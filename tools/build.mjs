@@ -12,6 +12,10 @@ export const PAGES = [
   { html: 'airship.html', entry: 'src/airship/main.js', name: 'airship' },
   { html: 'bogmire.html', entry: 'src/bogmire.js', name: 'bogmire' },
   { html: 'title.html', entry: 'src/title/main.js', name: 'title' },
+  { html: 'wickhollow.html', entry: 'src/wickhollow.js', name: 'wickhollow' },
+  { html: 'gloamwood.html', entry: 'src/gloamwood.js', name: 'gloamwood' },
+  { html: 'brewing.html', entry: 'src/brew/main.js', name: 'brewing' },
+  { html: 'swap-shop.html', entry: 'src/swap/main.js', name: 'swap-shop' },
 ];
 
 const only = process.argv[2];

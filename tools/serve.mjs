@@ -7,6 +7,7 @@ const ctx = await esbuild.context({
   entryPoints: Object.fromEntries(Object.entries({
     main: 'src/main.js', viewer: 'src/viewer.js', battle: 'src/battle/main.js', bestiary: 'src/bestiary.js', airship: 'src/airship/main.js',
     bogmire: 'src/bogmire.js', title: 'src/title/main.js',
+    wickhollow: 'src/wickhollow.js', gloamwood: 'src/gloamwood.js', brewing: 'src/brew/main.js', 'swap-shop': 'src/swap/main.js',
   }).filter(([, file]) => existsSync(file))),
   bundle: true,
   format: 'esm',
