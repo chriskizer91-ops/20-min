@@ -22,6 +22,7 @@
 //          names elsewhere ("the Quick Hand", "the Counting Heart").
 
 import { deepFreeze } from '../core/freeze.js';
+import { WITCH_RELICS } from './witch.js'; // ADDED for the 20-min game
 
 const st = (status, o = {}) => ({ type: 'status', status, ...o });
 const hand = (word, text, stats, o = {}) => ({ name: `the ${word} Hand`, text, stats, ...o });
@@ -1374,6 +1375,7 @@ export const RELICS = deepFreeze({
       b: { name: 'The Hearth Itself', text: 'It is only a hearth, after all, and a hearth keeps people warm. +12 MP, +15% healing and 10% frost resist.', stats: { mp: 12, healBonus: 15, resist: { frost: 10 } } },
     },
   },
+  ...WITCH_RELICS, // ADDED for the 20-min game
 });
 
 export const SETS = deepFreeze({

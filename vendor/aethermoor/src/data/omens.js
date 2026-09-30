@@ -7,6 +7,7 @@
 // under which its delay halves: it acts twice as often), guard, speed, gripMult, resist.
 
 import { deepFreeze } from '../core/freeze.js';
+import { MOONLIGHT_OMENS } from './moonlight-foes.js'; // ADDED for the 20-min game
 
 export const OMENS = deepFreeze({
   emberblooded: {
@@ -39,6 +40,7 @@ export const OMENS = deepFreeze({
     text: '+4 speed: it acts sooner and more often.',
     speed: 4,
   },
+  ...MOONLIGHT_OMENS, // ADDED for the 20-min game (notFor every tier, so the Waking and Grudges never roll it)
 });
 
 export const OMEN_IDS = Object.freeze(Object.keys(OMENS));

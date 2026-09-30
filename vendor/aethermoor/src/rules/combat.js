@@ -58,6 +58,7 @@ export function damageMult(t, kind, aspect) {
     if (t.weak?.includes(k)) m *= 1.5;
     if (t.resist?.includes(k)) m *= 0.5;
   }
+  for (const o of t.omens || []) if (aspect && OMENS[o]?.weak?.includes(aspect)) m *= 1.5; // ADDED for the 20-min game: an Omen's own weakness (Hollowed: radiant), gone when the Omen is
   const pct = t.side === 'hero' ? (t.stats.resist[aspect] || 0) + (aspect !== kind ? t.stats.resist[kind] || 0 : 0) : 0;
   return m * (1 - clamp(pct, 0, 60) / 100);
 }
@@ -207,6 +208,7 @@ export function dealDamage(B, src, t, raw, info) {
   if (t.side === 'hero' && amount) addSurge(B, t, T.surge.takenPct * amount / t.maxHp);
   if (t.hp === 0) knockOut(B, t, src);
   else {
+    if (t.side === 'foe' && src?.side === 'hero' && info.aspect) breakOmens(B, t, info.aspect); // ADDED for the 20-min game
     if (t.side === 'foe') afterFoeHurt(B, t);
     // M5: a hard enough hit makes a swallower let go; a charmed unit hit by its own side wakes
     if (amount >= t.maxHp * T.swallow.releasePct) release(B, t, `is spat out as ${t.name} reels.`);
@@ -399,6 +401,7 @@ export function resolveAttack(B, a, t, eff) {
   if (a.side === 'hero') addSurge(B, a, crit ? T.surge.crit : graze ? T.surge.graze : T.surge.hit);
   if (kind === 'crush' || eff.grip || crit) applyGrip(B, a, t, { crush: kind === 'crush' ? dealt : 0, dice: eff.grip, stat: eff.gripStat, crit, relic: B.relic });
   if (!graze && alive(t)) {
+    if (a.side === 'foe') a.struck = true; // ADDED for the 20-min game: its first hit has landed (an Omen that `breaks` no longer can)
     for (const rider of eff.riders || []) applyEffect(B, a, t, rider);
     if (a.side === 'foe') for (const o of a.omens) for (const rider of OMENS[o]?.riders || []) applyEffect(B, a, t, rider);
   }
@@ -468,7 +471,21 @@ function resolveDelay(B, a, t, eff) {
 function resolveCleanse(B, t, eff) {
   const ids = eff.statuses || t.statuses.filter(st => STATUSES[st.id]?.harmful).slice(0, eff.harmful || 1).map(st => st.id);
   for (const id of ids) if (statusOf(t, id)) removeStatus(B, t, id);
+  if (eff.omens) for (const f of eff.all ? unitsOf(B.s, 'foe').filter(alive) : [t]) stripOmens(B, f, eff.omens); // ADDED for the 20-min game
 }
+
+// ADDED for the 20-min game (docs/BALANCE.md): an Omen with `breaks: aspect` (Hollowed: radiant) comes off when a hero's
+// ADDED for the 20-min game: damage of that aspect lands before the bearer's own first hit has (whoever strikes first
+// ADDED for the 20-min game: wins); `cleanse.omens` strips named Omens from the target, or from every foe with `all`.
+function breakOmens(B, t, aspect) { // ADDED for the 20-min game
+  if (!t.struck) stripOmens(B, t, (t.omens || []).filter(o => OMENS[o]?.breaks === aspect)); // ADDED for the 20-min game
+} // ADDED for the 20-min game
+function stripOmens(B, t, ids) { // ADDED for the 20-min game
+  for (const o of ids.filter(id => t.omens?.includes(id))) { // ADDED for the 20-min game
+    t.omens = t.omens.filter(x => x !== o); // ADDED for the 20-min game
+    B.ev.push({ t: 'omen', target: t.id, omen: o, op: 'remove', text: (OMENS[o]?.lost || '{target} is no longer {omen}.').replaceAll('{target}', t.name).replaceAll('{omen}', OMENS[o]?.name || o) }); // ADDED for the 20-min game
+  } // ADDED for the 20-min game
+} // ADDED for the 20-min game
 
 function resolveRevive(B, t, eff) {
   if (!t.ko || t.gone) return;

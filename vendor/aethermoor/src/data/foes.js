@@ -21,6 +21,7 @@
 // ({ win?, flee? }: four titles each for its Grudge, in place of the Party-Breaker's and the Once-Fled's).
 
 import { deepFreeze } from '../core/freeze.js';
+import { moonlightFoes } from './moonlight-foes.js'; // ADDED for the 20-min game
 
 // M7 (spec §4.2): two tiers above the Champion's d20.
 //   hollow   the Hollow Council: a d20 that adds `bonus` (+4, capped at 20) while the family's `bonusWhile` relic (its
@@ -1407,6 +1408,6 @@ const HEARTH_BELOW = {
   },
 };
 
-export const FOES = deepFreeze({ ...VERDANT, ...TALLY_SUN, ...SUNSCORCH, ...TALLY_IRON, ...IRONSPIRE, ...TALLY_GLOOM, ...GLOOMFEN, ...HEARTH_BELOW });
+export const FOES = deepFreeze({ ...VERDANT, ...TALLY_SUN, ...SUNSCORCH, ...TALLY_IRON, ...IRONSPIRE, ...TALLY_GLOOM, ...GLOOMFEN, ...HEARTH_BELOW, ...moonlightFoes({ ...VERDANT, ...GLOOMFEN }) }); // ADDED for the 20-min game: ...moonlightFoes(...)
 
 export const FOE_IDS = Object.freeze(Object.keys(FOES));

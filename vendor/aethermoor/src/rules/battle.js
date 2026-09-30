@@ -408,6 +408,7 @@ export function targets(state, command) {
     case 'enemy': case 'all-enemies': return enemiesOf(state, u).map(t => t.id);
     case 'ally': case 'all-allies': return alliesOf(state, u).map(t => t.id);
     case 'ally-ko': return teamOf(state, u.side).filter(t => t.ko && !t.gone).map(t => t.id);
+    case 'ally-any': return teamOf(state, u.side).filter(t => (t.ko && !t.gone) || targetable(t)).map(t => t.id); // ADDED for the 20-min game: a brew that heals the standing or revives the fallen (Heartsease)
     case 'self': return [u.id];
     default: return [];
   }

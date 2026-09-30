@@ -29,6 +29,7 @@
 //   unmakes        (M7) the bearer's relic powers are struck from it: its Legend Surge is the plain Heroic one (unmade)
 
 import { deepFreeze } from '../core/freeze.js';
+import { MOONLIGHT_STATUSES } from './moonlight-foes.js'; // ADDED for the 20-min game
 
 export const STATUSES = deepFreeze({
   burning: {
@@ -129,4 +130,5 @@ export const STATUSES = deepFreeze({
     id: 'hearthlit', name: 'Hearthlit', harmful: false, turns: 3, hit: 1,
     text: 'The hearth\'s own fire is in them: +1 to hit.',
   },
+  ...MOONLIGHT_STATUSES, // ADDED for the 20-min game
 });
