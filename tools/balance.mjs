@@ -6,7 +6,7 @@
 //
 //   node tools/balance.mjs [B1 B2 ...] [--n 400] [--policy naive,sensible,expert] [--first-strike] [--path brisk]
 //                          [--level N] [--wears witch:hag-stone] [--bag heartsease-tonic:2,moonwater:1]
-//                          [--seed N --trace] [--json]
+//                          [--seed N --trace] [--json] [--ban cmd,hero:cmd] [--ablate] [--chain]
 //
 // Policies:
 //   naive     mashes Witchfire and basic attacks (Peck, Nettie's stick); heals only when someone is almost down
@@ -17,7 +17,7 @@
 //             Kraa! when a big hit is aimed at someone fragile, times Moonlight to break Hollowed before it strikes,
 //             pries the Veil first, and holds brews for when they matter.
 
-import { ENCOUNTERS, ORDER, CURVE, startEncounter, nextForm, partyFor } from '../src/battle/encounters.js';
+import { ENCOUNTERS, ORDER, CURVE, startEncounter, nextForm, partyFor, makeHero } from '../src/battle/encounters.js';
 import { commands, act, foeTurn, timeline, outcome } from '../vendor/aethermoor/src/rules/battle.js';
 import { familyData, targetable, alive, unitsOf, foeTable } from '../vendor/aethermoor/src/rules/ai.js';
 import { damageMult, effGuard, saveDC } from '../vendor/aethermoor/src/rules/combat.js';
@@ -298,7 +298,7 @@ function answerPlan(s, h, C, level) {
     const rot = up.reduce((a, x) => a + stacks(x, 'rotting'), 0);
     const hexed = up.filter(x => has(x, 'hexed')).length;
     const struck = foesUp(s).filter(f => f.omens?.includes('hollowed') && f.struck).length;
-    const need = level === 'expert' ? rot + hexed >= 3 || struck >= 2 || (struck >= 1 && rot >= 2) : rot + hexed >= 2 || struck >= 2;
+    const need = rot + hexed >= 2 || struck >= 2 || (level === 'expert' && struck >= 1 && rot >= 1);
     if (need) return inc;
   }
   const oil = pick(C, 'lantern-oil');
@@ -483,15 +483,20 @@ function hitOf(f, h, eff, guarded) {
   return null;
 }
 // every hit coming at each hero before that hero's next turn: { [heroId]: [{ foe, single, outs, riders }] }
-function hitsComing(s, { guarded = new Set(), redirect = null, cancel = new Set() } = {}) {
+// A foe's next move counts in full when it lands before its target's next turn, and at LATE weight when the target gets
+// a turn first (she may answer it herself, but Be Still or a Bless may not be enough).
+const LATE = 0.6;
+function hitsComing(s, { guarded = new Set(), redirect = null, cancel = new Set(), guardLate = false } = {}) {
   const res = {};
   for (const h of heroesUp(s)) res[h.id] = [];
   for (const h of heroesUp(s)) {
     const seen = new Set();
-    for (const id of before(s, h)) {
+    const soon = new Set(before(s, h));
+    for (const id of [...soon, ...foesUp(s).map(f => f.id).filter(x => !soon.has(x))]) {
       const f = s.units[id];
       if (!f || f.side !== 'foe' || seen.has(id) || cancel.has(id)) continue;
       seen.add(id);
+      const w = soon.has(id) ? 1 : LATE;
       for (const key of f.dice > 1 ? ['intent', 'intent2'] : ['intent']) {
         const it = f[key];
         if (!it || it.cancelled) continue;
@@ -503,8 +508,9 @@ function hitsComing(s, { guarded = new Set(), redirect = null, cancel = new Set(
         const aimed = move.target === 'all-enemies' || ((move.target === 'enemy' || move.target === 'strongest') && target === h.id);
         if (!aimed) continue;
         for (const eff of move.effects) {
-          const x = hitOf(f, h, eff, guarded.has(h.id));
-          if (x) res[h.id].push({ foe: f.id, single: move.target !== 'all-enemies', ...x });
+          // (Guarding from Be Still or Kraa! only covers what lands before this hero's next turn)
+          const x = hitOf(f, h, eff, guarded.has(h.id) && (w === 1 || guardLate));
+          if (x) res[h.id].push({ foe: f.id, single: move.target !== 'all-enemies', outs: x.outs.map(o => ({ ...o, p: o.p * w })), riders: x.riders * w });
         }
       }
     }
@@ -574,7 +580,8 @@ export function expertReaction(s, h, C, mem) {
   if (bless) for (const x of heroes) if (!has(x, 'warded')) add(withTarget(bless, x), dangerOf(s, base, { wardAdd: { [x.id]: 3.5 + (h.mods?.WIS || 0) } }), 0.5);
   if (pick(C, 'defend')) add(C.defend, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]) })), 0.4);
   const kraa = pick(C, 'kraa');
-  if (kraa) add(kraa, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]), redirect: h.id })), 0);
+  // Kraa!: every single blow comes to him, and he Guards (again on his next turn, if the blow comes after it)
+  if (kraa) add(kraa, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]), redirect: h.id, guardLate: true })), 0);
   // Hex: its attack rolls go to disadvantage for two of its turns (the second turn is worth about as much again)
   const hex = pick(C, 'hex');
   if (hex) {
@@ -689,8 +696,8 @@ export function decide(s, heroId, level, mem = {}) {
 // ---- playing one fight -------------------------------------------------------------------------------------------------------
 const cmdKey = c => (c.type === 'attack' ? 'attack' : c.type === 'skill' ? c.skill : c.type === 'item' ? `brew:${c.item}` : c.type);
 
-export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = false, path = 'typical', level, wears, bag, trace = false, maxActions = 500, ban = [] } = {}) {
-  let s = startEncounter(id, { seed, firstStrike, path, level, wears, bag });
+export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = false, path = 'typical', level, wears, bag, party, trace = false, maxActions = 500, ban = [] } = {}) {
+  let s = startEncounter(id, { seed, firstStrike, path, level, wears, bag, party });
   const st = {
     id, seed, policy, result: null, heroTurns: 0, foeTurns: 0, lost: 0, seconds: 0, lowest: 1, lowestParty: 1, downs: 0,
     brews: {}, moves: {}, fire: { hit: 0, crit: 0, graze: 0, miss: 0, fumble: 0 }, herbs: 0, pried: [], surges: {},
@@ -764,8 +771,89 @@ export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = fal
   st.seconds = st.heroTurns * SECONDS.hero + st.foeTurns * SECONDS.foe + st.lost * SECONDS.lost;
   const out = outcome(s);
   st.xp = out?.xp || 0;
-  st.end = unitsOf(s, 'hero').map(h => ({ id: h.heroId, hp: h.hp, maxHp: h.maxHp }));
+  st.end = unitsOf(s, 'hero').map(h => ({ id: h.heroId, hp: h.hp, maxHp: h.maxHp, mp: h.mp, maxMp: h.maxMp, surge: h.surge }));
+  st.bag = { ...s.bag };
   return st;
+}
+
+// ---- the whole night: fights in order, HP carried where the route has no rest ---------------------------------------
+// Rests (full HP and MP) where docs/SLICE.md puts them: her armchair before B1, Silas's bench at the wayside kettle
+// before B2, the skiff and Nettie's hut before B4, Bogmire again before B5. Nothing between B2 and B3, or between B5 and
+// B6. After a won fight, A's breather (TUNING.rest: +20% HP, +25% MP). The bag follows the brew plan (BALANCE.md §4):
+// the tutorial Heartsease; at the kettle, one more Heartsease and a moonwater kept raw (or, on the brisk path, the
+// Wisp-Calm that skips B2 and one Heartsease); at Nettie's, Remembrance Incense and a second Lantern Oil. A lost fight:
+// she wakes at her last rest with everything she had when the fight began, and tries again (at most 6 times).
+export const CHAIN = {
+  rests: { typical: ['B1', 'B2', 'B4', 'B5'], brisk: ['B1', 'B3', 'B5'], 'typical+rest': ['B1', 'B2', 'B4', 'B5', 'B6'], 'brisk+rest': ['B1', 'B3', 'B5', 'B6'] },
+  brew: { typical: { B1: { 'heartsease-tonic': 1 }, B2: { 'heartsease-tonic': 1, moonwater: 1 }, B4: { 'remembrance-incense': 1, 'lantern-oil': 1 } },
+    brisk: { B1: { 'heartsease-tonic': 1 }, B3: { 'heartsease-tonic': 1 }, B5: { 'remembrance-incense': 1, 'lantern-oil': 1 } } },
+};
+CHAIN.brew['typical+rest'] = CHAIN.brew.typical;
+CHAIN.brew['brisk+rest'] = CHAIN.brew.brisk;
+
+export function playChain({ path = 'typical', policy = 'sensible', seed = 1 } = {}) {
+  const route = path.replace('+rest', '');
+  const ids = route === 'brisk' ? ['B1', 'B3', 'B5', 'B6'] : ORDER;
+  const out = [];
+  let carry = null, bag = {};
+  for (const id of ids) {
+    if (CHAIN.rests[path].includes(id)) carry = null;
+    for (const [k, v] of Object.entries(CHAIN.brew[path][id] || {})) bag[k] = (bag[k] || 0) + v;
+    const startBag = { ...bag };
+    const entered = { hp: carry ? carry.reduce((a, c) => a + c.hp, 0) / carry.reduce((a, c) => a + c.maxHp, 0) : 1,
+      mp: carry ? carry.reduce((a, c) => a + c.mp, 0) / carry.reduce((a, c) => a + (c.maxMp || c.mp), 0) : 1 };
+    let tries = 0, r;
+    for (;;) {
+      tries++;
+      const spec = partyFor(id, { path: route }).map(p => {
+        const c = carry?.find(x => x.id === p.id);
+        return c ? { ...p, hp: c.hp, mp: c.mp, surge: c.surge } : p;
+      });
+      r = playFight(id, { seed: seed * 101 + tries * 13 + ids.indexOf(id), policy, path: route, party: spec, bag: { ...startBag } });
+      if (r.result === 'victory' || tries >= 6) break;
+      carry = null; // she wakes at her last rest, whole
+    }
+    out.push({ id, tries, won: r.result === 'victory', firstTry: tries === 1 && r.result === 'victory', minutes: r.seconds / 60, bagIn: startBag,
+      enteredHurt: entered.hp, enteredMp: entered.mp });
+    if (r.result !== 'victory') break;
+    bag = { ...r.bag };
+    // A's breather after a won fight, and the next fight's level (a level-up adds the HP it grants)
+    carry = r.end.map(e => ({ id: e.id, hp: Math.min(e.maxHp, Math.max(1, e.hp) + Math.round(e.maxHp * TUNING.rest.breatherHp)), mp: Math.min(e.maxMp, e.mp + Math.round(e.maxMp * TUNING.rest.breatherMp)), surge: e.surge, maxHp: e.maxHp, missing: 0 }))
+      .map(c => ({ ...c, missing: c.maxHp - c.hp }));
+    const next = ids[ids.indexOf(id) + 1];
+    if (next) {
+      const nextSpec = partyFor(next, { path: route });
+      const was = partyFor(id, { path: route })[0].level;
+      carry = nextSpec.map(p => {
+        const c = carry.find(x => x.id === p.id);
+        if (!c) return null;
+        const { hero } = makeHero(p.id, { level: p.level, relics: p.relics });
+        const mpGain = p.level > was ? HEROES_MP[p.id] * (p.level - was) : 0; // a level-up adds its MP (rules/progression.js grantXp)
+        return { id: p.id, hp: Math.max(1, hero.hp - c.missing), mp: Math.min(hero.mp, c.mp + mpGain), surge: c.surge, maxHp: hero.hp, maxMp: hero.mp };
+      }).filter(Boolean);
+      if (!carry.length) carry = null;
+    }
+  }
+  return out;
+}
+
+const HEROES_MP = { witch: 2, inkblot: 2, nettie: 2 }; // mp.perLevel in data/witch.js
+
+export function chainBattery({ path = 'typical', policy = 'sensible', n = 200 } = {}) {
+  const per = {};
+  let complete = 0, losses = 0;
+  for (let i = 0; i < n; i++) {
+    const run = playChain({ path, policy, seed: 1 + i });
+    if (run.length && run[run.length - 1].won && run.length === (path.startsWith('brisk') ? 4 : 6)) complete++;
+    for (const f of run) {
+      const p = (per[f.id] ||= { n: 0, first: 0, tries: 0, minutes: 0, hurt: 0, mp: 0, bag: {} });
+      p.n++; p.first += f.firstTry ? 1 : 0; p.tries += f.tries; p.minutes += f.minutes; p.hurt += f.enteredHurt; p.mp += f.enteredMp;
+      const key = Object.entries(f.bagIn).filter(([, v]) => v > 0).sort().map(([k, v]) => `${k.split('-')[0]}${v > 1 ? '×' + v : ''}`).join('+') || 'empty';
+      p.bag[key] = (p.bag[key] || 0) + 1;
+      losses += f.tries - (f.won ? 1 : 0);
+    }
+  }
+  return { path, policy, n, complete: complete / n, lossesPerRun: losses / n, per };
 }
 
 // ---- many fights ------------------------------------------------------------------------------------------------------------
@@ -799,6 +887,23 @@ export function battery(id, { n = 400, seed0 = 1, ...opts } = {}) {
     hollowed: { start: sum(r => r.hollowed.start) / n, broken: sum(r => r.hollowed.broken) / n, stripped: sum(r => r.hollowed.stripped) / n },
     hurt, rot: sum(r => r.rot) / n, fastest: wins.length ? Math.min(...wins.map(r => r.heroTurns)) : 0,
   };
+}
+
+// ---- ablation: what each command is worth (the win rate without it) -----------------------------------------------------
+// For every command a policy used in a fight, play the fight again with that command taken from that hero. A command
+// worth using costs win rate (or time) when it is taken away; a command that is always best would cost a great deal.
+export function ablate(id, { n = 400, policy = 'sensible', firstStrike = false, seed0 = 1 } = {}) {
+  const base = battery(id, { n, policy, firstStrike, seed0 });
+  const total = Object.values(base.moves).reduce((a, b) => a + b, 0);
+  const rows = [];
+  for (const [k, v] of Object.entries(base.moves).sort((a, b) => b[1] - a[1])) {
+    if (v / total < 0.004) continue;
+    const hero = k.slice(0, k.indexOf(':')), cmd = k.slice(k.indexOf(':') + 1);
+    // a brew is taken from the bag (nobody can use it); a command only from that hero
+    const without = battery(id, { n, policy, firstStrike, seed0, ban: cmd.startsWith('brew:') ? [cmd.slice(5)] : [`${hero}:${cmd}`] });
+    rows.push({ move: k, share: v / total, win: without.win, dWin: without.win - base.win, dMin: without.minutes - base.minutes });
+  }
+  return { base, rows };
 }
 
 // ---- report ---------------------------------------------------------------------------------------------------------------
@@ -839,6 +944,9 @@ function parseArgs(argv) {
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--trace') o.trace = true;
     else if (a === '--json') o.json = true;
+    else if (a === '--ablate') o.ablate = true;
+    else if (a === '--chain') o.chain = true;
+    else if (a === '--paths') o.paths = argv[++i].split(',');
     else if (a === '--wears') for (const w of argv[++i].split(',')) { const [h, r] = w.split(':'); (o.wears[h] ||= []).push(r); }
     else if (a === '--ban') o.ban = argv[++i].split(',');
     else if (a === '--bag') o.bag = Object.fromEntries(argv[++i].split(',').map(x => { const [k, v] = x.split(':'); return [k, +v]; }));
@@ -849,6 +957,22 @@ function parseArgs(argv) {
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
+  if (o.chain) {
+    for (const path of o.paths || ['typical', 'brisk', 'typical+rest']) for (const policy of o.policies) {
+      const c = chainBattery({ path, policy, n: o.n });
+      console.log(`\n== the whole night, ${path} path, ${policy}: ${P(c.complete)} finish; ${c.lossesPerRun.toFixed(2)} lost fights per run`);
+      for (const [id, p] of Object.entries(c.per)) console.log(`  ${id}: first try ${P(p.first / p.n)}  tries ${(p.tries / p.n).toFixed(2)}  enters at ${P(p.hurt / p.n)} HP ${P(p.mp / p.n)} MP  ${(p.minutes / p.n).toFixed(1)} min  bag in: ${Object.entries(p.bag).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} ${P(v / p.n).trim()}`).join(', ')}`);
+    }
+    return;
+  }
+  if (o.ablate) {
+    for (const id of o.ids) for (const policy of o.policies) {
+      const { base, rows } = ablate(id, { n: o.n, policy, firstStrike: o.firstStrike });
+      console.log(`\n== ${id}${o.firstStrike ? '+FS' : ''} ${policy}: win ${P(base.win)}, ${base.minutes.toFixed(1)} min. Without each command:`);
+      for (const r of rows) console.log(`  ${r.move.padEnd(34)} used ${P(r.share)}  win ${P(r.win)} (${r.dWin >= 0 ? '+' : ''}${(100 * r.dWin).toFixed(0)})  ${r.dMin >= 0 ? '+' : ''}${r.dMin.toFixed(1)} min`);
+    }
+    return;
+  }
   if (o.seed != null) {
     for (const id of o.ids) for (const policy of o.policies) {
       const r = playFight(id, { seed: o.seed, policy, firstStrike: o.firstStrike, path: o.path, level: o.level, wears: o.wears, bag: o.bag, trace: o.trace });

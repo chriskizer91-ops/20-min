@@ -12,6 +12,7 @@
 // - Family `hollowed-mandrake` (new, from A's briarling stats, with a Scream) and family `silas` (the guest).
 // - Variants on A's families (moonlightFoes adds them; A's own entries are untouched):
 //     lamp-moth `wickhollow`   carries a Wickhollow flame (a grip meter Pinch can empty); Circle the Light needs it
+//     willow-wight `moonlight` B5's willow: fewer HP, harder blows, a Weep that does not scale (a short, sharp fight)
 //     gloamwing `moonlight`    the first boss, sized for two heroes at level 2; calls lamp-moths; a charging dive
 //     lantern-mother `moonlight` and `lights-out`   the final boss's two forms: Lamplight and the Children's Road,
 //                              then (after a cut) Lights Out, where Silas steps out of the bow-lamp's flame
@@ -19,7 +20,7 @@
 const atk = (dice, kind, o = {}) => ({ type: 'attack', dice, kind, ...o });
 const status = (id, o = {}) => ({ type: 'status', status: id, ...o });
 const ALL_TIERS = ['rabble', 'veteran', 'relic-bearer', 'champion', 'hollow', 'unsmith'];
-const EVERYTHING = ['slash', 'pierce', 'crush', 'ember', 'frost', 'storm', 'stone', 'verdant', 'tide', 'radiant', 'blight', 'calm'];
+const EVERYTHING = ['slash', 'pierce', 'crush', 'ember', 'frost', 'storm', 'stone', 'verdant', 'tide', 'radiant', 'blight'];
 
 export const MOONLIGHT_OMENS = {
   hollowed: {
@@ -91,13 +92,13 @@ const MOTH_MOVES = {
 };
 
 const GLOAMWING = {
-  name: 'The Gloamwing', hp: 86, guard: 14, atk: 4, dmg: 2, speed: 12,
+  name: 'The Gloamwing', hp: 84, guard: 14, atk: 4, dmg: 2, speed: 12,
   koText: 'The Gloamwing flutters up after the moon, drowsy, and settles on Silas\'s moth-bower to sleep.',
   moves: {
     'wing-buffet': { name: 'Wing Buffet', target: 'enemy', text: 'Pale wings hit like a door slammed in a gale.', effects: [atk('1d6', 'crush')] },
     dreamdust: { name: 'Dreamdust', target: 'all-enemies', text: 'Scales like snow. WIS save or Spooked.', effects: [status('frightened', { save: 'WIS' })] },
     cocoon: { name: 'Cocoon', target: 'self', when: { hpBelow: 0.5 }, fallback: 'wing-buffet', text: 'It wraps itself in silk: Regenerating.', effects: [status('regenerating', { value: { dice: '1d6', diceEvery: 3 } })] },
-    'moon-dive': { name: 'Moon-Dive', target: 'enemy', charge: true, text: 'It climbs toward the moon and folds its wings, charging: when it comes down, 3d8 crushing. A Stagger breaks it off.', effects: [atk('3d8', 'crush')] },
+    'moon-dive': { name: 'Moon-Dive', target: 'enemy', charge: true, text: 'It climbs toward the moon and folds its wings, charging: when it comes down, 3d6 crushing. A Stagger breaks it off.', effects: [atk('3d6', 'crush')] },
     'call-moths': { name: 'Call the Moths', target: 'self', fallback: 'wing-buffet', text: 'The Dawnbell hums, and a lamp-moth comes to it out of the dark, carrying a Wickhollow flame.', effects: [{ type: 'summon', family: 'lamp-moth', variant: 'wickhollow', count: 1, max: 2, levelDelta: -1 }] },
     'bell-hum': { name: 'Bell-Hum', target: 'all-enemies', requires: 'dawnbell', fallback: 'wing-buffet', text: 'The Dawnbell hums on its thorax: 1d6 radiant to all, and you Stagger.', effects: [{ type: 'damage', dice: '1d6', kind: 'radiant', aspect: 'radiant', riders: [status('staggered')] }] },
   },
@@ -119,8 +120,7 @@ const LM_MOVES = {
 };
 
 const LANTERN_MOTHER = {
-  name: 'The Lantern Mother', hp: 52, guard: 14, atk: 7, dmg: 5, speed: 16,
-  immune: ['calm'],
+  name: 'The Lantern Mother', hp: 48, guard: 14, atk: 7, dmg: 5, speed: 16,
   koText: 'The lamps go out, all but hers, and the one at the skiff\'s bow. She stops being gentle.',
   moves: LM_MOVES,
   phases: [
@@ -130,8 +130,7 @@ const LANTERN_MOTHER = {
 };
 
 const LIGHTS_OUT = {
-  name: 'The Lantern Mother', hp: 44, guard: 14, atk: 7, dmg: 5, speed: 16,
-  immune: ['calm'],
+  name: 'The Lantern Mother', hp: 40, guard: 14, atk: 7, dmg: 5, speed: 16,
   opener: 'snuff',
   koText: 'The veil falls. "Are they safe?" she asks. "I was taking them home."',
   moves: LM_MOVES,
@@ -151,6 +150,14 @@ export function moonlightFoes(base) {
       wickhollow: {
         relics: ['wickhollow-flame'], moves: MOTH_MOVES, table: [[1, 3, 'batter'], [4, 5, 'dust'], [6, 6, 'circle']],
         koText: 'It drops the flame it was carrying, and the flame floats off home up the river.',
+      },
+    }),
+    // B5's willow: the last test before the boss is meant to be short and sharp (docs/BALANCE.md), so fewer HP and
+    // harder blows than A's willow at the same level, and a Weep that does not grow with its level
+    'willow-wight': withVariants('willow-wight', {
+      moonlight: {
+        hp: 24, dmg: 6, table: [[1, 3, 'lash'], [4, 6, 'bough-fall'], [7, 8, 'weep']],
+        moves: { ...base['willow-wight'].moves, weep: { ...base['willow-wight'].moves.weep, effects: [status('regenerating', { value: { dice: '1d6' } })] } },
       },
     }),
     gloamwing: withVariants('gloamwing', { moonlight: GLOAMWING }),

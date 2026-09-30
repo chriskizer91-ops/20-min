@@ -218,13 +218,8 @@ export const WITCH_CONSUMABLES = {
     effects: [{ type: 'cleanse', statuses: ['chilled', 'frozen'] }, { type: 'status', status: 'hasted' }],
     text: 'Ember-star lily and glowcap, rubbed in. Cures Chilled and Frozen, and Hastes.',
   },
-  // In the field Wisp-Calm opens the twisted grove (skips B2); thrown in a fight, every wisp and moth drifts off, shy.
-  // Bosses are immune to 'calm'.
-  'wisp-calm': {
-    id: 'wisp-calm', name: 'Wisp-Calm', target: 'all-enemies', price: 0, delay: 1,
-    effects: [{ type: 'damage', dice: '99', kind: 'calm' }],
-    text: 'Lavender and wisp-sprout. Every wisp and moth hiccups, goes green again and drifts off, shy.',
-  },
+  // Wisp-Calm is a field brew, not a battle item: it opens the twisted grove, so B2 never starts (docs/SLICE.md). The
+  // rules cannot aim a thrown brew at only the wisps and moths, and one that ended any fight would end the bosses too.
   // Duds get cards too ("Wren insisted"), and they are useful thrown (LORE §8)
   'hiccup-tonic': {
     id: 'hiccup-tonic', name: 'Hiccup Tonic', target: 'enemy', price: 0, delay: 0.8,

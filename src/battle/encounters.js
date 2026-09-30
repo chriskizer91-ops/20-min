@@ -21,7 +21,8 @@ import { createRng } from '../../vendor/aethermoor/src/core/rng.js';
 // ---- the fights ----------------------------------------------------------------------------------------------------------
 // foes: FoeSpawns (rules/battle.js createBattle): family, level, variant, omens, name.
 // party: hero ids; levels come from CURVE, relics from `wears` (what a typical player has equipped by then).
-// bag: the brews a typical player carries in (docs/BALANCE.md §4 follows the moonwater through the night).
+// bag: the brews a typical player carries in: the commonest bag a sensible player arrives with when the whole night is
+//      played in order (tools/balance.mjs --chain; docs/BALANCE.md §4 follows the eight moonwater through the night).
 // flags: noFlee (bosses), required, firstStrike ('can': Moonlight on a foe's back in the field gives one).
 
 const INKBLOT_FEATHER = { inkblot: ['inkblots-feather'] }; // back from his nest in the Hollow (B3's screen)
@@ -51,28 +52,28 @@ export const ENCOUNTERS = {
     party: ['witch', 'inkblot'],
     bag: { 'heartsease-tonic': 2, moonwater: 1 },
     flags: { required: false, skip: 'wisp-calm' },
-    teaches: 'Radiant on Radiant is x0.5, so Witchfire, not Moonlight; Inkblot\'s Pinch takes a flame; Wisp-Calm ends a fight.',
+    teaches: 'Radiant on Radiant is x0.5, so Witchfire, not Moonlight; Inkblot\'s Pinch takes a flame. (Brew Wisp-Calm in the field and this fight never starts.)',
   },
   B3: {
     id: 'B3', name: 'The Gloamwing', where: 'the Hollow',
     backdrop: 'graveyard-night',
     foes: [{ family: 'gloamwing', level: 2, variant: 'moonlight', name: 'The Gloamwing' }],
     party: ['witch', 'inkblot'],
-    bag: { 'heartsease-tonic': 2, moonwater: 1 },
+    bag: { 'heartsease-tonic': 1, moonwater: 1 },
     flags: { required: true, noFlee: true, boss: true },
-    teaches: 'Grip & Claim on the Dawnbell, a Stagger (Pinch) cancelling a charge, Witchfire against a boss weak to Ember, the gold card.',
+    teaches: 'Grip & Claim on the Dawnbell (Pinch), breaking off a charge (Pinch leaves it Flustered; Kraa! draws it onto a Guarding crow), Witchfire against a boss weak to Ember, the gold card.',
   },
   B4: {
     id: 'B4', name: 'The Murkway', where: 'the Murkway, a plank path over black pools',
     backdrop: 'battle-open-fen', stopgap: 'graveyard-night',
     foes: [
-      { family: 'mire-leech', level: 2, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
+      { family: 'mire-leech', level: 1, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
       { family: 'boglurcher', level: 4, omens: ['hollowed'], name: 'Hollowed Boglurcher' },
-      { family: 'mire-leech', level: 2, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
+      { family: 'mire-leech', level: 1, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
     ],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
-    bag: { 'heartsease-tonic': 1, 'remembrance-incense': 1, 'lantern-oil': 1 },
+    bag: { 'lantern-oil': 1, 'remembrance-incense': 1, moonwater: 1 },
     flags: { required: false, firstStrike: 'can' },
     teaches: 'Nettie\'s first fight; Radiant against Blight, where the first hit wins: Moonlight on a foe\'s back in the field for a First Strike, then Moonlight before the rot lands.',
   },
@@ -81,12 +82,12 @@ export const ENCOUNTERS = {
     backdrop: 'battle-long-boardwalk',
     foes: [
       { family: 'drowned', level: 1, variant: 'choir', name: 'Drowned Chorister' },
-      { family: 'willow-wight', level: 6, name: 'Willow-Wight' },
+      { family: 'willow-wight', level: 6, variant: 'moonlight', name: 'Willow-Wight' },
       { family: 'drowned', level: 1, variant: 'choir', name: 'Drowned Chorister' },
     ],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
-    bag: { 'heartsease-tonic': 1, 'remembrance-incense': 1, 'lantern-oil': 1 },
+    bag: { 'lantern-oil': 1, 'remembrance-incense': 1, moonwater: 1 },
     flags: { required: true },
     teaches: 'Nettie\'s heals and Tide; Hexed and Rooted; Remembrance Incense.',
   },
@@ -96,7 +97,7 @@ export const ENCOUNTERS = {
     foes: [{ family: 'lantern-mother', level: 5, variant: 'moonlight', name: 'The Lantern Mother' }],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
-    bag: { 'heartsease-tonic': 1, 'lantern-oil': 1, moonwater: 1 },
+    bag: { 'lantern-oil': 1, moonwater: 1 },
     flags: { required: true, noFlee: true, boss: true, final: true },
     next: 'B6b',
     teaches: 'Two grip meters (Lantern and Veil); Tide (thrown moonwater, Nettie\'s jars) against her weakness; Lantern Oil against Lights Out.',
