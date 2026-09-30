@@ -1,0 +1,17 @@
+{
+  "name": "wickhollow-20-min",
+  "private": true,
+  "type": "module",
+  "description": "A 20-minute FF9-style slice: 3D characters walking over painted backgrounds, in the browser.",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "build": "node tools/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tools/build.mjs && node tests/browser.mjs",
+    "shot": "node tools/shot.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}
