@@ -3,10 +3,7 @@
   "id": "battle-gloamwood",
   "title": "The Lantern Path",
   "image": "art/battle/gloamwood-night.webp",
-  "size": [
-    1448,
-    1086
-  ],
+  "size": [1448, 1086],
   "camera": {
     "fov": 34,
     "pitch": 8.7,
@@ -15,133 +12,30 @@
   "walk": [
     {
       "name": "the clearing",
-      "points": [
-        [
-          150,
-          640
-        ],
-        [
-          500,
-          615
-        ],
-        [
-          950,
-          615
-        ],
-        [
-          1300,
-          640
-        ],
-        [
-          1400,
-          760
-        ],
-        [
-          1330,
-          880
-        ],
-        [
-          1100,
-          930
-        ],
-        [
-          700,
-          950
-        ],
-        [
-          330,
-          920
-        ],
-        [
-          150,
-          840
-        ],
-        [
-          80,
-          740
-        ]
-      ]
+      "points": [[150, 640], [500, 615], [950, 615], [1300, 640], [1400, 760], [1330, 880], [1100, 930], [700, 950], [330, 920], [150, 840], [80, 740]]
     }
   ],
   "layers": [
     {
       "name": "rocks and flowers, front left",
-      "base": [
-        150,
-        1060
-      ],
+      "base": [150, 1060],
       "outline": [
-        [
-          [
-            0,
-            820
-          ],
-          [
-            120,
-            800
-          ],
-          [
-            250,
-            860
-          ],
-          [
-            310,
-            960
-          ],
-          [
-            300,
-            1086
-          ],
-          [
-            0,
-            1086
-          ]
-        ]
+        [[0, 820], [120, 800], [250, 860], [310, 960], [300, 1086], [0, 1086]]
       ]
     },
     {
       "name": "bush, front right",
-      "base": [
-        1350,
-        1060
-      ],
+      "base": [1350, 1060],
       "outline": [
-        [
-          [
-            1230,
-            900
-          ],
-          [
-            1330,
-            860
-          ],
-          [
-            1448,
-            860
-          ],
-          [
-            1448,
-            1086
-          ],
-          [
-            1220,
-            1086
-          ]
-        ]
+        [[1230, 900], [1330, 860], [1448, 860], [1448, 1086], [1220, 1086]]
       ]
     }
   ],
   "lights": [
     {
       "_what": "lantern on the post",
-      "pixel": [
-        1238,
-        345
-      ],
-      "base": [
-        1270,
-        600
-      ],
+      "pixel": [1238, 345],
+      "base": [1270, 600],
       "color": "#ffb45e",
       "intensity": 6,
       "distance": 10,
@@ -149,14 +43,8 @@
     },
     {
       "_what": "glowing mushrooms",
-      "pixel": [
-        165,
-        430
-      ],
-      "base": [
-        165,
-        470
-      ],
+      "pixel": [165, 430],
+      "base": [165, 470],
       "color": "#ff9a5a",
       "intensity": 3,
       "distance": 6,
@@ -164,14 +52,8 @@
     },
     {
       "_what": "glowing mushrooms",
-      "pixel": [
-        85,
-        545
-      ],
-      "base": [
-        85,
-        560
-      ],
+      "pixel": [85, 545],
+      "base": [85, 560],
       "color": "#ff9a5a",
       "intensity": 3,
       "distance": 6,
@@ -179,14 +61,8 @@
     },
     {
       "_what": "the runestone",
-      "pixel": [
-        450,
-        330
-      ],
-      "base": [
-        450,
-        470
-      ],
+      "pixel": [450, 330],
+      "base": [450, 470],
       "color": "#c9a8ff",
       "intensity": 3,
       "distance": 7,
@@ -194,41 +70,12 @@
     }
   ],
   "spots": {
-    "_about": "Where the fighters stand, in painting pixels: the party on the right (front first), the foes on the left",
-    "heroes": [
-      [
-        1060,
-        760
-      ],
-      [
-        1170,
-        660
-      ],
-      [
-        1150,
-        870
-      ]
-    ],
-    "foes": [
-      [
-        420,
-        720
-      ],
-      [
-        580,
-        650
-      ],
-      [
-        470,
-        860
-      ]
-    ]
+    "_about": "Where the fighters stand, in painting pixels: the party on the right (the witch, then Inkblot in front where he isn't hidden, then Nettie behind), the foes on the left",
+    "heroes": [[1030, 730], [1150, 830], [1240, 650]],
+    "foes": [[560, 700], [740, 640], [640, 820]]
   },
   "spawn": {
-    "pixel": [
-      1060,
-      760
-    ],
+    "pixel": [1060, 760],
     "facing": "left"
   },
   "exits": []

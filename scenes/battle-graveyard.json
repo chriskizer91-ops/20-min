@@ -4,28 +4,95 @@
   "title": "The Hollow",
   "image": "art/battle/graveyard-night.webp",
   "size": [1448, 1086],
-  "camera": { "fov": 34, "pitch": 8.7, "ppm": 85 },
+  "camera": {
+    "fov": 34,
+    "pitch": 8.7,
+    "ppm": 85
+  },
   "walk": [
     {
       "name": "the clearing",
-      "points": [
-        [180, 600], [420, 560], [900, 560], [1180, 590], [1330, 640], [1320, 760], [1250, 850],
-        [1100, 860], [900, 900], [600, 920], [330, 900], [210, 850], [150, 720]
-      ]
+      "points": [[180, 600], [420, 560], [900, 560], [1180, 590], [1330, 640], [1320, 760], [1250, 850], [1100, 860], [900, 900], [600, 920], [330, 900], [210, 850], [150, 720]]
     }
   ],
   "layers": [
-    { "name": "gravestone, front left", "base": [120, 885], "outline": [[[48, 700], [92, 668], [140, 672], [182, 702], [206, 862], [164, 902], [56, 888]]] },
-    { "name": "gravestone, front right", "base": [1200, 958], "outline": [[[1138, 872], [1178, 850], [1252, 858], [1262, 962], [1140, 964]]] },
-    { "name": "grave cross, right", "base": [1355, 832], "outline": [[[1308, 762], [1350, 740], [1398, 752], [1402, 832], [1314, 834]]] }
+    {
+      "name": "gravestone, front left",
+      "base": [120, 885],
+      "outline": [
+        [[48, 700], [92, 668], [140, 672], [182, 702], [206, 862], [164, 902], [56, 888]]
+      ]
+    },
+    {
+      "name": "gravestone, front right",
+      "base": [1200, 958],
+      "outline": [
+        [[1138, 872], [1178, 850], [1252, 858], [1262, 962], [1140, 964]]
+      ]
+    },
+    {
+      "name": "grave cross, right",
+      "base": [1355, 832],
+      "outline": [
+        [[1308, 762], [1350, 740], [1398, 752], [1402, 832], [1314, 834]]
+      ]
+    }
   ],
   "lights": [
-    { "_what": "gate lantern", "pixel": [918, 262], "base": [918, 330], "color": "#ffb45e", "intensity": 6, "distance": 9, "glow": 0.8 },
-    { "_what": "gate lantern", "pixel": [1038, 258], "base": [1038, 330], "color": "#ffb45e", "intensity": 6, "distance": 9, "glow": 0.8 },
-    { "_what": "runestone", "pixel": [198, 360], "base": [200, 470], "color": "#7dffa0", "intensity": 5, "distance": 7, "glow": 1.2 },
-    { "_what": "runestone", "pixel": [1220, 372], "base": [1220, 480], "color": "#7dffa0", "intensity": 5, "distance": 7, "glow": 1.2 },
-    { "_what": "runestone", "pixel": [1384, 470], "base": [1384, 520], "color": "#7dffa0", "intensity": 4, "distance": 6, "glow": 1.0 }
+    {
+      "_what": "gate lantern",
+      "pixel": [918, 262],
+      "base": [918, 330],
+      "color": "#ffb45e",
+      "intensity": 6,
+      "distance": 9,
+      "glow": 0.8
+    },
+    {
+      "_what": "gate lantern",
+      "pixel": [1038, 258],
+      "base": [1038, 330],
+      "color": "#ffb45e",
+      "intensity": 6,
+      "distance": 9,
+      "glow": 0.8
+    },
+    {
+      "_what": "runestone",
+      "pixel": [198, 360],
+      "base": [200, 470],
+      "color": "#7dffa0",
+      "intensity": 5,
+      "distance": 7,
+      "glow": 1.2
+    },
+    {
+      "_what": "runestone",
+      "pixel": [1220, 372],
+      "base": [1220, 480],
+      "color": "#7dffa0",
+      "intensity": 5,
+      "distance": 7,
+      "glow": 1.2
+    },
+    {
+      "_what": "runestone",
+      "pixel": [1384, 470],
+      "base": [1384, 520],
+      "color": "#7dffa0",
+      "intensity": 4,
+      "distance": 6,
+      "glow": 1.0
+    }
   ],
-  "spawn": { "pixel": [1060, 760], "facing": "left" },
-  "exits": []
+  "spawn": {
+    "pixel": [1060, 760],
+    "facing": "left"
+  },
+  "exits": [],
+  "spots": {
+    "_about": "Where the fighters stand, in painting pixels: the party on the right (the witch, then Inkblot in front where he isn't hidden, then Nettie behind), the foes on the left",
+    "heroes": [[1030, 730], [1150, 830], [1240, 650]],
+    "foes": [[560, 700], [740, 640], [640, 820]]
+  }
 }

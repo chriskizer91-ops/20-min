@@ -1,6 +1,7 @@
 // Plays the built demos in headless Chromium: node tests/browser.mjs (run `npm run build` first).
 // Checks it starts without errors, walks with the keys, climbs the chapel steps by tapping, talks to
-// Hilde, and flies the camera out behind the scenes and back; opens a battle; and flies the skiff.
+// Hilde, and flies the camera out behind the scenes and back; opens a battle, meets B5's party of three and turns
+// B6 into Lights Out; and flies the skiff.
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -66,6 +67,22 @@ if (await game(() => !!window.__battle.director.targeting)) await page.keyboard.
 for (let i = 0; i < 40 && (await game(() => document.getElementById('menu').hidden)); i++) await wait(250);
 const after = await game(() => ({ hp: Object.values(window.__battle.director.state.units).filter((u) => u.side === 'foe').reduce((a, u) => a + u.hp, 0), turns: window.__battle.director.state.turn ?? 0 }));
 check(after.hp <= hpBefore, `Witchfire is thrown and the fight goes on to her next turn (foes' HP ${hpBefore} -> ${after.hp})`);
+
+// The night's other fights: B5 meets the party of three on the Long Boardwalk, and B6's first form, beaten, turns
+// into Lights Out (here with her first form's HP set to 1 so it ends at once).
+await game(() => window.__battle.fight('B5'));
+await page.waitForFunction(() => !document.getElementById('menu').hidden, null, { timeout: 60000 });
+const party = await game(() => Object.values(window.__battle.director.state.units).filter((u) => u.side === 'hero').map((u) => u.heroId ?? u.id).join(', '));
+check(party === 'witch, inkblot, nettie', `B5 is fought by the witch, Inkblot and Nettie (${party})`);
+await game(() => window.__battle.fight('B6'));
+await page.waitForFunction(() => !document.getElementById('menu').hidden, null, { timeout: 60000 });
+await game(() => { for (const u of Object.values(window.__battle.director.state.units)) if (u.side === 'foe') u.hp = 1; });
+for (let i = 0; i < 240 && (await game(() => window.__battle.fightId)) !== 'B6b'; i++) {
+  if (await game(() => !!window.__battle.director.targeting)) await page.keyboard.press('Enter');
+  else if (await game(() => !document.getElementById('menu').hidden)) await page.locator('#menu-list button:not([disabled])').first().click();
+  await wait(250);
+}
+check(await game(() => window.__battle.fightId === 'B6b'), 'beating the Lantern Mother\'s first form turns the fight into Lights Out');
 
 // The airship: docked at Wickhollow, "Fly to Bogmire" takes off, and near Bogmire she sets down at its dock.
 await page.goto(pathToFileURL(resolve('dist/airship.html')).href);

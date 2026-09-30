@@ -22,7 +22,7 @@ import { createRng } from '../../vendor/aethermoor/src/core/rng.js';
 // foes: FoeSpawns (rules/battle.js createBattle): family, level, variant, omens, name.
 // party: hero ids; levels come from CURVE, relics from `wears` (what a typical player has equipped by then).
 // bag: the brews a typical player carries in: the commonest bag a sensible player arrives with when the whole night is
-//      played in order (tools/balance.mjs --chain; docs/BALANCE.md §4 follows the eight moonwater through the night).
+//      played in order (tools/balance.mjs --chain; docs/BALANCE.md §6 follows the eight moonwater through the night).
 // flags: noFlee (bosses), required, firstStrike ('can': Moonlight on a foe's back in the field gives one).
 
 const INKBLOT_FEATHER = { inkblot: ['inkblots-feather'] }; // back from his nest in the Hollow (B3's screen)

@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- PAGE -->
-<title>Hollow Battle</title>
+<title>The Night's Battles</title>
 <style>
   /* A battle screen in the witch's colours: plum panels with a cream edge, gold for names and numbers.
      Layout after FF9: turn order across the top, the move's name in a banner, commands bottom left, the
@@ -106,10 +106,30 @@
   #result li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border: 1px solid var(--rarity); border-radius: 6px; background: rgba(0, 0, 0, 0.35); }
   #result li b { color: var(--rarity); font-weight: 600; }
   #result li span { color: var(--dim); font-size: 13px; }
-  #again { padding: 8px 16px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  #result .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  #again, #onward, #choose { padding: 8px 16px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  #choose { background: var(--plum); }
+
+  /* Which fight: B1 to B6, in the night's order */
+  #where { position: fixed; left: var(--gutter); top: calc(14px + env(safe-area-inset-top, 0px)); max-width: 30%; margin: 0; font-size: 13px; color: var(--gold);
+    letter-spacing: 0.06em; text-transform: uppercase; text-shadow: 0 1px 0 #000, 0 0 10px #000; pointer-events: none; }
+  #btn-fights { position: fixed; right: var(--gutter); top: calc(12px + env(safe-area-inset-top, 0px)); padding: 6px 12px; background: var(--panel);
+    border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #picker { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; padding: 16px 18px; }
+  #picker h2 { margin: 0 0 4px; font: 400 36px/1 var(--display); color: var(--cream); }
+  #picker p { margin: 0 0 10px; color: var(--dim); font-size: 13px; }
+  #fights { display: grid; gap: 6px; }
+  #fights button { display: grid; gap: 2px; text-align: left; padding: 8px 12px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
+  #fights button:hover, #fights button:focus-visible { border-color: var(--gold); outline: none; }
+  #fights b { font: 400 24px/1 var(--display); color: var(--gold); }
+  #fights span { font-size: 12.5px; color: var(--dim); }
+  #picker-close { margin-top: 10px; padding: 6px 14px; background: none; border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
 
   @media (max-width: 560px) {
     #menu, #party { width: calc(50% - 22px); }
+    #where { display: none; }
+    #ribbon { left: var(--gutter); transform: none; max-width: calc(100% - 110px); overflow: hidden; }
+    .hero b { font-size: 17px; margin: 0; }
     #party { padding: 8px; }
     .hero { grid-template-columns: 1fr; }
     .hero img { display: none; }
@@ -121,7 +141,7 @@
   }
   @media (prefers-reduced-motion: reduce) { #cursor, .pop { animation-duration: 0.01s; } }
 </style>
-<canvas id="stage" aria-label="A moonlit graveyard: the Moonlight Witch faces two marsh-lights and a lamp-moth"></canvas>
+<canvas id="stage" aria-label="A painted night battlefield: the Moonlight Witch and her friends face the foes of the Gloamwood and the fen"></canvas>
 <div id="labels"></div>
 <div id="ribbon" class="panel" aria-label="Turn order"></div>
 <p id="banner" class="panel"></p>
@@ -130,11 +150,19 @@
 <span id="cursor" hidden>▶</span>
 <section id="menu" class="panel" hidden><h2 id="menu-title"></h2><ul id="menu-list"></ul><p id="hint"></p></section>
 <section id="party" class="panel" aria-label="The party"></section>
+<p id="where"></p>
+<button id="btn-fights" type="button">Fights</button>
 <section id="result" class="panel" hidden aria-live="polite">
   <h2 id="result-title"></h2>
   <p id="result-text"></p>
   <ul id="result-loot"></ul>
-  <button id="again">Fight again</button>
+  <div class="row"><button id="onward" type="button" hidden></button><button id="again" type="button">Fight again</button><button id="choose" type="button">Choose a fight</button></div>
+</section>
+<section id="picker" class="panel" hidden aria-label="Choose a fight">
+  <h2>The night's battles</h2>
+  <p>Each fight as it's met on a typical night: the party, their level, and what they carry. Losing costs nothing.</p>
+  <div id="fights"></div>
+  <button id="picker-close" type="button">Close</button>
 </section>
 <!-- /PAGE -->
 <script type="module" src="dev/battle.js"></script>

@@ -786,7 +786,7 @@ export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = fal
 // ---- the whole night: fights in order, HP carried where the route has no rest ---------------------------------------
 // Rests (full HP and MP) where docs/SLICE.md puts them: her armchair before B1, Silas's bench at the wayside kettle
 // before B2, the skiff and Nettie's hut before B4, Bogmire again before B5. Nothing between B2 and B3, or between B5 and
-// B6. After a won fight, A's breather (TUNING.rest: +20% HP, +25% MP). The bag follows the brew plan (BALANCE.md §4):
+// B6. After a won fight, A's breather (TUNING.rest: +20% HP, +25% MP). The bag follows the brew plan (BALANCE.md §6):
 // the tutorial Heartsease; at the kettle, one more Heartsease and a moonwater kept raw (or, on the brisk path, the
 // Wisp-Calm that skips B2 and one Heartsease); at Nettie's, Remembrance Incense and a second Lantern Oil. A lost fight:
 // she wakes at her last rest with everything she had when the fight began, and tries again (at most 6 times).

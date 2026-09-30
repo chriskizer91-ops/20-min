@@ -1,14 +1,32 @@
 import * as THREE from 'three';
 import * as E from './engine.js';
 import { portraits } from '../assets.js';
+import nettiePortrait from '../../art/portraits/nettie-calm.webp';
 
 // Sounds from Thareia's studio for what happens in a fight
 const STATUS_SOUND = { burning: 'burn', chilled: 'chill', frozen: 'chill', poisoned: 'poison', rotting: 'rot', staggered: 'stagger', frightened: 'fear',
   charmed: 'charm', hexed: 'hex', warded: 'ward', hasted: 'haste', regenerating: 'regen', guarding: 'shield-up', marked: 'counter', rooted: 'stagger', bleeding: 'poison' };
 const HIT_SOUND = { ember: 'ember', frost: 'frost', storm: 'storm', stone: 'stone', verdant: 'verdant', tide: 'tide', radiant: 'radiant', blight: 'blight',
   slash: 'hit-slash', pierce: 'hit-thrust', crush: 'hit-blunt' };
-const FOE_SOUND = { 'marsh-light': 'wisp', 'lamp-moth': 'insect', 'bog-hag': 'hex', 'willow-wight': 'leaves', 'mire-leech': 'slime', drowned: 'ghost', 'lantern-mother': 'ghost' };
-const SKILL_SOUND = { attack: 'ember', 'silver-circle': 'radiant', moonbeam: 'radiant', bless: 'ward', gather: 'dagger' };
+const FOE_SOUND = { 'marsh-light': 'wisp', 'lamp-moth': 'insect', 'bog-hag': 'hex', 'willow-wight': 'leaves', 'mire-leech': 'slime', drowned: 'ghost', 'lantern-mother': 'ghost',
+  glowcap: 'slime', 'hollowed-mandrake': 'verdant', boglurcher: 'rot-beast', gloamwing: 'insect' };
+const SKILL_SOUND = { attack: 'ember', 'silver-circle': 'radiant', moonbeam: 'radiant', bless: 'ward', gather: 'dagger',
+  pinch: 'dagger', kraa: 'bird', 'mind-the-jars': 'tide', 'stir-the-pot': 'heal', 'bitterroot-poultice': 'verdant', hex: 'hex' };
+
+// The party (docs/LORE.md §5-6): each hero's portrait, and what their plain commands are called
+const PORTRAIT = { witch: portraits['witch-calm'], inkblot: portraits.inkblot, nettie: nettiePortrait };
+const NAMES = {
+  witch: { attack: 'Witchfire', defend: 'Be Still', surge: 'Full Moon', flee: 'Slip Away' },
+  inkblot: { attack: 'Peck', defend: 'Puff Up', surge: 'Every Shiny Thing', flee: 'Slip Away' },
+  nettie: { attack: 'A Lamp and a Stick', defend: 'Stand Firm', surge: 'Undo the Knot', flee: 'Slip Away' },
+};
+// How each hero's model shows a command: [move, reaches the target?]
+const HERO_MOVES = {
+  inkblot: { attack: ['peck', true], pinch: ['pinch', true], kraa: ['kraa'], item: ['fetch', true], defend: ['puff'], surge: ['pinch', true], flee: ['fly'] },
+  nettie: { attack: ['attack', true], 'mind-the-jars': ['jars', true], 'stir-the-pot': ['stir'], 'bitterroot-poultice': ['stir'], hex: ['hex', true], item: ['cast'], defend: ['ward'], surge: ['undo'], flee: ['cheer'] },
+};
+// The bosses' relics, by the part of the model that shows them
+const RELIC_PART = { dawnbell: null, 'lamplighters-lantern': 'lantern', 'mourning-veil': 'veil' };
 
 // docs/LORE.md: Aethermoor's statuses keep their rules, five get gentler names
 const STATUS_NAME = { bleeding: 'Snagged', frightened: 'Spooked', swallowed: 'Led Away', unmade: 'Greyed', hearthlit: 'Moonlit' };
@@ -19,10 +37,14 @@ const BEATEN = {
   'willow-wight': 'It roots and sleeps, only a willow again.',
   'mire-leech': 'It slips back into the water.',
   glowcap: 'It sits down and puts down roots.',
+  'hollowed-mandrake': 'It sulks, arms folded, and won\'t look at anyone.',
+  boglurcher: 'Its eyes close. Just bog now, with bogwick growing on it.',
+  drowned: 'It wakes, asks "Is it morning?", and stays to listen.',
+  gloamwing: 'It flutters up after the moon, then settles on a bower to sleep.',
 };
 // What Gather cuts from each foe (LORE §8), by herb id in art/herbs
-const GATHERS = { 'marsh-light': 'wisp_sprout', glowcap: 'glowcap', boglurcher: 'bogwick', 'willow-wight': 'silver_mugwort' };
-const HERB_NAMES = { wisp_sprout: 'Wisp-sprout', glowcap: 'Glowcap', bogwick: 'Bogwick', silver_mugwort: 'Silver mugwort' };
+const GATHERS = { 'marsh-light': 'wisp_sprout', glowcap: 'glowcap', boglurcher: 'bogwick', 'willow-wight': 'silver_mugwort', 'hollowed-mandrake': 'mandrake' };
+const HERB_NAMES = { wisp_sprout: 'Wisp-sprout', glowcap: 'Glowcap', bogwick: 'Bogwick', silver_mugwort: 'Silver mugwort', mandrake: 'Mandrake root' };
 
 // The battle director: asks the rules what happens (engine.js) and plays it out on the 3D stage and the HUD.
 // Foes act on their own; on the witch's turn the command menu opens. Every event from the rules is shown:
@@ -32,15 +54,17 @@ const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export class Director {
-  constructor({ stage, actors, state, audio, fx, onEnd }) {
-    Object.assign(this, { stage, actors, state, audio, fx, onEnd });
+  // spawn(unit) makes and places a model for a foe that joins mid-fight (a summoned lamp-moth), returning it
+  constructor({ stage, actors, state, audio, fx, onEnd, spawn }) {
+    Object.assign(this, { stage, actors, state, audio, fx, onEnd, spawn });
     this.labels = {};
     for (const [id, a] of Object.entries(actors)) if (this.unit(id).side === 'foe') this.labels[id] = this.makeFoeLabel(id);
     this.renderParty();
     this.renderRibbon();
   }
 
-  unit(id) { return this.state.units[id]; }
+  unit(id) { return this.state.units[id] ?? this.pending?.units[id]; }
+  heroOf(id) { const u = this.unit(id); return u?.heroId ?? u?.id; }
 
   async run() {
     await wait(900);
@@ -91,7 +115,7 @@ export class Director {
 
   async on_intent(e) {
     const l = this.labels[e.foe];
-    if (l) l.intent.textContent = `d${e.die} · ${e.face} · ${e.move ? (this.moveName(e) || e.move) : ''}`;
+    if (l) l.intent.textContent = [`d${e.die}`, e.face ?? null, e.move ? (this.moveName(e) || e.move) : null].filter((x) => x != null && x !== '').join(' · ');
     if (l) l.intent.title = e.text || '';
   }
 
@@ -100,9 +124,11 @@ export class Director {
   async on_move(e, actorId, cmd) {
     const actor = this.actors[e.actor];
     const side = this.unit(e.actor)?.side;
-    const label = side === 'hero' ? this.labelFor(cmd) ?? e.name : e.name;
+    const label = side === 'hero' ? this.labelFor(cmd, e.actor) ?? e.name : e.name;
     this.banner(label);
-    if (side === 'hero') {
+    const hero = side === 'hero' ? this.heroOf(e.actor) : null;
+    if (hero && hero !== 'witch') await this.heroMove(hero, actor, cmd);
+    else if (side === 'hero') {
       const tgt = cmd?.target;
       const foe = tgt && this.actors[tgt] && this.unit(tgt)?.side === 'foe';
       const item = cmd?.type === 'item';
@@ -137,6 +163,10 @@ export class Director {
         const color = cmd?.id === 'moonbeam' ? '#e6ecff' : cmd?.item === 'hush-tea' ? '#d8b8ff' : cmd?.item === 'moonwater' ? '#8fc8ff' : '#c77dff';
         if (foe) await this.fx.bolt(actor.fire.getWorldPosition(new THREE.Vector3()), this.center(tgt), color, cmd?.type === 'attack' ? 1 : 1.4);
       }
+    } else if (side === 'ally') {
+      actor?.play?.('cast');
+      this.audio.sfx('ward');
+      await wait(500);
     } else {
       // Each foe model maps its Aethermoor move ids to its own signature moves (Lure, Batter, Spore Puff...);
       // the bosses name theirs after the move ids themselves.
@@ -166,9 +196,25 @@ export class Director {
     this.fx.sparkle(this.center(cmd.target), '#b8f0a0', 16);
   }
 
-  labelFor(cmd) {
+  labelFor(cmd, heroId) {
     if (!cmd) return null;
-    return { attack: 'Witchfire', defend: 'Be Still', surge: 'Full Moon', flee: 'Slip Away' }[cmd.type] ?? null;
+    return NAMES[this.heroOf(heroId)]?.[cmd.type] ?? null;
+  }
+
+  // Inkblot's and Nettie's commands, on their models: a move, and for a reaching move, a hop or step to the target
+  async heroMove(hero, actor, cmd) {
+    const key = cmd?.type === 'skill' ? cmd.id : cmd?.type;
+    const [move, reach] = HERO_MOVES[hero]?.[key] ?? ['cast'];
+    const item = cmd?.type === 'item';
+    this.audio.sfx(item ? 'mp-restore' : SKILL_SOUND[cmd?.id] ?? (cmd?.type === 'attack' ? (hero === 'inkblot' ? 'hit-thrust' : 'staff-thump') : 'ui-confirm'));
+    const tgt = cmd?.target && this.actors[cmd.target];
+    const from = actor.root.rotation.y;
+    if (tgt && tgt !== actor) actor.root.rotation.y = Math.atan2(tgt.root.position.x - actor.root.position.x, tgt.root.position.z - actor.root.position.z);
+    const dist = tgt ? Math.max(0.6, actor.root.position.distanceTo(tgt.root.position) / actor.root.scale.x - 0.9) : 1;
+    await new Promise((r) => { actor.play(move, r, reach ? { reach: dist } : {}); setTimeout(r, 2600); });
+    if (hero === 'nettie' && ['mind-the-jars', 'hex'].includes(cmd?.id) && tgt) await this.fx.bolt(actor.fire.getWorldPosition(new THREE.Vector3()), this.center(cmd.target), cmd.id === 'hex' ? '#c6f25e' : '#34b4ae', 1.2);
+    await wait(250);
+    actor.root.rotation.y = from;
   }
 
   async on_roll(e) {
@@ -233,6 +279,58 @@ export class Director {
   async on_text(e) { this.caption(e.text); await wait(500); }
   async on_surge() {}
 
+  // A foe joins mid-fight (a lamp-moth answering the Dawnbell or the lantern)
+  async on_spawn(e) {
+    const u = this.pending?.units[e.foe] ?? this.unit(e.foe);
+    if (!u || this.actors[e.foe] || !this.spawn) return;
+    this.actors[e.foe] = this.spawn(u);
+    this.labels[e.foe] = this.makeFoeLabel(e.foe);
+    if (e.text) this.caption(e.text);
+    this.audio.sfx('summon');
+    await wait(700);
+  }
+
+  // Moonlight breaks the Hollowed omen: the grey cracks flare silver and close
+  async on_omen(e) {
+    if (e.op === 'remove') this.actors[e.target]?.setHollowed?.(false);
+    if (e.text) this.caption(e.text);
+    this.audio.sfx('radiant');
+    await wait(600);
+  }
+
+  // A boss's fight turns (the Gloamwing's silk, the Lantern Mother's Children's Road and Lights Out)
+  async on_phase(e) {
+    this.actors[e.foe]?.phase?.(e.phase);
+    if (e.text) this.caption(e.text);
+    this.audio.sfx('boss');
+    await wait(1100);
+  }
+
+  // Pinch works a held relic loose: the model shows how hard it still holds
+  async on_grip(e) {
+    const a = this.actors[e.target];
+    const k = e.max ? Math.max(0, e.to / e.max) : 0;
+    const part = RELIC_PART[e.relic];
+    if (part) a?.grip?.(part, k); else a?.grip?.(k);
+    this.popup(e.target, `Grip ${e.to}/${e.max}`, 'tag', 0.3);
+    await wait(300);
+  }
+
+  async on_disarm(e) {
+    const part = RELIC_PART[e.relic];
+    const a = this.actors[e.target];
+    if (part) a?.dropRelic?.(part); else a?.dropRelic?.();
+    this.audio.sfx('relic-drop');
+    await wait(900);
+  }
+
+  async on_revive(e) {
+    this.actors[e.target]?.play?.('rise');
+    this.popup(e.target, 'Up again', 'heal');
+    this.audio.sfx('revive');
+    await wait(600);
+  }
+
   // ---------------------------------------------------------------- the command menu
 
   chooseCommand(heroId) {
@@ -258,8 +356,27 @@ export class Director {
         ul.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
       };
       const top = () => {
-        // Her commands are Aethermoor's, renamed (docs/LORE.md §5)
         const find = (type, id) => all.find((c) => c.type === type && (!id || c.id === id));
+        const hero = this.heroOf(heroId);
+        if (hero !== 'witch') {
+          // Inkblot's and Nettie's: their plain commands renamed, their skills straight on the list
+          const names = NAMES[hero] ?? {};
+          const list = [];
+          const hit = find('attack');
+          if (hit) list.push({ ...hit, label: names.attack });
+          list.push(...all.filter((c) => c.type === 'skill'));
+          const brews = all.filter((c) => c.type === 'item');
+          if (brews.length) list.push({ name: 'Brew', enabled: brews.some((i) => i.enabled), text: hero === 'inkblot' ? 'Carry a brew to a friend, or drop one on a foe.' : 'Drink one, or throw it.', sub: () => show([...brews, back], 'Brew') });
+          const guard = find('defend');
+          if (guard) list.push({ ...guard, label: names.defend });
+          const surge = find('surge');
+          if (surge) list.push({ ...surge, label: names.surge, text: surge.reason ? 'The gauge fills as the party fights.' : surge.text });
+          const flee = find('flee');
+          if (flee) list.push({ ...flee, label: names.flee });
+          show(list, this.unit(heroId).name);
+          return;
+        }
+        // Her commands are Aethermoor's, renamed (docs/LORE.md §5)
         const moon = all.filter((c) => c.type === 'skill' && c.id !== 'gather');
         const brews = all.filter((c) => c.type === 'item');
         const list = [];
@@ -373,7 +490,7 @@ export class Director {
       const row = document.createElement('div');
       row.className = 'hero';
       const face = document.createElement('img');
-      face.src = portraits['witch-calm'];
+      face.src = PORTRAIT[u.heroId ?? u.id] ?? portraits['witch-calm'];
       face.alt = '';
       const info = document.createElement('div');
       const name = document.createElement('b');
@@ -397,7 +514,7 @@ export class Director {
       chip.title = u.name;
       if (u.side === 'hero') {
         const img = document.createElement('img');
-        img.src = portraits['witch-calm'];
+        img.src = PORTRAIT[u.heroId ?? u.id] ?? portraits['witch-calm'];
         img.alt = u.name;
         chip.append(img);
       } else chip.textContent = u.name.split(/[\s-]/).map((w) => w[0]).join('').slice(0, 2);

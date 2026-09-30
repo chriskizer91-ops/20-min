@@ -83,7 +83,7 @@ export const WITCH_RELICS = {
 
 // ---- heroes ----------------------------------------------------------------------------------------------------------
 // hpDie, mp and base follow heroes.js. The party is three, not Aethermoor's four, so the witch and Nettie are a little
-// sturdier than A's scholars (docs/BALANCE.md §2).
+// sturdier than A's scholars (docs/BALANCE.md §10).
 export const WITCH_HEROES = {
   witch: {
     id: 'witch', name: 'The Moonlight Witch', title: 'of Wickhollow', race: 'human', role: 'Witchfire, moonlight and brews',

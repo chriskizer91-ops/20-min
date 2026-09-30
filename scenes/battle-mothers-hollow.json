@@ -3,10 +3,7 @@
   "id": "battle-mothers-hollow",
   "title": "Mother's Hollow",
   "image": "art/battle/mothers-hollow-night.webp",
-  "size": [
-    1448,
-    1086
-  ],
+  "size": [1448, 1086],
   "camera": {
     "fov": 34,
     "pitch": 8.7,
@@ -15,148 +12,37 @@
   "walk": [
     {
       "name": "the clearing",
-      "points": [
-        [
-          120,
-          640
-        ],
-        [
-          500,
-          620
-        ],
-        [
-          1000,
-          620
-        ],
-        [
-          1330,
-          645
-        ],
-        [
-          1400,
-          770
-        ],
-        [
-          1300,
-          900
-        ],
-        [
-          1050,
-          940
-        ],
-        [
-          650,
-          950
-        ],
-        [
-          320,
-          920
-        ],
-        [
-          170,
-          850
-        ],
-        [
-          80,
-          740
-        ]
-      ]
+      "points": [[120, 640], [500, 620], [1000, 620], [1330, 645], [1400, 770], [1300, 900], [1050, 940], [650, 950], [320, 920], [170, 850], [80, 740]]
     }
   ],
   "layers": [
     {
       "name": "stumps, front left",
-      "base": [
-        100,
-        900
-      ],
+      "base": [100, 900],
       "outline": [
-        [
-          [
-            40,
-            780
-          ],
-          [
-            150,
-            770
-          ],
-          [
-            160,
-            900
-          ],
-          [
-            40,
-            905
-          ]
-        ]
+        [[40, 780], [150, 770], [160, 900], [40, 905]]
       ]
     },
     {
       "name": "stump and flowers, lower left",
-      "base": [
-        230,
-        1070
-      ],
+      "base": [230, 1070],
       "outline": [
-        [
-          [
-            170,
-            940
-          ],
-          [
-            300,
-            930
-          ],
-          [
-            320,
-            1086
-          ],
-          [
-            150,
-            1086
-          ]
-        ]
+        [[170, 940], [300, 930], [320, 1086], [150, 1086]]
       ]
     },
     {
       "name": "stump, front right",
-      "base": [
-        1400,
-        960
-      ],
+      "base": [1400, 960],
       "outline": [
-        [
-          [
-            1340,
-            850
-          ],
-          [
-            1448,
-            845
-          ],
-          [
-            1448,
-            965
-          ],
-          [
-            1345,
-            965
-          ]
-        ]
+        [[1340, 850], [1448, 845], [1448, 965], [1345, 965]]
       ]
     }
   ],
   "lights": [
     {
       "_what": "the lit windows",
-      "pixel": [
-        1035,
-        475
-      ],
-      "base": [
-        1035,
-        590
-      ],
+      "pixel": [1035, 475],
+      "base": [1035, 590],
       "color": "#ffb45e",
       "intensity": 6,
       "distance": 12,
@@ -164,14 +50,8 @@
     },
     {
       "_what": "the door lamp",
-      "pixel": [
-        760,
-        395
-      ],
-      "base": [
-        760,
-        560
-      ],
+      "pixel": [760, 395],
+      "base": [760, 560],
       "color": "#ffb45e",
       "intensity": 5,
       "distance": 9,
@@ -179,14 +59,8 @@
     },
     {
       "_what": "lantern in the willow",
-      "pixel": [
-        245,
-        235
-      ],
-      "base": [
-        245,
-        560
-      ],
+      "pixel": [245, 235],
+      "base": [245, 560],
       "color": "#ffb45e",
       "intensity": 4,
       "distance": 9,
@@ -194,14 +68,8 @@
     },
     {
       "_what": "lantern on the post",
-      "pixel": [
-        515,
-        440
-      ],
-      "base": [
-        515,
-        560
-      ],
+      "pixel": [515, 440],
+      "base": [515, 560],
       "color": "#ffb45e",
       "intensity": 4,
       "distance": 8,
@@ -209,41 +77,12 @@
     }
   ],
   "spots": {
-    "_about": "Where the fighters stand, in painting pixels: the party on the right (front first), the foes on the left",
-    "heroes": [
-      [
-        1060,
-        760
-      ],
-      [
-        1170,
-        660
-      ],
-      [
-        1150,
-        870
-      ]
-    ],
-    "foes": [
-      [
-        420,
-        720
-      ],
-      [
-        580,
-        650
-      ],
-      [
-        470,
-        860
-      ]
-    ]
+    "_about": "Where the fighters stand, in painting pixels: the party on the right (the witch, then Inkblot in front where he isn't hidden, then Nettie behind), the foes on the left",
+    "heroes": [[1030, 730], [1150, 830], [1240, 650]],
+    "foes": [[560, 700], [740, 640], [640, 820]]
   },
   "spawn": {
-    "pixel": [
-      1060,
-      760
-    ],
+    "pixel": [1060, 760],
     "facing": "left"
   },
   "exits": []
