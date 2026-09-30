@@ -6,13 +6,16 @@
 //
 //   node tools/balance.mjs [B1 B2 ...] [--n 400] [--policy naive,sensible,expert] [--first-strike] [--path brisk]
 //                          [--level N] [--wears witch:hag-stone] [--bag heartsease-tonic:2,moonwater:1]
-//                          [--seed N --trace] [--json] [--ban cmd,hero:cmd] [--ablate] [--chain]
+//                          [--seed N --trace] [--json] [--ban cmd,hero:cmd] [--ablate] [--chain] [--arrive]
+//   --arrive  play each fight as the party walks into it when the whole night is played in order (HP, MP, Full Moon
+//             and bag carried from the fights before, no rest in between): the real first try
 //
 // Policies:
 //   naive     mashes Witchfire and basic attacks (Peck, Nettie's stick); heals only when someone is almost down
 //             (under 20%); fires the Full Moon the moment it is full.
 //   sensible  uses aspects (Witchfire on Verdant, Moonlight on Blight and Hollowed, never on Radiant; Tide on the Lantern
-//             Mother), heals at about 40%, Gathers when it is safe, Pinches what a foe holds, Silver Circle on a crowd.
+//             Mother), heals at about 40%, Gathers when it is safe, Pinches what a foe holds, Silver Circle on a crowd,
+//             Hexes the biggest foe once.
 //   expert    plans around the intents on the ribbon: heals and wards before a hit lands, Pinches or Hushes a charge,
 //             Kraa! when a big hit is aimed at someone fragile, times Moonlight to break Hollowed before it strikes,
 //             pries the Veil first, and holds brews for when they matter.
@@ -402,9 +405,12 @@ function nettieOffense(s, h, C, level, mem) {
   const hex = pick(C, 'hex');
   if (hex && h.mp >= 5) {
     if (level === 'sensible') {
-      // hex the big one once, unless her jars already hurt it more (a Tide-weak foe gets the jars instead)
-      const t = foes.find(f => (isBoss(f) || f.tier === 'veteran') && !has(f, 'hexed') && damageMult(f, 'tide', 'tide') <= 1 && !(mem.hexed ||= new Set()).has(f.id));
-      if (t) { mem.hexed.add(t.id); return withTarget(hex, t); }
+      // hex the big one, once a fight, unless her jars already hurt it more (a Tide-weak foe gets the jars instead)
+      const big = [...foes].sort((a, b) => b.maxHp - a.maxHp)[0];
+      if (!mem.hexedOnce && big && (isBoss(big) || big.tier === 'veteran') && !has(big, 'hexed') && damageMult(big, 'tide', 'tide') <= 1) {
+        mem.hexedOnce = true;
+        return withTarget(hex, big);
+      }
     }
   }
   const jars = pick(C, 'mind-the-jars'), stick = pick(C, 'attack');
@@ -575,7 +581,8 @@ export function expertReaction(s, h, C, mem) {
   const heart = pick(C, 'heartsease-tonic');
   if (heart) for (const x of heroes) healOpt(heart, 5 + Math.round(0.3 * x.maxHp), x);
   const stir = pick(C, 'stir-the-pot');
-  if (stir) for (const x of heroes) healOpt(stir, 9 + (h.mods?.WIS || 0) + (h.level >= 5 ? 4.5 : 0), x);
+  const pot = SKILLS['stir-the-pot'].effects.find(e => e.type === 'heal');
+  if (stir) for (const x of heroes) healOpt(stir, diceStats(pot.dice, h.level, pot.diceEvery).mean + (h.mods?.[pot.stat] || 0), x);
   const bless = pick(C, 'bless');
   if (bless) for (const x of heroes) if (!has(x, 'warded')) add(withTarget(bless, x), dangerOf(s, base, { wardAdd: { [x.id]: 3.5 + (h.mods?.WIS || 0) } }), 0.5);
   if (pick(C, 'defend')) add(C.defend, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]) })), 0.4);
@@ -791,7 +798,8 @@ export const CHAIN = {
 CHAIN.brew['typical+rest'] = CHAIN.brew.typical;
 CHAIN.brew['brisk+rest'] = CHAIN.brew.brisk;
 
-export function playChain({ path = 'typical', policy = 'sensible', seed = 1 } = {}) {
+// onEnter(id, party, bag): called as each fight is first met (the party as it walks in); return true to stop there
+export function playChain({ path = 'typical', policy = 'sensible', seed = 1, onEnter } = {}) {
   const route = path.replace('+rest', '');
   const ids = route === 'brisk' ? ['B1', 'B3', 'B5', 'B6'] : ORDER;
   const out = [];
@@ -802,6 +810,11 @@ export function playChain({ path = 'typical', policy = 'sensible', seed = 1 } = 
     const startBag = { ...bag };
     const entered = { hp: carry ? carry.reduce((a, c) => a + c.hp, 0) / carry.reduce((a, c) => a + c.maxHp, 0) : 1,
       mp: carry ? carry.reduce((a, c) => a + c.mp, 0) / carry.reduce((a, c) => a + (c.maxMp || c.mp), 0) : 1 };
+    const walkIn = partyFor(id, { path: route }).map(p => {
+      const c = carry?.find(x => x.id === p.id);
+      return c ? { ...p, hp: c.hp, mp: c.mp, surge: c.surge } : p;
+    });
+    if (onEnter && onEnter(id, walkIn, { ...startBag })) return out;
     let tries = 0, r;
     for (;;) {
       tries++;
@@ -839,6 +852,16 @@ export function playChain({ path = 'typical', policy = 'sensible', seed = 1 } = 
 
 const HEROES_MP = { witch: 2, inkblot: 2, nettie: 2 }; // mp.perLevel in data/witch.js
 
+// How the party walks into fight `id` when the night is played in order (HP, MP, Full Moon and bag carried over): one
+// arrival per chain seed. battery(id, { arrive }) then plays the fight from these, a first try without a rest before it.
+export function arrivals(id, { path = 'typical', policy = 'sensible', n = 300 } = {}) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    playChain({ path, policy, seed: 1 + i, onEnter: (at, party, bag) => at === id && out.push({ party, bag }) });
+  }
+  return out;
+}
+
 export function chainBattery({ path = 'typical', policy = 'sensible', n = 200 } = {}) {
   const per = {};
   let complete = 0, losses = 0;
@@ -862,7 +885,11 @@ const pct = (a, q) => { if (!a.length) return 0; const b = [...a].sort((x, y) =>
 
 export function battery(id, { n = 400, seed0 = 1, ...opts } = {}) {
   const runs = [];
-  for (let i = 0; i < n; i++) runs.push(playFight(id, { ...opts, seed: seed0 + i * 7919 }));
+  const { arrive, ...rest } = opts;
+  for (let i = 0; i < n; i++) {
+    const a = arrive?.length ? arrive[i % arrive.length] : null;
+    runs.push(playFight(id, { ...rest, ...(a ? { party: a.party, bag: a.bag } : {}), seed: seed0 + i * 7919 }));
+  }
   const wins = runs.filter(r => r.result === 'victory');
   const moves = {}, brews = {};
   for (const r of runs) {
@@ -946,6 +973,7 @@ function parseArgs(argv) {
     else if (a === '--json') o.json = true;
     else if (a === '--ablate') o.ablate = true;
     else if (a === '--chain') o.chain = true;
+    else if (a === '--arrive') o.arrive = true;
     else if (a === '--paths') o.paths = argv[++i].split(',');
     else if (a === '--wears') for (const w of argv[++i].split(',')) { const [h, r] = w.split(':'); (o.wears[h] ||= []).push(r); }
     else if (a === '--ban') o.ban = argv[++i].split(',');
@@ -987,9 +1015,12 @@ async function main() {
     if (!o.json) console.log(`\n== ${id} ${ENCOUNTERS[id].name}: party ${ENCOUNTERS[id].party.join(', ')} at level ${lv} (${o.path}); foes ${ENCOUNTERS[id].foes.map(f => `${f.name} L${f.level}`).join(', ')}`);
     const fsModes = o.firstStrike ? [true] : ENCOUNTERS[id].flags.firstStrike ? [false, true] : [false];
     for (const fs of fsModes) for (const policy of o.policies) {
-      const b = battery(id, { n: o.n, policy, firstStrike: fs, path: o.path, level: o.level, wears: o.wears, bag: o.bag, ban: o.ban });
+      // --arrive: walk in as the night leaves the party (HP, MP and bag from playing it in order, no rest before it)
+      const arrive = o.arrive ? arrivals(id, { path: o.path, policy, n: o.n }) : null;
+      if (arrive && !arrive.length) { console.log(`${id} ${policy}: the night never reaches it`); continue; }
+      const b = battery(id, { n: o.n, policy, firstStrike: fs, path: o.path, level: o.level, wears: o.wears, bag: o.bag, ban: o.ban, arrive });
       all.push(b);
-      if (!o.json) console.log(report(b));
+      if (!o.json) console.log(report(b) + (arrive ? `\n    (walked in from the night: ${arrive.length} arrivals)` : ''));
     }
   }
   if (o.json) console.log(JSON.stringify(all, null, 1));

@@ -84,6 +84,19 @@ export class Stage {
     return this.reveal.on || this.reveal.t > 0;
   }
 
+  // Go to another painted screen (a town has several): its painting, its camera, its world and its cut-outs.
+  // The renderer, the zoom and the pixel size stay as they are.
+  setScreen({ paint, painting, world, cutouts }) {
+    Object.assign(this, { paint, painting, world, cutouts });
+    this.view = paint.camera.clone();
+    this.view.layers.set(LAYER_ACTORS);
+    this.bgUniforms.painting.value = painting;
+    this.window.fx = this.window.fy = undefined;
+    this.applyZoom();
+    this.makeTarget(true);
+    cutouts.uniforms.actorDepth.value = this.rt.depthTexture;
+  }
+
   resize() {
     const canvas = this.renderer.domElement;
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;

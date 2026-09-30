@@ -14,8 +14,9 @@
 //     lamp-moth `wickhollow`   carries a Wickhollow flame (a grip meter Pinch can empty); Circle the Light needs it
 //     willow-wight `moonlight` B5's willow: fewer HP, harder blows, a Weep that does not scale (a short, sharp fight)
 //     gloamwing `moonlight`    the first boss, sized for two heroes at level 2; calls lamp-moths; a charging dive
-//     lantern-mother `moonlight` and `lights-out`   the final boss's two forms: Lamplight and the Children's Road,
-//                              then (after a cut) Lights Out, where Silas steps out of the bow-lamp's flame
+//     lantern-mother `moonlight` and `lights-out`   the final boss's two forms: Lamplight and the Children's Road
+//                              (she opens by tending the party: Come In Out of the Wet), then (after a cut) Lights
+//                              Out, where she stops being gentle (+1 damage) and Silas steps out of the bow-lamp's flame
 
 const atk = (dice, kind, o = {}) => ({ type: 'attack', dice, kind, ...o });
 const status = (id, o = {}) => ({ type: 'status', status: id, ...o });
@@ -107,6 +108,9 @@ const GLOAMWING = {
 };
 
 const LM_MOVES = {
+  // her opener in Lamplight: she takes them for children lost in the fen, and tends them before she leads them home. The
+  // night gives no rest between the Long Boardwalk and her door, and this is the one kindness in it (docs/BALANCE.md §7)
+  'come-in': { name: 'Come In Out of the Wet', target: 'all-enemies', text: '"Look at you, wet through. Come in, come in, and warm your hands at the lamp." She means it. Every hero heals 30% of their HP and gets 6 MP back.', effects: [{ type: 'heal', pct: 0.3 }, { type: 'mp', amount: 6 }] },
   'lamp-pole': { name: 'Lamp-Pole', target: 'enemy', text: 'The long hooked pole she lit Misthollow\'s lamps with, swung like a scythe: 1d10 crushing.', effects: [atk('1d10', 'crush')] },
   'lantern-flare': { name: 'Lantern Flare', target: 'all-enemies', text: 'Every lamp in the Hollow flares at once: 1d8 radiant to every hero, DEX save for half.', effects: [{ type: 'damage', dice: '1d8', kind: 'radiant', aspect: 'radiant', save: 'DEX' }] },
   lure: { name: 'Lure', target: 'enemy', charge: true, requires: 'lamplighters-lantern', fallback: 'lamp-pole', text: 'She lifts the lantern and smiles at one of you, the way she smiled at the children, charging. WIS save or Charmed.', effects: [status('charmed', { save: 'WIS' })] },
@@ -120,7 +124,8 @@ const LM_MOVES = {
 };
 
 const LANTERN_MOTHER = {
-  name: 'The Lantern Mother', hp: 48, guard: 14, atk: 7, dmg: 5, speed: 16,
+  name: 'The Lantern Mother', hp: 48, guard: 14, atk: 7, dmg: 6, speed: 16,
+  opener: 'come-in',
   koText: 'The lamps go out, all but hers, and the one at the skiff\'s bow. She stops being gentle.',
   moves: LM_MOVES,
   phases: [
@@ -130,7 +135,7 @@ const LANTERN_MOTHER = {
 };
 
 const LIGHTS_OUT = {
-  name: 'The Lantern Mother', hp: 40, guard: 14, atk: 7, dmg: 5, speed: 16,
+  name: 'The Lantern Mother', hp: 40, guard: 14, atk: 7, dmg: 7, speed: 16,
   opener: 'snuff',
   koText: 'The veil falls. "Are they safe?" she asks. "I was taking them home."',
   moves: LM_MOVES,
@@ -156,7 +161,7 @@ export function moonlightFoes(base) {
     // harder blows than A's willow at the same level, and a Weep that does not grow with its level
     'willow-wight': withVariants('willow-wight', {
       moonlight: {
-        hp: 24, dmg: 6, table: [[1, 3, 'lash'], [4, 6, 'bough-fall'], [7, 8, 'weep']],
+        hp: 26, dmg: 8, table: [[1, 3, 'lash'], [4, 6, 'bough-fall'], [7, 8, 'weep']],
         moves: { ...base['willow-wight'].moves, weep: { ...base['willow-wight'].moves.weep, effects: [status('regenerating', { value: { dice: '1d6' } })] } },
       },
     }),

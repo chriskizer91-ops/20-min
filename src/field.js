@@ -4,98 +4,130 @@ import { createCrow } from './actors/party-crow.js'; // the new Inkblot, with th
 import { portraits } from './assets.js';
 import { createSound } from './audio/sound.js';
 import { ring } from './paint.js';
-import { turnToward, glowSprite } from './actors/kit.js';
+import { turnToward } from './actors/kit.js';
 import { HERBS, SQUARE_HERBS } from './data/herbs.js';
 import { createHerb } from './actors/herbs.js';
 
 const REACH = 1.15; // meters: how close she has to be to talk to someone
 const $ = (id) => document.getElementById(id);
 
-// Everything that happens on the field screen: the villagers, talking, tapping to walk, the exits,
-// and the buttons for looking behind the scenes.
+// Things she carries that aren't herbs, with a little painted icon for the basket.
+const ITEMS = {
+  moonwater: {
+    name: 'Moonwater',
+    icon: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" shape-rendering="crispEdges"><path fill="#2a1a33" d="M5 1h4v2H8v1h2v1h1v7H3V5h1V4h2V3H5z"/><path fill="#c9b27a" d="M6 2h2v1H6z"/><path fill="#dfe8ff" d="M4 6h6v5H4z"/><path fill="#8fb4ff" d="M4 8h6v3H4z"/><path fill="#fff" d="M5 6h1v2H5z"/></svg>')}`,
+  },
+};
+
+// Everything that happens on a field screen: the people, talking, tapping to walk, gathering, the exits, and
+// the buttons for looking behind the scenes. Who and what is on a screen comes from its cast: the square's is
+// SQUARE, at the bottom of this file. A town with several screens (src/town.js) calls enter() with each
+// screen's own cast when she walks through a door; the basket, the sound and what she's already picked carry over.
 export class Field {
-  constructor({ world, walk, paint, stage, player, scene }) {
-    Object.assign(this, { world, walk, paint, stage, player, scene });
+  constructor({ world, walk, paint, stage, player, scene, cast = SQUARE }) {
+    Object.assign(this, { stage, player });
     this.audio = createSound();
-    this.audio.music('wickhollow');
     this.talking = null;
     this.moved = false;
     this.time = 0;
-    this.sparks = new Sparks(world);
-    this.glints = new Sparks(world, '#efe6ff', 2.5);
+    this.basket = {}; // herbs, by kind
+    this.items = {}; // everything else she carries (moonwater)
+    this.picked = new Set(); // herbs already gathered, so they stay gone when she comes back to a screen
+    this.visits = new Map(); // how often she's spoken to someone with an id, whichever screen they're on
+    this.enter({ world, walk, paint, scene }, cast);
+    this.buildHud();
+    this.bindPointer();
+    this.showPlace();
+  }
 
-    const at = (x, y, h = 0) => paint.toWorld(x, y, h);
-    const headingTo = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);
-
-    // Hilde works at the anvil in the smithy's open front.
-    const hilde = createHilde();
-    hilde.root.position.copy(at(470, 622));
-    const anvil = at(466, 596);
-    const anvilTop = anvil.clone().setY(0.62);
-    hilde.work = headingTo(hilde.root.position, anvil);
-    hilde.root.rotation.y = hilde.work;
-    hilde.events.strike = () => {
-      this.sparks.burst(anvilTop, 14);
-      const d = player.pos.distanceTo(hilde.root.position);
-      if (!this.talking) this.audio.sfx('anvil', { g: Math.max(0.12, 1 - d / 9) });
+  // Set up one painted screen: its people, things, herbs and exits, all added to one group so leave() can take
+  // them away again.
+  enter({ world, walk, paint, scene }, cast) {
+    Object.assign(this, { world, walk, paint, scene, cast });
+    if (cast.music !== undefined) this.audio.music(cast.music);
+    this.group = new THREE.Group();
+    this.group.name = `cast-${scene.id}`;
+    world.add(this.group);
+    walk.obstacles.length = 0;
+    this.sparks = new Sparks(this.group);
+    this.glints = new Sparks(this.group, '#efe6ff', 2.5);
+    this.things = [];
+    this.villagers = [];
+    this.crow = null;
+    this.leaving = [];
+    this.nearby = null;
+    this.herbTotal = cast.herbTotal ?? 0;
+    this.sounds = (cast.ambience ?? []).map((a) => ({ ...a, wait: a.first }));
+    cast.enter(this);
+    for (const t of this.things) t.visits ??= 0;
+    // An exit she's standing in when she arrives (the door she came through) waits until she's stepped out of it.
+    const foot = paint.toPixel(this.player.pos);
+    this.exits = scene.exits.map((e) => {
+      const zone = ring(e.zone);
+      return { ...e, zone, inside: pointInPolygon(foot.x, foot.y, zone) };
+    });
+    // Where the labels sit behind the scenes
+    const cam = paint.camera;
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+    this.labelSpots = {
+      painting: cam.position.clone().addScaledVector(forward, paint.distance * 1.45).add(new THREE.Vector3(0, 9.5, 0)),
+      camera: cam.position.clone().add(new THREE.Vector3(0, 1.4, 0)),
+      ...cast.labels?.(this),
     };
-    // Agnes hovers by the chapel wall, knitting.
-    const agnes = createAgnes();
-    agnes.root.position.copy(at(904, 580));
-    agnes.rest = 0.35;
-    // Inkblot hops about the square.
+  }
+
+  leave() {
+    if (this.talking) this.endTalk();
+    this.world.remove(this.group);
+    this.walk.obstacles.length = 0;
+    this.player.path = null;
+    this.player.onArrive = null;
+  }
+
+  // People who stand about: placed on the floor, in the way of anyone walking, and updated by the cast.
+  addPerson(actor, pos, heading = 0) {
+    actor.root.position.copy(pos);
+    actor.root.rotation.y = heading;
+    this.group.add(actor.root);
+    if (actor.fx) this.group.add(actor.fx);
+    actor.obstacle = { x: pos.x, z: pos.z, r: actor.radius };
+    this.walk.obstacles.push(actor.obstacle);
+    this.villagers.push(actor);
+    return actor;
+  }
+
+  // Inkblot: pecks about the floor, and flies up to one of the high perches if she crowds him.
+  // perches: { ground: [Vector3], high: [Vector3] }
+  addCrow(pos, perches) {
     const crow = createCrow();
-    crow.root.position.copy(at(610, 850));
+    crow.root.position.copy(pos);
+    this.group.add(crow.root);
     this.crow = { actor: crow, state: 'stand', timer: 2, flight: null, high: false };
+    this.perches = perches;
+    return crow;
+  }
 
-    this.villagers = [hilde, agnes];
-    for (const v of [hilde, agnes, crow]) world.add(v.root);
-    for (const v of this.villagers) {
-      v.obstacle = { x: v.root.position.x, z: v.root.position.z, r: v.radius };
-      walk.obstacles.push(v.obstacle);
-    }
-
-    // Perches for the crow: spots on the ground, and the tops of things.
-    const top = (base, topY) => at(...base).setY(paint.heightAbove(base, topY));
-    this.perches = {
-      ground: [[610, 850], [420, 800], [560, 660], [860, 640], [900, 800], [760, 880], [1150, 1000], [330, 640]].map(([x, y]) => at(x, y)),
-      high: [top([705, 724], 548), top([343, 742], 580), top([999, 936], 776), top([1063, 640], 488)],
-    };
-
-    // Things to look at, and people to talk to
-    this.things = [
-      { name: 'Hilde', actor: hilde, pos: hilde.root.position, portrait: 'hilde', voice: 3, lines: DIALOGUE.hilde },
-      { name: 'Agnes', actor: agnes, pos: agnes.root.position, portrait: 'agnes', voice: 4, lines: DIALOGUE.agnes },
-      { name: 'Inkblot', crow: true, pos: crow.root.position, portrait: 'inkblot', voice: 6, lines: DIALOGUE.inkblot },
-      { name: null, pos: at(705, 792), lines: DIALOGUE.well, sound: 'well-bucket' },
-      { name: null, pos: at(786, 402, 0.55), lines: DIALOGUE.door, sound: 'sealed-door' },
-      { name: null, pos: at(300, 720), lines: DIALOGUE.stall, sound: 'shop-bell' },
-    ];
-    for (const t of this.things) t.visits = 0;
-
-    // Herbs to gather: the source game's patches on this painting, each one once a night.
-    this.basket = {};
-    for (const [key, x, y] of SQUARE_HERBS) {
+  // Herbs to gather: [kind, x, y] in painting pixels, plus a height for one growing in a pot. Each is picked once
+  // a night: one she's already gathered isn't planted again when she comes back.
+  plantHerbs(list, scale = 1.7) {
+    for (const [key, x, y, lift = 0] of list) {
+      const id = `${this.scene.id}:${key}:${x},${y}`;
+      if (this.picked.has(id)) continue;
       const herb = HERBS[key];
-      const pos = at(x, y);
+      const pos = this.paint.toWorld(x, y, lift);
       const plant = createHerb(key);
       plant.root.position.copy(pos);
       plant.root.rotation.y = Math.random() * Math.PI * 2;
-      plant.root.scale.setScalar(1.7); // a touch bigger than life, so they're easy to spot
-      world.add(plant.root);
-      this.things.push({ name: herb.name, herb: key, pos, group: plant.root, plant, visits: 0 });
+      plant.root.scale.setScalar(scale); // a touch bigger than life, so they're easy to spot
+      this.group.add(plant.root);
+      this.things.push({ name: herb.name, herb: key, id, pos, group: plant.root, plant, visits: 0 });
     }
-    this.exits = scene.exits.map((e) => ({ ...e, zone: ring(e.zone), inside: false }));
-
-    this.buildHud();
-    this.bindPointer();
-    setTimeout(() => $('place').classList.add('gone'), 5200);
   }
 
   // ---------------------------------------------------------------- input
 
   canWalk() {
-    return !this.talking && !this.player.actor.busy;
+    return !this.talking && !this.player.actor.busy && !this.locked;
   }
 
   onKey(what) {
@@ -105,7 +137,7 @@ export class Field {
       return;
     }
     if (what === 'act') {
-      if (this.player.actor.busy) return;
+      if (this.player.actor.busy || this.locked) return;
       if (this.talking) this.advance();
       else if (this.nearby) this.talk(this.nearby);
     } else if (what === 'back') {
@@ -171,6 +203,7 @@ export class Field {
 
   // Tap: talk if a dialogue is open; walk to a person and talk; or walk to the spot.
   tap(x, y) {
+    if (this.locked) return;
     if (this.talking) return this.advance();
     if (this.stage.revealing) return;
     this.noteMoved();
@@ -203,7 +236,7 @@ export class Field {
     let best = null, bestD = 44;
     for (const t of this.things) {
       if (t.crow && this.crow.state !== 'stand') continue;
-      const lift = t.crow ? 0.15 : t.actor ? 0.6 : t.herb ? 0.2 : 0.3;
+      const lift = t.lift ?? (t.crow ? 0.15 : t.actor ? 0.6 : t.herb ? 0.2 : 0.3);
       const s = this.stage.worldToScreen(t.pos.clone().setY(t.pos.y + lift));
       const d = Math.hypot(s.x - x, s.y - y) / Math.max(0.6, this.stage.scale);
       if (d < bestD) (bestD = d), (best = t);
@@ -227,24 +260,21 @@ export class Field {
     if (thing.herb) return this.gather(thing);
     const player = this.player;
     player.path = null;
-    const lines = thing.visits > 0 && thing.lines.again ? thing.lines.again : thing.lines.first;
+    const seen = thing.id ? this.visits.get(thing.id) ?? 0 : thing.visits;
+    const lines = seen > 0 && thing.lines.again ? thing.lines.again : thing.lines.first;
     thing.visits++;
+    if (thing.id) this.visits.set(thing.id, seen + 1);
     this.talking = { thing, lines, index: -1 };
     $('hint').classList.add('gone');
     // Face each other.
     player.heading = Math.atan2(thing.pos.x - player.pos.x, thing.pos.z - player.pos.z);
     thing.actor?.lookAt?.(Math.atan2(player.pos.x - thing.pos.x, player.pos.z - thing.pos.z));
     if (thing.crow) this.crow.actor.root.rotation.y = Math.atan2(player.pos.x - thing.pos.x, player.pos.z - thing.pos.z);
-    const box = $('talk');
-    box.hidden = false;
-    box.classList.toggle('plain', !thing.name);
-    $('talk-name').textContent = thing.name ?? '';
-    const face = $('talk-face');
-    // Her own thoughts show her portrait with no name, the way a field message would.
-    face.src = portraits[thing.portrait ?? 'witch-calm'];
+    $('talk').hidden = false;
     this.player.actor.setMood?.(thing.name ? 'happy' : 'calm');
     this.audio.sfx(thing.sound ?? (thing.name ? 'ui-confirm' : 'ui-page'));
     if (thing.crow) this.audio.sfx('kraa');
+    thing.onTalk?.(this);
     this.advance();
   }
 
@@ -257,11 +287,32 @@ export class Field {
     }
     T.index++;
     if (T.index >= T.lines.length) return this.endTalk();
-    T.text = T.lines[T.index];
+    const line = T.lines[T.index];
+    T.text = typeof line === 'string' ? line : line.say;
     T.shown = 0;
     T.typing = true;
-    if (T.thing.name === 'Hilde' && /Ha!/.test(T.text)) T.thing.actor.laugh();
+    this.showSpeaker(T.thing, line);
+    T.thing.onLine?.(T.text, this);
+    if (typeof line === 'object') line.do?.(this);
     $('talk-more').hidden = true;
+  }
+
+  // Who's speaking this line: whoever she's talking to, unless the line is an object that says otherwise:
+  // { say, who: 'witch' (her own words, out loud), name, face (a portrait), mood (the speaker's face), voice, do(field) }.
+  // Lines of a thing with no name are the witch's own thoughts: her portrait, no name, in italics.
+  showSpeaker(thing, line) {
+    const L = typeof line === 'object' ? line : {};
+    const witch = L.who === 'witch';
+    const name = witch ? 'The Witch' : L.name ?? thing.name;
+    const box = $('talk');
+    box.classList.toggle('plain', !name);
+    $('talk-name').textContent = name ?? '';
+    const key = L.face ?? (witch ? 'witch-calm' : thing.portrait ?? 'witch-calm');
+    const src = typeof key === 'function' ? key(L) : portraits[key] ?? key;
+    const face = $('talk-face');
+    if (face.getAttribute('src') !== src) face.src = src;
+    this.talking.voice = witch ? 1 : L.voice ?? thing.voice ?? 1;
+    if (L.mood) (witch ? this.player.actor : thing.actor)?.setMood?.(L.mood);
   }
 
   // Kneel, pick, and into the basket it goes.
@@ -278,6 +329,7 @@ export class Field {
     const herb = HERBS[thing.herb];
     thing.leaving = 0;
     this.leaving = [...(this.leaving ?? []), thing];
+    this.picked.add(thing.id);
     this.glints.burst(thing.pos.clone().setY(thing.pos.y + 0.2), 22);
     const first = !this.basket[thing.herb];
     this.basket[thing.herb] = (this.basket[thing.herb] ?? 0) + 1;
@@ -287,23 +339,34 @@ export class Field {
     setTimeout(() => !this.talking && this.player.actor.setMood?.('calm'), 1400);
   }
 
+  // Something that isn't an herb goes into the basket (three moonwater from Nettie's rain-butt).
+  give(item, n = 1) {
+    this.items[item] = (this.items[item] ?? 0) + n;
+    this.showBasket(item);
+    this.audio.sfx('shard-pickup');
+  }
+
   showBasket(fresh) {
     const box = $('basket');
     box.hidden = false;
     const list = $('basket-list');
-    list.replaceChildren(...Object.entries(this.basket).map(([key, n]) => {
+    const row = (key, n, icon, name) => {
       const li = document.createElement('li');
       if (key === fresh) li.className = 'fresh';
       const img = document.createElement('img');
-      img.src = HERBS[key].icon;
+      img.src = icon;
       img.alt = '';
       const label = document.createElement('span');
-      label.textContent = `${HERBS[key].name} ×${n}`;
+      label.textContent = `${name} ×${n}`;
       li.append(img, label);
       return li;
-    }));
+    };
+    list.replaceChildren(
+      ...Object.entries(this.basket).map(([key, n]) => row(key, n, HERBS[key].icon, HERBS[key].name)),
+      ...Object.entries(this.items).map(([key, n]) => row(key, n, ITEMS[key].icon, ITEMS[key].name)),
+    );
     const total = Object.values(this.basket).reduce((a, b) => a + b, 0);
-    $('basket-count').textContent = `${total} of ${SQUARE_HERBS.length}`;
+    $('basket-count').textContent = `${total} of ${this.herbTotal}`;
   }
 
   endTalk() {
@@ -314,22 +377,20 @@ export class Field {
     this.player.actor.setMood?.('calm');
     if (thing.crow) this.crowFlee(true);
     this.audio.sfx('back');
+    thing.onEnd?.(this);
   }
 
   // ---------------------------------------------------------------- each frame
 
   update(dt, time) {
     this.time = time;
-    // Night sounds: crickets now and then, and once in a while an owl in the Gloamwood
-    this.nextCrickets = (this.nextCrickets ?? 3) - dt;
-    if (this.nextCrickets < 0) { this.audio.sfx('crickets'); this.nextCrickets = 6 + Math.random() * 6; }
-    this.nextOwl = (this.nextOwl ?? 20) - dt;
-    if (this.nextOwl < 0) { this.audio.sfx('owl'); this.nextOwl = 25 + Math.random() * 30; }
+    // Night sounds: crickets now and then, and once in a while an owl in the Gloamwood (each cast has its own)
+    for (const s of this.sounds) {
+      if ((s.wait -= dt) < 0) { this.audio.sfx(s.sfx, s.opts); s.wait = s.gap + Math.random() * s.spread; }
+    }
     const player = this.player;
-    const [hilde, agnes] = this.villagers;
-    hilde.update(dt, hilde.work);
-    agnes.update(dt, agnes.rest);
-    this.updateCrow(dt);
+    this.cast.update?.(this, dt, time);
+    if (this.crow) this.updateCrow(dt);
     this.sparks.update(dt);
     this.glints.update(dt);
     for (const t of this.things) if (t.herb) t.plant.update(dt);
@@ -338,7 +399,7 @@ export class Field {
       const k = Math.min(1, t.leaving);
       t.group.position.y = t.pos.y + k * 0.35;
       t.group.scale.setScalar(1 - k);
-      if (k >= 1) this.world.remove(t.group);
+      if (k >= 1) t.group.parent?.remove(t.group);
     }
     this.leaving = (this.leaving ?? []).filter((t) => t.leaving < 1);
 
@@ -348,7 +409,7 @@ export class Field {
       const before = Math.floor(T.shown);
       T.shown = Math.min(T.text.length, T.shown + dt * 42);
       const now = Math.floor(T.shown);
-      if (now > before && now % 2 === 0 && /\w/.test(T.text[now - 1] ?? '')) this.audio.sfx('blip', { voice: T.thing.voice ?? 1 });
+      if (now > before && now % 2 === 0 && /\w/.test(T.text[now - 1] ?? '')) this.audio.sfx('blip', { voice: T.voice ?? T.thing.voice ?? 1 });
       $('talk-text').textContent = T.text.slice(0, now);
       if (now >= T.text.length) {
         T.typing = false;
@@ -365,16 +426,19 @@ export class Field {
       for (const t of this.things) {
         if (t.crow && this.crow.state !== 'stand') continue;
         const to = new THREE.Vector3().subVectors(t.pos, player.pos).setY(0);
-        const d = to.length() - (t.actor?.radius ?? (t.crow ? 0.1 : t.herb ? 0.05 : 0.2));
+        const d = to.length() - (t.actor?.radius ?? t.reach ?? (t.crow ? 0.1 : t.herb ? 0.05 : 0.2));
         if (d < best && (d < 0.35 || to.normalize().dot(facing) > 0.2)) (best = d), (this.nearby = t);
       }
     }
 
-    // Exits
+    // Exits: one that leads somewhere hands over to the town (onExit); the rest just say where they'd go.
     const foot = this.paint.toPixel(player.pos);
     for (const e of this.exits) {
       const inside = pointInPolygon(foot.x, foot.y, e.zone);
-      if (inside && !e.inside) this.toast(e.line);
+      if (inside && !e.inside) {
+        if (e.to && this.onExit) this.onExit(e);
+        else this.toast(e.line);
+      }
       e.inside = inside;
     }
     player.obstacle.x = player.pos.x;
@@ -454,7 +518,7 @@ export class Field {
   // After the 3D frame is drawn: place the "!" and the dialogue over the right spots on screen.
   afterRender() {
     const bang = $('bang');
-    const show = !!this.nearby && !this.talking && !this.stage.revealing;
+    const show = !!this.nearby && !this.talking && !this.stage.revealing && !this.locked;
     bang.hidden = !show;
     if (show) {
       const p = this.stage.worldToScreen(this.player.pos.clone().setY(this.player.pos.y + 1.9));
@@ -465,6 +529,7 @@ export class Field {
     labels.hidden = !on;
     if (on) for (const el of labels.children) {
       const at = this.labelSpots[el.dataset.spot];
+      if (!at) { el.hidden = true; continue; }
       const p = this.stage.worldToScreen(at);
       const { w, h } = this.stage.cssSize;
       const ahead = at.clone().sub(this.stage.revealCam.position).dot(this.stage.revealCam.getWorldDirection(new THREE.Vector3())) > 0;
@@ -483,11 +548,19 @@ export class Field {
     this.audio.sfx(sound);
   }
 
+  // The name of the place, top left, for a few seconds: FF9 names every new place.
+  showPlace() {
+    $('place-name').textContent = this.scene.title;
+    $('place-sub').textContent = this.scene.subtitle;
+    const place = $('place');
+    place.classList.remove('gone');
+    clearTimeout(this.placeTimer);
+    this.placeTimer = setTimeout(() => place.classList.add('gone'), 5200);
+  }
+
   // ---------------------------------------------------------------- buttons
 
   buildHud() {
-    $('place-name').textContent = this.scene.title;
-    $('place-sub').textContent = this.scene.subtitle;
     const touch = matchMedia('(pointer: coarse)').matches;
     $('hint').textContent = touch
       ? 'Tap anywhere to walk there. Tap a person to talk.'
@@ -517,22 +590,6 @@ export class Field {
     });
     $('bang').addEventListener('click', () => this.nearby && this.talk(this.nearby));
     $('talk').addEventListener('click', () => this.advance());
-
-    // Where the labels sit behind the scenes
-    const card = (name) => {
-      const c = this.stage.cutouts.cards.find((k) => k.name === name);
-      const box = new THREE.Box3().setFromObject(c.mesh);
-      return box.getCenter(new THREE.Vector3()).setY(box.max.y + 0.2);
-    };
-    const cam = this.paint.camera;
-    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
-    this.labelSpots = {
-      painting: cam.position.clone().addScaledVector(forward, this.paint.distance * 1.45).add(new THREE.Vector3(0, 9.5, 0)),
-      camera: cam.position.clone().add(new THREE.Vector3(0, 1.4, 0)),
-      floor: this.paint.toWorld(1150, 980),
-      well: card('well'),
-      lamp: card('lamp post, bottom right'),
-    };
   }
 
   toggleBackstage(on = !this.stage.reveal.on) {
@@ -555,8 +612,8 @@ export class Field {
 }
 
 // Sparks off the anvil: little additive points that fly up and fall.
-class Sparks {
-  constructor(world, color = '#ffc46b', gravity = 7) {
+export class Sparks {
+  constructor(parent, color = '#ffc46b', gravity = 7) {
     this.gravity = gravity;
     this.max = 60;
     this.list = [];
@@ -564,7 +621,7 @@ class Sparks {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(this.max * 3), 3));
     this.points = new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.points.frustumCulled = false;
-    world.add(this.points);
+    parent.add(this.points);
   }
   burst(at, n) {
     for (let i = 0; i < n && this.list.length < this.max; i++) {
@@ -585,7 +642,7 @@ class Sparks {
   }
 }
 
-function pointInPolygon(x, y, pts) {
+export function pointInPolygon(x, y, pts) {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
     const [xi, yi] = pts[i], [xj, yj] = pts[j];
@@ -593,6 +650,76 @@ function pointInPolygon(x, y, pts) {
   }
   return inside;
 }
+
+// ---------------------------------------------------------------- the Wickhollow square
+
+// Who and what is in the square: Hilde at her anvil, Agnes knitting by the chapel, Inkblot, the well, the chapel
+// door, Quill's stall, and the source game's herb patches.
+const SQUARE = {
+  music: 'wickhollow',
+  // Night sounds: crickets now and then, and once in a while an owl in the Gloamwood
+  ambience: [{ sfx: 'crickets', first: 3, gap: 6, spread: 6 }, { sfx: 'owl', first: 20, gap: 25, spread: 30 }],
+  herbTotal: SQUARE_HERBS.length,
+  enter(field) {
+    const { paint, walk, player } = field;
+    const at = (x, y, h = 0) => paint.toWorld(x, y, h);
+    const headingTo = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);
+
+    // Hilde works at the anvil in the smithy's open front.
+    const hilde = createHilde();
+    hilde.root.position.copy(at(470, 622));
+    const anvil = at(466, 596);
+    const anvilTop = anvil.clone().setY(0.62);
+    hilde.work = headingTo(hilde.root.position, anvil);
+    hilde.root.rotation.y = hilde.work;
+    hilde.events.strike = () => {
+      field.sparks.burst(anvilTop, 14);
+      const d = player.pos.distanceTo(hilde.root.position);
+      if (!field.talking) field.audio.sfx('anvil', { g: Math.max(0.12, 1 - d / 9) });
+    };
+    // Agnes hovers by the chapel wall, knitting.
+    const agnes = createAgnes();
+    agnes.root.position.copy(at(904, 580));
+    agnes.rest = 0.35;
+    field.villagers = [hilde, agnes];
+    for (const v of [hilde, agnes]) field.group.add(v.root);
+    // Inkblot hops about the square. Perches: spots on the ground, and the tops of things.
+    const top = (base, topY) => at(...base).setY(paint.heightAbove(base, topY));
+    const crow = field.addCrow(at(610, 850), {
+      ground: [[610, 850], [420, 800], [560, 660], [860, 640], [900, 800], [760, 880], [1150, 1000], [330, 640]].map(([x, y]) => at(x, y)),
+      high: [top([705, 724], 548), top([343, 742], 580), top([999, 936], 776), top([1063, 640], 488)],
+    });
+    for (const v of field.villagers) {
+      v.obstacle = { x: v.root.position.x, z: v.root.position.z, r: v.radius };
+      walk.obstacles.push(v.obstacle);
+    }
+
+    // Things to look at, and people to talk to
+    field.things = [
+      { name: 'Hilde', actor: hilde, pos: hilde.root.position, portrait: 'hilde', voice: 3, lines: DIALOGUE.hilde, onLine: (text) => /Ha!/.test(text) && hilde.laugh() },
+      { name: 'Agnes', actor: agnes, pos: agnes.root.position, portrait: 'agnes', voice: 4, lines: DIALOGUE.agnes },
+      { name: 'Inkblot', crow: true, pos: crow.root.position, portrait: 'inkblot', voice: 6, lines: DIALOGUE.inkblot },
+      { name: null, pos: at(705, 792), lines: DIALOGUE.well, sound: 'well-bucket' },
+      { name: null, pos: at(786, 402, 0.55), lines: DIALOGUE.door, sound: 'sealed-door' },
+      { name: null, pos: at(300, 720), lines: DIALOGUE.stall, sound: 'shop-bell' },
+    ];
+    // Herbs to gather: the source game's patches on this painting, each one once a night.
+    field.plantHerbs(SQUARE_HERBS);
+  },
+  update(field, dt) {
+    const [hilde, agnes] = field.villagers;
+    hilde.update(dt, hilde.work);
+    agnes.update(dt, agnes.rest);
+  },
+  labels(field) {
+    const card = (name) => {
+      const c = field.stage.cutouts.cards.find((k) => k.name === name);
+      const box = new THREE.Box3().setFromObject(c.mesh);
+      return box.getCenter(new THREE.Vector3()).setY(box.max.y + 0.2);
+    };
+    return { floor: field.paint.toWorld(1150, 980), well: card('well'), lamp: card('lamp post, bottom right') };
+  },
+};
 
 // What people say. Hilde's, Agnes's and Inkblot's first lines are from Follow Me Down Witch Way's
 // dialogue.json; the rest are written for this square. Lines with no name are the witch's own thoughts.

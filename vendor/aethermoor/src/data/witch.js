@@ -170,8 +170,9 @@ export const WITCH_SKILLS = {
   },
   'stir-the-pot': {
     id: 'stir-the-pot', name: 'Stir the Pot', domain: 'attunement', mp: 4, delay: 1, target: 'ally',
-    text: 'A ladleful from the pot for whoever needs it most: heal 2d8 + WIS.',
-    effects: [{ type: 'heal', dice: '2d8', stat: 'WIS', diceEvery: 4 }],
+    // a die more every third level (3d8 at level 4): at level 4 it has to keep up with the Lantern Mother's pole
+    text: 'A ladleful from the pot for whoever needs it most: heal 2d8 + WIS (3d8 from level 4).',
+    effects: [{ type: 'heal', dice: '2d8', stat: 'WIS', diceEvery: 3 }],
   },
   'bitterroot-poultice': {
     id: 'bitterroot-poultice', name: 'Bitterroot', domain: 'craft', mp: 1, delay: 0.7, target: 'ally',
