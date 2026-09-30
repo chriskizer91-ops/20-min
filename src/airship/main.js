@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import mapPainting from '../../art/map/gloomfen-region.webp';
+import mapPainting from '../../art/map/world-night.webp';
+import cloudAtlas from '../../art/fx/night-clouds.webp';
+import lightsAtlas from '../../art/fx/drifting-lights.webp';
 import { fonts } from '../assets.js';
-import { MAP, PLACES, WINDOWS, LIGHT_PATH } from '../data/places.js';
+import { MAP, PLACES, LIGHT_PATH } from '../data/places.js';
 import { PaintCamera } from '../paint.js';
 import { buildCutouts } from '../layers.js';
 import { Stage, LAYER_GLOW } from '../stage.js';
@@ -13,23 +15,15 @@ import { glowSprite, onLayer } from '../actors/kit.js';
 import { createKeys } from '../input.js';
 import { createSound } from '../audio/sound.js';
 
-// The airship demo: the witch's skiff flying over the painted map of the Gloomfen, between her village and
-// Bogmire. Nothing happens in the air but the flight: cute music, clouds, the lit towns below. Tap the map to
+// The airship demo: the Magpie flying over the painted valley at night, down the Sable from the witch's village
+// to Bogmire. Nothing happens in the air but the flight: cute music, clouds, the lit towns below. Tap the map to
 // fly somewhere, steer with the arrow keys, or pick a town and she flies there and sets down at its dock.
 
 const CRUISE = 4.5; // m/s: Wickhollow to Bogmire in about 25 seconds
-const CRUISE_ALT = 7, DOCK_ALT = 1.3; // m above the map
+const CRUISE_ALT = 7; // m above the map; each town has its own dock height (the jetty, Bogmire's mast)
 const TURN = 1.5; // rad/s at most
-const SHIP_SCALE = 1.6; // about the size of the skiffs painted at the docks
+const SHIP_SCALE = 1.6;
 const TUNES = [{ id: 'flight', name: 'Sunstone Wind' }, { id: 'travel', name: 'Over the Wilds' }];
-
-// Three looks for the same daytime painting. The grade tints the painting; the lights match it.
-const TIMES = {
-  day: { name: 'Day', tint: [1, 1, 1], saturation: 1, lift: [0, 0, 0], vignette: 0.25, sky: '#fff4de', ground: '#50603c', hemi: 1.5, sun: '#fff0d4', sunI: 1.8, windows: 0, clouds: '#ffffff', cloudOpacity: 1, shadow: 0.35 },
-  dusk: { name: 'Dusk', tint: [1.06, 0.76, 0.6], saturation: 0.95, lift: [0.025, 0.008, 0.03], vignette: 0.7, sky: '#ffb892', ground: '#3a2a48', hemi: 1.1, sun: '#ffa26a', sunI: 1.5, windows: 0.75, clouds: '#ffd2bc', cloudOpacity: 1, shadow: 0.28 },
-  night: { name: 'Night', tint: [0.3, 0.37, 0.66], saturation: 0.55, lift: [0, 0.004, 0.02], vignette: 1.1, sky: '#9ab0ff', ground: '#1a1830', hemi: 0.8, sun: '#c4d0ff', sunI: 0.9, windows: 1, clouds: '#6f7cb8', cloudOpacity: 0.92, shadow: 0.18 },
-};
-const ORDER = ['night', 'dusk', 'day'];
 
 async function boot() {
   for (const [family, url] of Object.entries(fonts)) new FontFace(family, `url(${url})`).load().then((f) => document.fonts.add(f)).catch(() => {});
@@ -53,27 +47,18 @@ async function boot() {
     p.dockAt = p.dock ? at(...p.dock) : p.ground;
   }
 
-  // ---------------------------------------------------------------- light, time of day
-  const hemi = new THREE.HemisphereLight('#ffffff', '#444444', 1);
-  const sun = new THREE.DirectionalLight('#ffffff', 1);
-  sun.position.set(-30, 60, -20);
+  // ---------------------------------------------------------------- moonlight
+  // The painting is already night, so it isn't graded; the models get a cool moon from the top right, where the
+  // painted moon is, and a dim violet sky.
+  const hemi = new THREE.HemisphereLight('#9aa8ff', '#1c1830', 0.95);
+  const moon = new THREE.DirectionalLight('#d2d8ff', 1.1);
+  moon.position.set(40, 60, -40);
   const lights = new THREE.Group();
-  lights.add(hemi, sun, sun.target);
+  lights.add(hemi, moon, moon.target);
   lights.traverse((o) => o.layers.enableAll());
   world.add(lights);
-  let time = pickTime();
-  const look = structuredClone(TIMES[time]);
 
-  // Lit windows and a few marsh-lights drifting over the wild places, both only after dark
-  const windows = WINDOWS.map(([x, y], i) => {
-    const g = glowSprite(i % 3 ? '#ffc46e' : '#ffae5a', 4, 0, LAYER_GLOW);
-    const core = glowSprite('#fff1c8', 0.9, 1, LAYER_GLOW);
-    g.material.depthTest = core.material.depthTest = false;
-    g.position.copy(at(x, y, 0.4));
-    core.position.copy(g.position);
-    world.add(g, core);
-    return { g, core, seed: Math.random() * 10 };
-  });
+  // Marsh-lights drifting over the wild places
   const wisps = PLACES.filter((p) => p.kind === 'wild').flatMap((p) => [0, 1].map((k) => {
     const g = glowSprite(p.hidden ? '#c77dff' : '#8fffa0', 1.6, 0, LAYER_GLOW);
     g.material.depthTest = false;
@@ -81,19 +66,24 @@ async function boot() {
     return { g, home: p.ground.clone(), a: Math.random() * 6, r: 1.5 + k * 1.8, s: 0.3 + Math.random() * 0.3 };
   }));
 
-  // The stolen lights: violet flames drifting down the waterways toward Mother's Hollow, to show the way
+  // The stolen lights: painted violet flames (art/fx/drifting-lights.webp, four frames) drifting down the Sable
+  // toward Mother's Hollow, to show the way
+  const [lightsTex, cloudTex] = await Promise.all([loadTexture(lightsAtlas), loadTexture(cloudAtlas)]);
   const trail = new THREE.CatmullRomCurve3(LIGHT_PATH.map(([x, y]) => at(x, y)));
   const trailLength = trail.getLength();
-  const flames = Array.from({ length: 16 }, (_, i) => {
-    const g = glowSprite('#c77dff', 2.4, 0, LAYER_GLOW);
-    const core = glowSprite('#f4e4ff', 0.55, 0, LAYER_GLOW);
-    g.material.depthTest = core.material.depthTest = false;
-    world.add(g, core);
-    return { g, core, u: i / 16, seed: Math.random() * 10 };
+  const flames = Array.from({ length: 14 }, (_, i) => {
+    const tex = lightsTex.clone();
+    tex.repeat.set(0.25, 0.5);
+    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }));
+    f.scale.set(1.5, 1.5, 1);
+    f.layers.set(LAYER_GLOW);
+    const g = glowSprite('#b25cff', 3.2, 0, LAYER_GLOW);
+    g.material.depthTest = false;
+    world.add(g, f);
+    return { f, tex, g, u: i / 14, seed: Math.random() * 10 };
   });
 
-  // ---------------------------------------------------------------- clouds
-  const cloudTex = [0, 1, 2].map((k) => cloudTexture(k));
+  // ---------------------------------------------------------------- clouds: the batch's painted night clouds (the puffy ones; the swirls read as storms)
   const shadowTex = new THREE.CanvasTexture((() => {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
@@ -106,20 +96,21 @@ async function boot() {
     g.fillRect(0, 0, 64, 64);
     return c;
   })());
-  const span = { x0: at(0, 512).x - 10, x1: at(1536, 512).x + 10 };
-  const clouds = Array.from({ length: 6 }, (_, i) => {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex[i % 3], transparent: true, depthWrite: false, opacity: 0.9 }));
-    const w = 8 + (i * 5) % 7;
-    s.scale.set(w, w * 0.5, 1);
-    s.center.set(0.5, 0.2); // anchored near its flat base
-    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.9, w * 0.45), new THREE.MeshBasicMaterial({ map: shadowTex, color: 0x000000, transparent: true, opacity: 0.1, depthWrite: false }));
+  // Placed by where they show: each floats about 150 painting pixels above the ground point it's over
+  const clouds = [[560, 760, 0], [980, 560, 1], [1420, 520, 4], [220, 980, 3], [780, 1060, 1], [60, 700, 4]].map(([px, py, k], i) => {
+    const tex = cloudTex.clone();
+    tex.repeat.set(1 / 3, 1 / 2);
+    tex.offset.set((k % 3) / 3, k < 3 ? 0.5 : 0);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.85 }));
+    const w = 13 + (i * 5) % 7;
+    s.scale.set(w, w, 1);
+    const shadow = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.8, w * 0.5), new THREE.MeshBasicMaterial({ map: shadowTex, color: 0x000000, transparent: true, opacity: 0.12, depthWrite: false }));
     shadow.rotation.x = -Math.PI / 2;
     shadow.renderOrder = -2;
-    const px = [180, 1040, 640, 1480, 420, 860][i], py = [300, 180, 860, 420, 980, 340][i];
     const g = at(px, py);
-    const c = { s, shadow, x: g.x, z: g.z, y: 13 + (i % 3) * 2.5, speed: 0.35 + (i % 4) * 0.08 };
     world.add(s, shadow);
-    return c;
+    // Each drifts east across the valley at its own depth, and comes round again from the west
+    return { s, shadow, x: g.x, z: g.z, y: 14 + (i % 3) * 2.5, speed: 0.3 + (i % 4) * 0.07, x0: at(0, py).x - w, x1: at(1536, py).x + w };
   });
 
   // ---------------------------------------------------------------- the skiff and her crew
@@ -145,7 +136,7 @@ async function boot() {
 
   const home = place.wickhollow;
   const S = {
-    mode: 'docked', at: home.id, pos: home.dockAt.clone(), alt: DOCK_ALT, heading: home.heading,
+    mode: 'docked', at: home.id, pos: home.dockAt.clone(), alt: home.dockAlt, heading: home.heading,
     speed: 0, turn: 0, climb: 0, target: null, landAt: null, show: null, seen: new Set(), overview: false, tune: 0,
   };
 
@@ -163,7 +154,6 @@ async function boot() {
   $('btn-takeoff').addEventListener('click', () => { audio.unlock(); takeOff(); });
   $('btn-land').addEventListener('click', () => { if (S.near) flyTo(S.near.id); });
   $('btn-close').addEventListener('click', () => showCard(null));
-  $('btn-time').addEventListener('click', () => { time = ORDER[(ORDER.indexOf(time) + 1) % ORDER.length]; saveTime(time); audio.sfx('ui-confirm'); syncButtons(); });
   $('btn-map').addEventListener('click', () => { S.overview = !S.overview; audio.sfx('map-open'); syncButtons(); });
   $('btn-tune').addEventListener('click', () => {
     audio.unlock();
@@ -173,7 +163,6 @@ async function boot() {
   });
   $('btn-sound').addEventListener('click', () => { audio.unlock(); const on = !audio.enabled; audio.setEnabled(on); audio.setMusicEnabled(on); syncButtons(); });
   function syncButtons() {
-    $('btn-time').textContent = TIMES[time].name;
     $('btn-map').textContent = S.overview ? 'Follow' : 'Map';
     $('btn-map').setAttribute('aria-pressed', String(S.overview));
     $('btn-tune').textContent = `♪ ${TUNES[S.tune].name}`;
@@ -291,7 +280,8 @@ async function boot() {
   });
 
   function clampPixel(p) {
-    return new THREE.Vector2(THREE.MathUtils.clamp(p.x, 70, MAP.size[0] - 70), THREE.MathUtils.clamp(p.y, 150, MAP.size[1] - 60));
+    const B = MAP.bounds;
+    return new THREE.Vector2(THREE.MathUtils.clamp(p.x, B.x0, B.x1), THREE.MathUtils.clamp(p.y, B.y0, B.y1));
   }
 
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -331,7 +321,7 @@ async function boot() {
       throttle *= Math.max(0.2, (Math.cos(diff) + 1) / 2);
     } else S.turn *= Math.exp(-dt * 4);
     // She can't go fast until she's up
-    throttle *= THREE.MathUtils.clamp((S.alt - DOCK_ALT) / 3, 0.15, 1);
+    throttle *= THREE.MathUtils.clamp((S.alt - 1.3) / 3, 0.15, 1);
     S.speed += (CRUISE * throttle - S.speed) * (1 - Math.exp(-dt * 1.4));
     S.pos.x += Math.sin(S.heading) * S.speed * dt;
     S.pos.z += Math.cos(S.heading) * S.speed * dt;
@@ -339,11 +329,12 @@ async function boot() {
     const c = clampPixel(px);
     if (c.x !== px.x || c.y !== px.y) S.pos.copy(at(c.x, c.y));
 
-    const wantAlt = S.mode === 'flying' ? CRUISE_ALT : DOCK_ALT;
+    const dockAlt = place[S.landAt ?? S.at]?.dockAlt ?? 1.3;
+    const wantAlt = S.mode === 'flying' ? CRUISE_ALT : dockAlt;
     const before = S.alt;
     S.alt += (wantAlt - S.alt) * (1 - Math.exp(-dt * (S.mode === 'flying' ? 0.9 : 1.3)));
     S.climb = (S.alt - before) / Math.max(dt, 1e-4);
-    if (S.mode === 'landing' && Math.abs(S.alt - DOCK_ALT) < 0.05 && S.pos.distanceTo(place[S.landAt].dockAt) < 0.1) docked(place[S.landAt]);
+    if (S.mode === 'landing' && Math.abs(S.alt - dockAlt) < 0.05 && S.pos.distanceTo(place[S.landAt].dockAt) < 0.1) docked(place[S.landAt]);
 
     // Near a town in the air, offer to land; near a wild place, say what's there.
     S.near = null;
@@ -387,48 +378,30 @@ async function boot() {
     crow.update(dt, 'stand', ship.perch.y);
     if (nettie.root.visible) nettie.update(dt, 0, 0);
 
-    // Time of day: glide the grade and the lights toward the chosen look
-    const L = TIMES[time], g = 1 - Math.exp(-dt * 2);
-    for (const k of ['saturation', 'vignette', 'hemi', 'sunI', 'windows', 'cloudOpacity', 'shadow']) look[k] += (L[k] - look[k]) * g;
-    stage.grade.tint.lerp(new THREE.Color(...L.tint), g);
-    stage.grade.lift.lerp(new THREE.Color(...L.lift), g);
-    stage.grade.saturation = look.saturation;
-    stage.grade.vignette = look.vignette;
-    hemi.color.lerp(new THREE.Color(L.sky), g);
-    hemi.groundColor.lerp(new THREE.Color(L.ground), g);
-    hemi.intensity = look.hemi;
-    sun.color.lerp(new THREE.Color(L.sun), g);
-    sun.intensity = look.sunI;
-    ship.shadow.material.opacity *= look.shadow / 0.35;
-    for (const w of windows) {
-      const f = 1 + Math.sin(t * 3 + w.seed) * 0.08 + Math.sin(t * 7.7 + w.seed) * 0.06;
-      w.g.material.opacity = look.windows * 0.8 * f;
-      w.core.material.opacity = look.windows * f;
-    }
+    ship.shadow.material.opacity *= 0.55; // a moon shadow, fainter than the sun's
     for (const w of wisps) {
       w.a += dt * w.s;
       w.g.position.set(w.home.x + Math.cos(w.a) * w.r, 0.8 + Math.sin(w.a * 2.3) * 0.4, w.home.z + Math.sin(w.a) * w.r * 0.7);
-      w.g.material.opacity = look.windows * (0.55 + Math.sin(t * 5 + w.a) * 0.2);
+      w.g.material.opacity = 0.5 + Math.sin(t * 5 + w.a) * 0.2;
     }
     for (const f of flames) {
       f.u = (f.u + dt * 0.7 / trailLength) % 1;
       const p = trail.getPointAt(f.u);
       p.y = 2.2 + Math.sin(t * 1.7 + f.seed) * 0.35;
       p.x += Math.sin(t * 0.9 + f.seed) * 0.5;
+      f.f.position.copy(p);
       f.g.position.copy(p);
-      f.core.position.copy(p);
-      const fade = Math.min(1, f.u * 8, (1 - f.u) * 8) * (0.35 + look.windows * 0.65);
-      f.g.material.opacity = fade * (0.7 + Math.sin(t * 9 + f.seed) * 0.1);
-      f.core.material.opacity = fade;
+      const frame = Math.floor(t * 8 + f.seed * 3) % 4;
+      f.tex.offset.set(frame * 0.25, 0.5);
+      const fade = Math.min(1, f.u * 8, (1 - f.u) * 8);
+      f.f.material.opacity = fade;
+      f.g.material.opacity = fade * (0.55 + Math.sin(t * 9 + f.seed) * 0.08);
     }
     for (const c of clouds) {
       c.x += c.speed * dt;
-      if (c.x > span.x1) c.x = span.x0;
+      if (c.x > c.x1) c.x = c.x0;
       c.s.position.set(c.x, c.y, c.z);
       c.shadow.position.set(c.x, 0.03, c.z);
-      c.s.material.color.lerp(new THREE.Color(L.clouds), g);
-      c.s.material.opacity = look.cloudOpacity;
-      c.shadow.material.opacity = look.shadow * 0.35;
     }
 
     // The camera follows the ship, a little ahead of where she's going
@@ -446,10 +419,12 @@ async function boot() {
     stage.update(dt);
     stage.render();
 
+    const title = $('title').getBoundingClientRect(), titleBottom = title.bottom + 34, titleRight = title.right;
     for (const { p, el } of labels) {
       const s = stage.pixelToScreen(new THREE.Vector2(...p.pixel));
       const off = s.x < -80 || s.y < -40 || s.x > stage.cssSize.w + 80 || s.y > stage.cssSize.h + 40;
-      el.hidden = off || (S.mode === 'docked' && S.at === p.id);
+      const underTitle = s.y < titleBottom && s.x < titleRight + 60;
+      el.hidden = off || underTitle || (S.mode === 'docked' && S.at === p.id);
       el.style.transform = `translate(${s.x}px, ${s.y}px)`;
       el.classList.toggle('goal', S.goal === p);
     }
@@ -459,62 +434,11 @@ async function boot() {
   showCard(home);
   document.body.classList.add('ready');
   requestAnimationFrame(frame);
-  window.__airship = { THREE, stage, paint, ship, witch, nettie, state: S, places: place, flyTo, takeOff, setTime: (k) => { time = k; syncButtons(); } };
+  window.__airship = { THREE, stage, paint, ship, witch, nettie, state: S, places: place, flyTo, takeOff };
 }
 
-function pickTime() {
-  try { const k = localStorage.getItem('airship-time'); if (k in TIMES) return k; } catch { /* no storage */ }
-  return 'night'; // the game is one full-moon night
-}
-function saveTime(k) {
-  try { localStorage.setItem('airship-time', k); } catch { /* no storage */ }
-}
-
-// A painted cumulus: a flat base, round heads piled up in the middle, lit from above and shaded underneath,
-// with a soft edge. Drawn once per kind.
-function cloudTexture(seed) {
-  const W = 512, H = 256;
-  let s = seed * 9301 + 49297;
-  const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  const heads = [];
-  const n = 7 + seed;
-  for (let i = 0; i < n; i++) {
-    const u = (i + 0.5) / n, x = 70 + u * 372 + (rnd() - 0.5) * 30;
-    const r = 34 + Math.sin(u * Math.PI) * (40 + rnd() * 26);
-    heads.push([x, 196 - r * (0.55 + rnd() * 0.3), r]);
-  }
-  const shape = document.createElement('canvas');
-  shape.width = W; shape.height = H;
-  const g = shape.getContext('2d');
-  const silhouette = (dy, shrink) => {
-    g.beginPath();
-    for (const [x, y, r] of heads) { g.moveTo(x + r * shrink, y + dy); g.arc(x, y + dy, r * shrink, 0, Math.PI * 2); }
-    g.ellipse(256, 196 + dy, 200 * shrink, 22, 0, 0, Math.PI * 2);
-    g.fill();
-  };
-  g.save();
-  g.beginPath();
-  g.rect(0, 0, W, 206);
-  g.clip(); // a flat bottom
-  g.fillStyle = '#7f86b8';
-  silhouette(0, 1);
-  g.fillStyle = '#c3c8e6';
-  silhouette(-12, 0.92);
-  g.fillStyle = '#ffffff';
-  silhouette(-26, 0.78);
-  // Sunlit rims on the tops of the heads
-  g.fillStyle = 'rgba(255, 250, 240, 0.9)';
-  for (const [x, y, r] of heads) { g.beginPath(); g.arc(x - r * 0.15, y - 26 - r * 0.2, r * 0.55, 0, Math.PI * 2); g.fill(); }
-  g.restore();
-  // Soften the edge
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const out = c.getContext('2d');
-  out.filter = 'blur(3px)';
-  out.drawImage(shape, 0, 0);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+function loadTexture(url) {
+  return new Promise((res, rej) => new THREE.TextureLoader().load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; res(t); }, undefined, rej));
 }
 
 boot().catch((err) => {

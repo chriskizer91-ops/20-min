@@ -1,0 +1,279 @@
+WITCH WAY - ART BATCH 02
+Generated and revised with the built-in image_gen tool.
+Each image entry contains its generation prompt and, where applicable, the final edit prompt.
+
+01-world-map.png
+Wickhollow to the Gloomfen at night
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: fantasy world map used for flying an airship in Witch Way.
+Input image 1: nighttime painted style and Wickhollow village design reference. Input image 2: village landmarks and illustrative map density reference ONLY. Do not copy its parchment, daytime coloring, framing, border, or layout. The supplied marsh-map reference is unavailable; create the region described below.
+Primary request: A painted fantasy region map seen from high above at a three-quarter angle, at night under a full moon: deep violet and indigo land, silver moonlight on the water, warm amber windows. Upper left: a small lantern-lit village at a dark forest's edge, with a chapel bell tower and small graveyard, a cobbled square with a round stone well, plum-roof cottages, an arched stone bridge over a river, and an old wooden jetty by a willow. North and east of the village, forest with a lantern-lit path past a waterfall, and a marshy hollow of twisted trees with green-glowing standing stones. An empty old castle on a far hill at the top edge.
+The river winds from the village diagonally across the WHOLE picture through heath, hedged fields and small woods, getting wider and darker, into a great marsh in the lower right: black pools, reed beds, plank paths, a long boardwalk on stilts with tiny lamp posts, and a stilt town of reed-thatched houses on plank streets around a round plank square with a tall airship mooring mast. Near this stilt town is a grove of black willows around a half-sunken house with every window lit; farther into the water, leaning towers of a drowned town. Sea edge in the far bottom corner.
+Leave generous open land and water BETWEEN the upper-left village and lower-right stilt town for flight. Readable geography with the entire region in view, not a ground-level landscape. Detailed painted richness and pixel-art-style texture. No text, labels, compass rose, border, frame, parchment, airships, people or creatures. Landscape 3:2, largest available resolution: at least 1536x1024, ideally 3072x2048 or greater.
+
+========================================================================
+
+02-bogmire-moot-circle.png
+Bogmire moot-circle and mooring mast
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 02-bogmire-moot-circle.png, fixed gameplay background for Witch Way.
+Input image: use as detailed pixel-art painting style and camera reference only; create the NEW scene specified below. Keep its visual craftsmanship, violet nighttime shadows and warm lighting without copying unrelated landmarks.
+Primary request: A small stilt town in a marsh at night. Plank streets on stilts over black water lead to a ROUND PLANK SQUARE in the middle, with a reed-thatched moot-hall on the far side and a round iron fire basket on a stone plinth in the square. Crooked stilt houses with amber windows and window boxes of grey, wilted herbs. Tall lamp poles with small lanterns burning violet-pink flames, with planters of candle-like reeds at their feet. On the RIGHT, a tall wooden airship mooring mast with an EMPTY landing platform and coiled ropes. At the LEFT edge, the door of a crooked hut with colored bottles glinting in its window. Rowboats tied to the stilts, willows and mist beyond. Leave the round square and plank streets clear to walk on. Detailed pixel-art-style painting, violet night, amber and violet lamplight. No people, animals or airships.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Camera and constraints: Landscape 3:2, 1536x1024 or larger. Fixed high three-quarter game-background view, looking down about 30 degrees, directly facing the scene, not rotated, no Dutch angle and no fisheye. Keep the central floor, path or planks open and clearly walkable. No people, animals, ghosts, creatures, airships, or text.
+
+========================================================================
+
+03-netties-hut-inside.png
+Nettie's hut interior
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 03-netties-hut-inside.png, fixed gameplay background for Witch Way.
+Input image: use as detailed pixel-art painting style and camera reference only; create the NEW scene specified below. Keep its visual craftsmanship, violet nighttime shadows and warm lighting without copying unrelated landmarks.
+Primary request: The inside of a swamp witch's cluttered hut on stilts at night. A peat fire under a black iron pot in the middle of the back wall. Shelves and racks of stoppered bottles in sea-glass green, ruby, amber and emerald. Jars with lids tied down with string, one lid lifted a crack as if whatever is inside might bite, but DO NOT show a creature. Bunches of bog-cotton and reeds drying from the rafters, and knotted charms of string and small bones. A narrow cot with a patchwork quilt on the RIGHT, a wooden rain barrel by the door, and a round window on the LEFT looking out at violet lamplight over the marsh. Plank floor with a rag rug, clear to walk on. Door at the BOTTOM. Detailed pixel-art-style painting, warm peat-fire light against violet shadows. No people or animals.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Camera and constraints: Landscape 3:2, 1536x1024 or larger. Fixed high three-quarter game-background view, looking down about 30 degrees, directly facing the scene, not rotated, no Dutch angle and no fisheye. Keep the central floor, path or planks open and clearly walkable. No people, animals, ghosts, creatures, airships, or text.
+
+========================================================================
+
+04-long-boardwalk.png
+The Long Boardwalk
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 04-long-boardwalk.png, fixed gameplay background for Witch Way.
+Input image: use as detailed pixel-art painting style and camera reference only; create the NEW scene specified below. Keep its visual craftsmanship, violet nighttime shadows and warm lighting without copying unrelated landmarks.
+Primary request: A long wooden boardwalk on stilts over still black marsh water at night. The boardwalk runs diagonally from the BOTTOM-LEFT corner to the TOP-RIGHT corner, with a WIDER LANDING in the middle and a LOW rope-and-post rail. Lamp posts along it burn small violet-pink flames. Reed islets, lily pads, a small punt tied to one post, and mist thickening toward the top where the boardwalk fades away. The full moon reflects in the water. Quiet, lonely and lovely, not scary. Leave all planks clear to walk on. Detailed pixel-art-style painting. No people, animals or ghosts. No gravestones, chapel, stone paving or graves from the style reference.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Camera and constraints: Landscape 3:2, 1536x1024 or larger. Fixed high three-quarter game-background view, looking down about 30 degrees, directly facing the scene, not rotated, no Dutch angle and no fisheye. Keep the central floor, path or planks open and clearly walkable. No people, animals, ghosts, creatures, airships, or text.
+
+========================================================================
+
+05-mothers-hollow.png
+Mother's Hollow
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 05-mothers-hollow.png, fixed gameplay background for Witch Way.
+Input image: use as detailed pixel-art painting style and camera reference only; create the NEW scene specified below. Keep its visual craftsmanship, violet nighttime shadows and warm lighting without copying unrelated landmarks.
+Primary request: A drowned grove of BLACK WEEPING WILLOWS at night around a HALF-SUNKEN OLD HOUSE. The house stands near the TOP, leaning in black water up to its windowsills, and EVERY WINDOW glows with MANY SMALL LANTERNS in warm amber and violet. A PLANK PATH winds from the BOTTOM edge across the water to the house's porch steps, which end in a SMALL DRY LANDING. Willow branches hang all round, with lily pads, lamplight shimmering on the water and low mist. The saddest, loveliest place in the marsh: grief, not horror. Leave the plank path and porch landing clear to walk on. Detailed pixel-art-style painting. No people, animals or ghosts. No gravestones, chapel or cemetery from the style reference.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Camera and constraints: Landscape 3:2, 1536x1024 or larger. Fixed high three-quarter game-background view, looking down about 30 degrees, directly facing the scene, not rotated, no Dutch angle and no fisheye. Keep the central floor, path or planks open and clearly walkable. No people, animals, ghosts, creatures, airships, or text.
+
+========================================================================
+
+06-gloamwood-battle.png
+The Gloamwood — battle backdrop
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: EMPTY side-view turn-based battle background for Witch Way.
+Input image: painted pixel-art texture and violet night palette reference ONLY, not its composition, buildings, river or elevated viewpoint.
+A clearing beside a woodland path at night, seen LOW AND CLOSE FROM THE SIDE. In front, a WIDE OPEN STRETCH of mossy ground and packed earth across the ENTIRE LOWER HALF, horizontally level from left edge to right edge. Keep it empty and unobstructed, with subdued ground texture. Behind it in the upper half: old twisted oaks, a mossy standing stone carved with a simple LINE THROUGH A DIAMOND, tall purple foxgloves and red lilies, small glowing mushrooms, an old iron lantern on a post that is UNLIT, and a thin waterfall far back between the trees. Full moon through the branches, low mist. Detailed pixel-art-style painting, cozy but a little eerie.
+Landscape 4:3, 1448x1086 or larger. Low and close SIDE VIEW, not top-down. A wide, open, flat and unobstructed arena occupies the full lower half, extending horizontally from left edge to right edge where fighters can stand. Put detailed scenery behind this ground. No people, animals, ghosts, creatures or text. Night, full moon, violet and indigo shadows, silver moonlight and a few warm or violet lights.
+Camera horizon is around the middle; ground-level lateral view, no overhead, isometric or three-quarter gameplay-map composition. The standing stone, plants and waterfall stay behind the fighter area. Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+
+========================================================================
+
+07-open-fen-battle.png
+The open fen — battle backdrop
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 07-open-fen-battle.png, empty side-view battle backdrop for Witch Way.
+Input image 1: match the low side-view camera, wide open ground and art style, but create a NEW location with the following scenery. Do not copy its forest-specific standing stone or waterfall.
+Primary request: A stretch of OPEN BOG at night, seen LOW AND CLOSE FROM THE SIDE. In front, a WIDE FLAT SHELF OF FIRM DARK PEAT AND OLD BOARDS spans the ENTIRE LOWER HALF from left edge to right edge, unobstructed for fighters. Behind it: black pools with lily pads, reed beds, dead grey trees, a few old leaning gravestones sinking into moss, a broken plank path, faint green LIGHTS far out over the water, low mist, and the full moon reflected in black water. Eerie but gentle, not scary. Detailed pixel-art-style painting. No living characters, ghosts or creatures.
+Camera and constraints: Landscape 4:3, 1448x1086 or larger. Low and close SIDE VIEW, not top-down. A wide, open, flat and unobstructed arena occupies the full lower half, extending horizontally from left edge to right edge where fighters can stand. Put detailed scenery behind this ground. No people, animals, ghosts, creatures or text. Night, full moon, violet and indigo shadows, silver moonlight and a few warm or violet lights.
+Keep all detailed scenery behind the empty combat area. Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+
+========================================================================
+
+08-long-boardwalk-battle.png
+The Long Boardwalk — battle backdrop
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 08-long-boardwalk-battle.png, empty side-view battle backdrop for Witch Way.
+Input image 1: match the low side-view camera, wide open ground and art style, but create a NEW location with the following scenery. Do not copy its forest-specific standing stone or waterfall. Input image 2: location-design reference only; do not copy its high camera angle.
+Primary request: A WIDE PLATFORM on the same long boardwalk built on stilts over black water at night, seen LOW AND CLOSE FROM THE SIDE. In front, BROAD WEATHERED PLANKS span the ENTIRE LOWER HALF horizontally from left edge to right edge, wide open with a LOW rope-and-post rail along the BACK EDGE. Behind the platform: the boardwalk running away into mist, lamp posts with small lanterns burning VIOLET-PINK flames, reed islets and lily pads on still water, and the full moon's reflection. Quiet and sad-lovely. Detailed pixel-art-style painting. Match the second reference's wood, rails, water and lamps but CHANGE CAMERA to the first reference's low side-view battle composition.
+Camera and constraints: Landscape 4:3, 1448x1086 or larger. Low and close SIDE VIEW, not top-down. A wide, open, flat and unobstructed arena occupies the full lower half, extending horizontally from left edge to right edge where fighters can stand. Put detailed scenery behind this ground. No people, animals, ghosts, creatures or text. Night, full moon, violet and indigo shadows, silver moonlight and a few warm or violet lights.
+Keep all detailed scenery behind the empty combat area. Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+
+========================================================================
+
+09-mothers-hollow-battle.png
+Mother's Hollow — battle backdrop
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept.
+Asset type: 09-mothers-hollow-battle.png, empty side-view battle backdrop for Witch Way.
+Input image 1: match the low side-view camera, wide open ground and art style, but create a NEW location with the following scenery. Do not copy its forest-specific standing stone or waterfall. Input image 2: location-design reference only; do not copy its high camera angle.
+Primary request: The front of the SAME half-sunken old house in a drowned grove of black willows at night, seen LOW AND CLOSE FROM THE SIDE. In front, a BROAD PLANK LANDING spans the ENTIRE LOWER HALF horizontally left to right, unobstructed, before the house's porch steps. Behind it: the house leaning in black water up to its windowsills, EVERY WINDOW glowing with MANY SMALL LANTERNS in amber and violet, weeping black willows hanging all round, lamplight shimmering on water, mist, and the full moon. Grief, not horror. Detailed pixel-art-style painting. Match the second reference's house identity and atmosphere but CHANGE CAMERA to the first reference's low side-view arena layout.
+Camera and constraints: Landscape 4:3, 1448x1086 or larger. Low and close SIDE VIEW, not top-down. A wide, open, flat and unobstructed arena occupies the full lower half, extending horizontally from left edge to right edge where fighters can stand. Put detailed scenery behind this ground. No people, animals, ghosts, creatures or text. Night, full moon, violet and indigo shadows, silver moonlight and a few warm or violet lights.
+Keep all detailed scenery behind the empty combat area. Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+
+========================================================================
+
+10-lights-go-down-the-river.png
+Opening — the lights go down the river
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story.
+Asset type: 10-lights-go-down-the-river.png, cinematic Witch Way still.
+Input image 1: art-style and nighttime village-world reference only. Additional references, when present, are used only for the identities and designs explicitly stated below; do not copy their composition or grid layouts.
+Primary request: A WIDE VIEW at night of a river winding AWAY from a lantern-lit village toward a DISTANT MISTY MARSH. DOZENS OF TINY FLAMES, violet at their edges and amber at their hearts, have lifted off their lanterns and float ON AND JUST ABOVE THE WATER, drifting downstream in a long line like little boats. They are naked magical flames, not paper lanterns, candles, actual boats or people. An arched stone bridge in the middle distance, a willow on the bank and a HUGE FULL MOON. Cinematic, painterly, detailed pixel-art style, violet and indigo night. Make the downstream trail of floating flames the clear storytelling focus.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Framing: Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+========================================================================
+
+11-the-skiff-wakes.png
+The skiff wakes
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story. Asset type: cinematic Witch Way cutscene still.
+Input image 1: style and young witch's costume reference. Input image 2: same witch's character design reference only, not a grid layout. The original airship turnaround is unavailable; establish a consistent skiff using the following exact description.
+At an old wooden jetty on a moonlit river, a SMALL wooden airship floats a little above the water: an open wooden skiff hull with bow and railings, small patched sails, and a cluster of BIG amber crystals held together in a BRASS FRAME over a small brazier. Keep the full skiff, sails, brass frame and crystals visible in the composition. No balloon.
+The young witch, seen from behind and a little to the side, wears her tall plum hat with cream horns and silver charms, magenta shawl, and long wavy brown hair. Standing at the jetty, she holds a small violet flame to the skiff's brazier. The amber crystals light up with a violet glow at their core. A black crow perches on the bow rail beside a small hanging lamp. A willow and lantern-lit village behind; full moon above.
+Cinematic detailed pixel-art-style painting, deep violet night and silver moonlight, warm wood and amber light. Cozy, magical, clearly readable action. Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+========================================================================
+
+12-night-misthollow-sank.png
+The night Misthollow sank — a memory
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story.
+Asset type: 12-night-misthollow-sank.png, cinematic Witch Way still.
+Input image 1: art-style and nighttime village-world reference only. Additional references, when present, are used only for the identities and designs explicitly stated below; do not copy their composition or grid layouts.
+Primary request: A STORYBOOK MEMORY at night, soft-edged and a little faded, in VIOLET AND SEPIA. A YOUNG ADULT WOMAN in a long black dress, a lamplighter, holds an OLD LANTERN HIGH and leads a line of CHILDREN along a BOARDWALK ON STILTS through mist. The children HOLD HANDS and walk CALMLY behind her; THEY ARE SAFE on the solid boardwalk above the water. Far behind them, the towers and belfries of a town sit low in rising water, lit only by her lantern. Gentle and sad, never frightening. Cinematic, painterly, detailed pixel-art style. Use the second reference's unveiled young woman's facial identity as a loose character reference, but this is an earlier living HUMAN memory, with natural skin rather than a glowing ghost. Do not recreate a portrait grid. No children in the water, danger, panic, horror or distressing imagery.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Framing: Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+FINAL EDIT PROMPT
+Use case: lighting-weather. Edit this cinematic memory scene while preserving its exact composition, the same young woman in a long black dress holding her lantern high, the same four children calmly holding hands, their faces and poses, their safe dry boardwalk, and the partly drowned towers far behind them.
+Change the atmosphere to a SOFT-EDGED, SLIGHTLY FADED STORYBOOK MEMORY in muted VIOLET AND SEPIA. Reduce the strong saturation and hard contrast; add delicate lavender-sepia mist, especially over the background, with softly faded edges that remain full-bleed, no border or frame.
+Her HELD LANTERN must be the ONLY WARM LIGHT SOURCE. Extinguish the other hanging lamps and all background windows; the distant drowned buildings should be quiet, dark silhouettes in pale violet-sepia haze. The warm light on the woman's face, clothes, children and nearby boardwalk comes from her single raised lantern. Suppress the bright full-moon disc behind soft haze so it does not compete.
+Keep the children calm and safe, no frightening imagery, no panic, no one in the water. Preserve the detailed pixel-art painting craftsmanship. Keep the same wide 16:9 composition and all character identities; do not add or remove people, props or buildings. No text, labels, title, UI or watermark.
+
+========================================================================
+
+13-lights-go-home.png
+Ending — the lights go home
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story.
+Asset type: 13-lights-go-home.png, cinematic Witch Way still.
+Input image 1: art-style and nighttime village-world reference only. Additional references, when present, are used only for the identities and designs explicitly stated below; do not copy their composition or grid layouts.
+Primary request: A STREAM OF HUNDREDS OF TINY FLAMES in violet and amber rises off a boardwalk in a dark marsh and flows UP A WINDING RIVER toward a FARAWAY LANTERN-LIT VILLAGE ON A HILL. The SAME SMALL WOODEN AIRSHIP as input image 2, with its patched sails and big amber crystal cluster in a brass frame over a brazier, its amber crystals glowing with a VIOLET HEART, follows the lights home. The skiff is SMALL against a HUGE FULL MOON and the expansive landscape, not a foreground close-up. Silver haze in the air. Cinematic, painterly, detailed pixel-art style, hopeful and warm. Keep the skiff design consistent with the second reference but create this completely new aerial composition. The lights are floating flames, not paper lanterns.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Framing: Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+========================================================================
+
+14-two-lamplighters.png
+Ending — two lamplighters
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story.
+Asset type: 14-two-lamplighters.png, cinematic Witch Way still.
+Input image 1: art-style and nighttime village-world reference only. Additional references, when present, are used only for the identities and designs explicitly stated below; do not copy their composition or grid layouts.
+Primary request: A WOODLAND LANTERN PATH at night with EVERY LANTERN LIT AGAIN, moths around the lights. TWO kind softly glowing GHOSTS, pale blue-white and a little see-through, light the LAST LANTERN TOGETHER. One is SILAS from the second reference: a lanky YOUNG ADULT male lamplighter in a LONG COAT WITH BRASS BUTTONS and a PEAKED CAP, holding a LONG LAMPLIGHTER'S POLE. Preserve the small reference character's essential costume silhouette and ghostly appearance in this more detailed painted scene. The other is the young adult woman from the third reference, in a BLACK MOURNING DRESS with the BLACK LACE VEIL FOLDED BACK from her face, holding up an OLD LANTERN AND SMILING. Use her unveiled bottom-row facial design; do not make a portrait grid. Both look warm, happy and peaceful. Cinematic detailed pixel-art-style painting. Exactly these two friendly ghosts, no frightening features, witch hats, extra characters or horror.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Framing: Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+FINAL EDIT PROMPT
+Use case: background replacement. Preserve EXACTLY the two friendly pale-blue ghost lamplighters in this image: their faces, hair, costumes, peaked cap, brass coat buttons, folded-back lace veil, transparent glow, expressions, poses, pole and held lantern. Preserve their shared action lighting the lantern at upper left and the moths around it.
+Change the SETTING to a WOODLAND LANTERN PATH at night. Replace the village, chapel, houses, castle, stone bridge and broad river in the background with a dense, peaceful FOREST of old trees, gently glowing plants, and a narrow earth path winding among their trunks. Many old lanterns along this woodland path are all lit again, receding into the woods, with moths around them. Keep the warmly lit flowers, leaves and lantern supporting the foreground composition. Let silver moonlight filter softly through branches rather than showing a castle landscape.
+Exactly two friendly ghosts, happy, warm and peaceful; no extra characters. Keep detailed pixel-art painting style and the original cinematic 16:9 framing. Do not change their identities, costumes or the lantern-lighting action. No text, UI or watermark.
+
+========================================================================
+
+15-title-skiff-over-valley.png
+Title screen — the skiff over the valley
+
+INITIAL GENERATION PROMPT
+Use case: illustration-story.
+Asset type: 15-title-skiff-over-valley.png, cinematic Witch Way still.
+Input image 1: art-style and nighttime village-world reference only. Additional references, when present, are used only for the identities and designs explicitly stated below; do not copy their composition or grid layouts.
+Primary request: TITLE-SCREEN COMPOSITION: keep the ENTIRE UPPER THIRD calm and OPEN, with softly shaded indigo SKY ONLY, reserved for a title that will be added later. No moon, ship, mast, people, trees, strong bright clouds or objects entering that upper-third title area. NO ACTUAL TEXT.
+Below that clear title area, the SAME small wooden airship as input image 2 sails through a night sky of silver moonlit clouds. Keep its wooden skiff hull, patched plum-and-cream sails and big amber crystals in a brass frame, glowing with a VIOLET HEART. A TINY FIGURE in a tall witch hat stands at the rail with a BLACK CROW ON HER SHOULDER. Far below, a lantern-lit village sits by a river winding away toward a misty marsh. Include a HUGE FULL MOON within the lower two-thirds and soft glowing silver haze in the air. Cinematic, painterly, detailed pixel-art style. The entire ship and mast fit inside the lower two-thirds. Match the reference craft's design while creating a completely new sweeping aerial valley composition.
+Style: Detailed pixel-art-style painting for Witch Way: richly painted yet readable pixel texture, nocturnal violet and indigo shadows, silver moonlight, warm amber and soft violet-pink lights, handcrafted fantasy architecture. No text, logos, watermarks, labels, UI, borders or frames.
+Framing: Wide cinematic 16:9 landscape, requested resolution 1920x1080 or larger. One continuous composition, edge-to-edge, no collage, frames, panels, letterboxing, text, logos or watermarks.
+
+FINAL EDIT PROMPT
+Use case: precise-object-edit. This image is a game TITLE SCREEN. Preserve the same wooden skiff design, sails, amber-violet crystals in the brass frame, young witch and crow at its rail, moonlit river valley and village, and detailed pixel-art painting style.
+Correct the composition so the FULL UPPER ONE THIRD of the canvas is ONLY CALM DARK INDIGO SKY with sparse faint stars, edge to edge. This is a protected title placement area: absolutely no mast, pennant, lamp, rigging, sail, bright cloud, moon, mountain, tree or building can enter it.
+Reduce the scale of the airship a little and move the ENTIRE airship downward so even its tallest mast and pennant start BELOW the one-third line, with a small safety gap. Move the moon and any mountain/cloud/tree silhouettes that intrude into this band downward as needed. The airship can remain large and readable in the LOWER LEFT TWO THIRDS, with the moonlit valley and village across the lower center and right. Keep the ENTIRE hull and mast inside the frame.
+Do not draw a title, label, border or text. Maintain 16:9 landscape. Same magical nighttime scene and character/craft identities; only adjust positions, scale and sky composition to create that genuinely unobstructed top-third title area.
+
+========================================================================
+
+16-nettie-four-expressions.png
+Nettie the Swamp Witch — four expressions
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: dialogue portrait sheet, square 1024x1024 or larger.
+Input image: pixel-art portrait rendering style reference ONLY. Create an entirely different character named Nettie; do not copy the reference witch's face, round glasses, horns, hat ornaments or clothes.
+A precise 2x2 grid of four matching bust portraits of the SAME swamp witch, each centered in an equal square on flat dark slate-blue. She is a sharp-featured woman about fifty, pale skin, long BLACK hair, dark brown eyes. Crooked peat-brown witch hat with a REED band. Knotted white bog-cotton shawl like an OPEN NET, small tassels and bone charms on its edges, and ONE thread glowing faintly, over a bark-brown robe. Small stoppered bottles of green, red and amber hang at her collar.
+Top left: dry, unimpressed half-smile. Top right: laughing despite herself. Bottom left: cross scowl. Bottom right: soft, kind look she would deny.
+Chunky readable pixel art, like a 128-pixel game portrait. Match face identity, costume, scale and framing across all four equal cells. Keep complete hat and accessories inside each cell. No visible dividing lines, text, labels, numbers, UI, decorative frame or watermark.
+
+========================================================================
+
+17-lantern-mother-four-expressions.png
+The Lantern Mother — four expressions
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: dialogue portrait sheet, square 1024x1024 or larger.
+Input image: pixel-art portrait rendering style reference ONLY. Create a DIFFERENT character, a ghostly young lamplighter, without a witch hat, glasses, horns or the reference character's clothes.
+A precise 2x2 grid of four matching bust portraits of the SAME ghostly young lamplighter, each centered in its own equal square on a flat dark slate-blue background. She is pale blue-white, softly glowing, slightly see-through, wearing a high-necked black mourning dress. An old lantern held at her chin lights her warmly from below. Gentle, never frightening.
+Top left: wet BLACK LACE VEIL over her face, only a faint glint of eyes, calm and sad.
+Top right: still VEILED, head bowed in grief.
+Bottom left: veil folded BACK, revealing a tired young woman's face streaked with lamp-black, wide hopeful eyes.
+Bottom right: veil BACK, wet eyes, small relieved smile.
+Chunky readable pixel art like a 128-pixel game portrait. Same young identity, clothing, lantern and portrait scale in all four cells. No text, labels, numbers, visible grid lines, border, UI or watermark. The grief is tender, with no horror, corpse decay or frightening features.
+
+========================================================================
+
+18-nettie-lantern-mother-faces.png
+Nettie and Lantern Mother face textures
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: flat FACE TEXTURE atlas for chunky low-poly game characters. Square 1024x1024 or larger.
+Input 1: face-sheet layout and clean cartoon feature reference only. Inputs 2 and 3: Nettie and Lantern Mother facial identity references only. Do not include hair, hats, veils, clothing, lanterns, head outlines or head shapes from any reference.
+Exactly 2 columns by 2 rows of FRONT-FACING cartoon facial features, flat and straight on. NO lighting, shading, gradients or 3D rendering. Entire TOP HALF is a perfectly uniform flat pale skin color #efd8c6. Entire BOTTOM HALF is a perfectly uniform flat ghostly blue-white #d4ecf4. Facial features centered identically within equal cells. Draw only eyebrows, eyes, very minimal nose, mouth and the requested cheek smudges.
+Top row NETTIE: sharp-featured swamp witch about fifty, dark brown eyes, thin arched eyebrows, small dry mouth. Top left: eyes open, unimpressed. Top right: eyes narrowed, sly half-smile.
+Bottom row LANTERN MOTHER: TIRED YOUNG WOMAN, soft dark eyes, faint lamp-black smudges on cheeks. Bottom left: eyes open and sad. Bottom right: eyes closed, small peaceful smile. No spectacles or elderly wrinkles.
+Clean FLAT SHAPES, simple game texture style. No head outline, hair, neck, ears, body, cell boundaries, frames, text, numbers, labels or watermark.
+
+FINAL EDIT PROMPT
+Use case: precise-object-edit. Edit the supplied 2x2 face-texture atlas. Change ONLY the TOP ROW (Nettie): remove every soot mark, nose smudge and freckle from both top faces, restoring clean uninterrupted pale skin around the features. Replace the thick eyebrows with THIN ARCHED dark eyebrows. Make each mouth smaller and drier while preserving top-left unimpressed expression and top-right sly half-smile. Keep her dark brown eyes, facial positions, front-facing layout and equal cell sizes. Preserve the entire BOTTOM ROW exactly, including the Lantern Mother's cheek smudges, sad open eyes at left and peaceful closed eyes at right. Preserve the flat pale-skin top background and pale blue-white bottom background, square canvas and borderless 2x2 layout. Do not add head outlines, hair, ears, hats, shading, gradients, clothing, text, frames or grid lines. Final output remains a flat UV face texture atlas.
+
+========================================================================
+
+19-night-clouds.png
+Night clouds for flight
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: game cloud sprite sheet, landscape 3:2, 1536x1024.
+A sprite sheet on pure BLACK #000000 with EXACTLY 3 columns by 2 rows: SIX soft night clouds seen from DIRECTLY ABOVE, each a different size and shape. Their tops are lit silver and pale violet by moonlight, edges thin and wispy. Painterly pixel-art style.
+Center each separate cloud in its equal square cell with plenty of pure black around ALL edges, no overlap or cropping. Clouds occupy around 60-75 percent of each cell. Include varied elongated, curled, puffy and broken cloud silhouettes while maintaining matching light direction and style. Top-down cloud tops, not a side-view cloud panorama. No moon, sky, stars, ground, horizon, buildings, characters, labels, numbers, visible grid lines, borders, text or anything else. Opaque pure black background, not transparent.
+
+========================================================================
+
+20-drifting-lights-aether-motes.png
+Drifting lights and Aether motes
+
+INITIAL GENERATION PROMPT
+Use case: stylized-concept. Asset type: game VFX animation sprite atlas. Landscape 2:1.
+A sprite sheet on pure BLACK #000000: EXACTLY 4 columns by 2 rows, eight equal square cells with no visible boundaries.
+TOP ROW: four successive frames of the SAME small floating flame with NO LANTERN, VIOLET around its edges and warm AMBER at its heart. Flame gently bobs and flickers in a looping sequence, matched scale and centered placement, slight shape changes across the four frames.
+BOTTOM ROW: four successive frames of a tiny cluster of glittering GOLD AND SILVER MOTES twinkling, like a sparkly trail left in the air. Small separate points and short star-like sparkles, not another flame. Matching centers and scale across the four frames.
+Soft glowing pixel-art style, each frame centered in its cell, isolated, generous pure black margins, no glow crossing into adjacent cells. Nothing else in the picture. No labels, text, numbers, border, visible grid, characters, lanterns or props. Opaque black backdrop, not transparent.
+
+========================================================================
+

@@ -13,7 +13,7 @@ right before the full build.
 |---|---|
 | `dist/wickhollow-square.html` | FF9's field trick: the 3D witch walking over the painted square, behind the well and lamps, up the chapel steps. Talk to Hilde, Agnes and Inkblot; gather 11 herbs into her basket. "Behind the scenes" flies the camera out to show how it's built. |
 | `dist/witch-up-close.html` | The witch model on a turntable: her walk, gathering with the athame, witchfire (raise and throw), Moonlight, tracing a rune, the athame dash, her veil, drinking a brew, and her faces. |
-| `dist/airship.html` | The skiff: the Magpie, Quill's sunstone skiff, in 3D and wearing the paint of Thareia's turnaround sheet, with the witch at the wheel and Inkblot on the rail, flying over Thareia's painted Gloomfen between Wickhollow and Bogmire. Tap the map to fly, steer with the keys, or pick a town and she flies there and sets down at its dock. Town cards list the herbs in town and the wild places on foot from it (their foes and herbs). Night, dusk or day; stolen violet lights drift down the fen to show the way. |
+| `dist/airship.html` | The skiff: the Magpie, Quill's sunstone skiff, in 3D and wearing the paint of Thareia's turnaround sheet, with the witch at the wheel and Inkblot on the rail, flying over Thareia's painted Gloomfen between Wickhollow and Bogmire. Tap the map to fly, steer with the keys, or pick a town and she flies there and sets down at its dock. Town cards list the herbs in town and the wild places on foot from it (their foes and herbs). Painted flames drift down the Sable to show the way, under the batch's painted night clouds. |
 | `dist/bestiary.html` | Every 3D model on a turntable next to the witch, with their moves: the party (the witch, Inkblot, Nettie), six Gloomfen foes (Sour Wisp, Lamp-Moth, Glowcap, Hollowed Mandrake, Boglurcher, Mire Leech), and the veterans and bosses (Willow-Wight, Drowned Chorister, the Gloamwing, the Lantern Mother). Foes can be shown Hollowed. |
 | `dist/hollow-battle.html` | A first battle (the outline's B2): the witch against two Sour Wisps and a Lamp-Moth on Thareia's graveyard backdrop, using Aethermoor's battle rules: the turn ribbon, intent dice, d20 rolls with grazes, statuses, and loot. Her commands follow the lore: Witchfire, Moonlight, Gather, Brew, Be Still, Full Moon, Slip Away. |
 
@@ -37,8 +37,7 @@ Open **`dist/wickhollow-square.html`** in a browser. It is one file of about 3 M
 In **the airship demo**, tap anywhere on the map to fly over it, or steer with the arrow keys or WASD. Tap a
 town's name (or "Fly to") and she flies there and lands. Space lands when a town is near, or takes off from a dock.
 **Map** shows the whole region; the ♪ button switches the flying music between Thareia's *Sunstone Wind* and
-*Over the Wilds*. The map is Thareia's Gloomfen region, graded to night in code, until art batch 2's world map
-comes back.
+*Over the Wilds*. The map is art batch 2's night painting of the valley, from Wickhollow down the Sable to Bogmire.
 
 **Behind the scenes** flies the camera out of the painting so you can see how the scene is put together: the
 painting on a flat card, the painter's camera, the invisible floor, and the cut-outs standing at their depths. You
@@ -74,7 +73,7 @@ following the "no recorded songs" decision in Thareia's notes.
 | `dist/` | the built game: `wickhollow-square.html` to play, plus a copy without the `<html>` wrapper for hosts that add their own |
 | `src/` | the engine and the game |
 | `scenes/` | one JSON file per painted screen: the camera, the walkmesh, the cut-outs, the lights and the exits |
-| `art/` | the painting, dialogue portraits and pixel fonts, copied from *Follow Me Down Witch Way* |
+| `art/` | paintings (`backgrounds/`, `battle/`, `stills/`, `map/`), dialogue portraits, face sheets, effects and pixel fonts: from *Follow Me Down Witch Way*, Thareia, and art batches 1 and 2 (`docs/art-requests/`) |
 | `tools/` | build, dev server, screenshots, and `overlay.py`, which draws a scene file over its painting |
 | `tests/` | rule tests (Node) and a browser test that plays the built game |
 | `docs/` | `LORE.md` (the story), `SLICE.md` (the route and battles), `PLAN.md`, `art-requests/`, and `lore-sources/` (digests of both games' lore) |

@@ -1,0 +1,363 @@
+{
+  "title": "Witch Way art batch 02",
+  "generation_method": "built-in image_gen",
+  "original_silas_reference_used": true,
+  "exact_regional_map_and_airship_references_available": false,
+  "images": [
+    {
+      "id": 1,
+      "file": "01-world-map.png",
+      "title": "Wickhollow to the Gloomfen at night",
+      "category": "World map",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3811169,
+      "sha256": "b29c14ab059b7e1adbce40e91f5701e83b201b0c2b8299b3bc1bc09292178d2c",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        23,
+        17,
+        44
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 2,
+      "file": "02-bogmire-moot-circle.png",
+      "title": "Bogmire moot-circle and mooring mast",
+      "category": "Exploration background",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3358034,
+      "sha256": "88ae2c57c889372ed3f668ba21b2fd6f607aa8de0a9679f03fa622d9a06c84ec",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        8,
+        7,
+        13
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 3,
+      "file": "03-netties-hut-inside.png",
+      "title": "Nettie's hut interior",
+      "category": "Exploration background",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3366089,
+      "sha256": "bdd881e11b61539658b7cfefbffdf2727c26c0e1eb2777fa663d846d4e0f60ab",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        14,
+        5,
+        10
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 4,
+      "file": "04-long-boardwalk.png",
+      "title": "The Long Boardwalk",
+      "category": "Exploration background",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3198060,
+      "sha256": "8fd6a51971e6a592ef564324244009dea0c1a32fa4be9f4de3db5aa043566380",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        1,
+        2,
+        4
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 5,
+      "file": "05-mothers-hollow.png",
+      "title": "Mother's Hollow",
+      "category": "Exploration background",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3504021,
+      "sha256": "41c84636449f002ffe403d1c2497624f30ebeb5a66d8ce7a16aef6ae261ee153",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        17,
+        23,
+        30
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 6,
+      "file": "06-gloamwood-battle.png",
+      "title": "The Gloamwood — battle backdrop",
+      "category": "Battle backdrop",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 3036875,
+      "sha256": "f2fed1bbb0ed489b5770f4ad8b4c0a7f930a90b665b44af76a4ff965da52a60f",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        17,
+        25,
+        50
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 7,
+      "file": "07-open-fen-battle.png",
+      "title": "The open fen — battle backdrop",
+      "category": "Battle backdrop",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 3008239,
+      "sha256": "505f5fca8f3e50a37cb00cb03b95c9ed00300434f4dbc145e2424f4709553cd4",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        37,
+        34,
+        79
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 8,
+      "file": "08-long-boardwalk-battle.png",
+      "title": "The Long Boardwalk — battle backdrop",
+      "category": "Battle backdrop",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2812140,
+      "sha256": "1d6fb4fd308489aa90a6b6654012dc3751fc3a39a9707842c8fb9f598e0d40ed",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        11,
+        14,
+        26
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 9,
+      "file": "09-mothers-hollow-battle.png",
+      "title": "Mother's Hollow — battle backdrop",
+      "category": "Battle backdrop",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 3194394,
+      "sha256": "e080d9e347dc833419a2d4f10a2e9f83e6be3ffb9404ecee63eddbefdba622ba",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        38,
+        49,
+        55
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 10,
+      "file": "10-lights-go-down-the-river.png",
+      "title": "Opening — the lights go down the river",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 941,
+      "bytes": 3200842,
+      "sha256": "6a0e011715da138f731ec1e97ce8070832c2a5466ff39cff85f32309b3ae242b",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        3,
+        5,
+        10
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 11,
+      "file": "11-the-skiff-wakes.png",
+      "title": "The skiff wakes",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 941,
+      "bytes": 3084652,
+      "sha256": "0b393081fefa46380fffa74fe025473c91d4c52c8392c7936f2580f6d1162357",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        6,
+        10,
+        12
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 12,
+      "file": "12-night-misthollow-sank.png",
+      "title": "The night Misthollow sank — a memory",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 940,
+      "bytes": 2622083,
+      "sha256": "0bd1e0a6a39988f42459175337b6a528778109dca1fa6b98bc47012f95cf9191",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        47,
+        34,
+        43
+      ],
+      "received_targeted_revision": true
+    },
+    {
+      "id": 13,
+      "file": "13-lights-go-home.png",
+      "title": "Ending — the lights go home",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 941,
+      "bytes": 3125065,
+      "sha256": "bf1b43e5205663dc29d4bda09842cd01f3ee524d3c8910eee0bb9239907117a4",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        39,
+        38,
+        85
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 14,
+      "file": "14-two-lamplighters.png",
+      "title": "Ending — two lamplighters",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 941,
+      "bytes": 3303196,
+      "sha256": "50b6904998b5f861fef28cd37f36dd987a936e6f0343e881a111fabcbf9edd23",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        1,
+        1,
+        1
+      ],
+      "received_targeted_revision": true
+    },
+    {
+      "id": 15,
+      "file": "15-title-skiff-over-valley.png",
+      "title": "Title screen — the skiff over the valley",
+      "category": "Cinematic still",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2611252,
+      "sha256": "57887ba22c9f212f5cb0e4e451f24981ffa19aa73104ca05c28b2a8dbc390e47",
+      "requested_grid_columns_rows": null,
+      "corner_rgb": [
+        11,
+        18,
+        73
+      ],
+      "received_targeted_revision": true
+    },
+    {
+      "id": 16,
+      "file": "16-nettie-four-expressions.png",
+      "title": "Nettie the Swamp Witch — four expressions",
+      "category": "Dialogue portraits",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2540768,
+      "sha256": "a758af0bb63378d02e11e363096c46083e83a7752de4708cedd181e7034f242f",
+      "requested_grid_columns_rows": [
+        2,
+        2
+      ],
+      "corner_rgb": [
+        43,
+        61,
+        81
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 17,
+      "file": "17-lantern-mother-four-expressions.png",
+      "title": "The Lantern Mother — four expressions",
+      "category": "Dialogue portraits",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2541721,
+      "sha256": "67d6d396d77a6ad97b158f45fc763071d130136b4c9e243187fbc61f0cede81b",
+      "requested_grid_columns_rows": [
+        2,
+        2
+      ],
+      "corner_rgb": [
+        40,
+        58,
+        82
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 18,
+      "file": "18-nettie-lantern-mother-faces.png",
+      "title": "Nettie and Lantern Mother face textures",
+      "category": "Face textures",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1322456,
+      "sha256": "a4ac03f27d9dd4b7984507c8a590d80a05ee1b2791c8e6bf321d4100aa1839fc",
+      "requested_grid_columns_rows": [
+        2,
+        2
+      ],
+      "corner_rgb": [
+        232,
+        195,
+        171
+      ],
+      "received_targeted_revision": true
+    },
+    {
+      "id": 19,
+      "file": "19-night-clouds.png",
+      "title": "Night clouds for flight",
+      "category": "Effects",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1695966,
+      "sha256": "8c493a37c482eb139c9b0992121b3b4c719af0b8c87f1197911b02f7611af2fa",
+      "requested_grid_columns_rows": [
+        3,
+        2
+      ],
+      "corner_rgb": [
+        0,
+        0,
+        0
+      ],
+      "received_targeted_revision": false
+    },
+    {
+      "id": 20,
+      "file": "20-drifting-lights-aether-motes.png",
+      "title": "Drifting lights and Aether motes",
+      "category": "Effects",
+      "width": 1774,
+      "height": 887,
+      "bytes": 681588,
+      "sha256": "0f25f954a46a0a651556359d1adf1e2c9f8158d029f99090bb27dff4517c8fd3",
+      "requested_grid_columns_rows": [
+        4,
+        2
+      ],
+      "corner_rgb": [
+        1,
+        1,
+        1
+      ],
+      "received_targeted_revision": false
+    }
+  ]
+}
