@@ -1,0 +1,31 @@
+{
+  "_about": "A battle backdrop: Thareia's graveyard at night (New-game repo, thareia/art-in/scenes/battle-graveyard-night.png). A lower, closer camera than the field screens, so the fighters stand large. Check with: python3 tools/overlay.py scenes/battle-graveyard.json out.png",
+  "id": "battle-graveyard",
+  "title": "The Hollow",
+  "image": "art/battle/graveyard-night.webp",
+  "size": [1448, 1086],
+  "camera": { "fov": 34, "pitch": 8.7, "ppm": 85 },
+  "walk": [
+    {
+      "name": "the clearing",
+      "points": [
+        [180, 600], [420, 560], [900, 560], [1180, 590], [1330, 640], [1320, 760], [1250, 850],
+        [1100, 860], [900, 900], [600, 920], [330, 900], [210, 850], [150, 720]
+      ]
+    }
+  ],
+  "layers": [
+    { "name": "gravestone, front left", "base": [120, 885], "outline": [[[48, 700], [92, 668], [140, 672], [182, 702], [206, 862], [164, 902], [56, 888]]] },
+    { "name": "gravestone, front right", "base": [1200, 958], "outline": [[[1138, 872], [1178, 850], [1252, 858], [1262, 962], [1140, 964]]] },
+    { "name": "grave cross, right", "base": [1355, 832], "outline": [[[1308, 762], [1350, 740], [1398, 752], [1402, 832], [1314, 834]]] }
+  ],
+  "lights": [
+    { "_what": "gate lantern", "pixel": [918, 262], "base": [918, 330], "color": "#ffb45e", "intensity": 6, "distance": 9, "glow": 0.8 },
+    { "_what": "gate lantern", "pixel": [1038, 258], "base": [1038, 330], "color": "#ffb45e", "intensity": 6, "distance": 9, "glow": 0.8 },
+    { "_what": "runestone", "pixel": [198, 360], "base": [200, 470], "color": "#7dffa0", "intensity": 5, "distance": 7, "glow": 1.2 },
+    { "_what": "runestone", "pixel": [1220, 372], "base": [1220, 480], "color": "#7dffa0", "intensity": 5, "distance": 7, "glow": 1.2 },
+    { "_what": "runestone", "pixel": [1384, 470], "base": [1384, 520], "color": "#7dffa0", "intensity": 4, "distance": 6, "glow": 1.0 }
+  ],
+  "spawn": { "pixel": [1060, 760], "facing": "left" },
+  "exits": []
+}

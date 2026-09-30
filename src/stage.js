@@ -26,6 +26,8 @@ export class Stage {
     this.showGuides = false;
 
     this.focus = new THREE.Vector2(paint.width / 2, paint.height / 2);
+    this.zoom = 1; // 1 fills the screen with the painting; more moves the camera in (battle sweeps)
+    this.zoomTarget = 1;
     this.window = { x: 0, y: 0, w: paint.width, h: paint.height };
 
     this.screenCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -77,14 +79,25 @@ export class Stage {
     this.renderer.setSize(w, h, false);
     this.cssSize = { w, h };
     // Fill the screen with the painting ("cover") and scroll over whatever doesn't fit.
-    this.scale = Math.max(w / this.paint.width, h / this.paint.height);
-    this.window.w = w / this.scale;
-    this.window.h = h / this.scale;
-    this.makeTarget();
+    this.applyZoom();
+    this.makeTarget(true);
     this.setFocus(this.focus, true);
   }
 
-  makeTarget() {
+  applyZoom() {
+    const { w, h } = this.cssSize;
+    this.scale = Math.max(w / this.paint.width, h / this.paint.height) * this.zoom;
+    this.window.w = w / this.scale;
+    this.window.h = h / this.scale;
+  }
+
+  // Move the camera in or out; `instant` skips the glide.
+  setZoom(z, instant = false) {
+    this.zoomTarget = z;
+    if (instant) { this.zoom = z; this.applyZoom(); this.makeTarget(); }
+  }
+
+  makeTarget(force = false) {
     const size = new THREE.Vector2();
     this.renderer.getDrawingBufferSize(size);
     let w = size.x, h = size.y;
@@ -93,6 +106,8 @@ export class Stage {
       h = Math.ceil(this.window.h / this.pixelSize);
     }
     if (this.rt && this.rt.width === w && this.rt.height === h) return;
+    // While zooming, keep the old picture unless the size is well off, rather than reallocate every frame.
+    if (!force && this.rt && Math.abs(this.rt.width / w - 1) < 0.08) return;
     this.rt?.dispose();
     this.rt = new THREE.WebGLRenderTarget(w, h, {
       type: THREE.HalfFloatType,
@@ -106,7 +121,7 @@ export class Stage {
 
   setPixelSize(px) {
     this.pixelSize = px;
-    this.makeTarget();
+    this.makeTarget(true);
   }
 
   // Scroll so a painting pixel sits in the middle of the screen, as far as the painting's edges allow.
@@ -128,6 +143,11 @@ export class Stage {
   }
 
   update(dt) {
+    if (Math.abs(this.zoom - this.zoomTarget) > 1e-4) {
+      this.zoom += (this.zoomTarget - this.zoom) * (1 - Math.exp(-dt * 3));
+      this.applyZoom();
+      this.makeTarget();
+    }
     this.scrollTo(this.focus, 1 - Math.exp(-dt * 4));
     const W = this.window, P = this.paint;
     this.view.setViewOffset(P.width, P.height, W.x, W.y, W.w, W.h);
