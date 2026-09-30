@@ -98,9 +98,12 @@ export function inkMat(color = '#12091a', { opacity = 1, scale = 1 } = {}) {
   return inks.get(key);
 }
 
-// Like kit's part(), but the outline can be any ink (opts.ink: false, true, or an inkMat()).
-export function makePart(defaultInk) {
+// Like kit's part(), but the outline can be any ink (opts.ink: false, true, or an inkMat()). For see-through
+// ghosts pass { order: 1, inkOrder: 2 }: the body draws first and writes depth, so its outline only shows round
+// the edge instead of darkening the middle.
+export function makePart(defaultInk, defaults = {}) {
   return function piece(parent, geometry, material, opts = {}) {
+    opts = { ...defaults, ...opts };
     const mesh = new THREE.Mesh(geometry, material);
     if (opts.pos) mesh.position.set(...opts.pos);
     if (opts.rot) mesh.rotation.set(...opts.rot);
@@ -111,7 +114,7 @@ export function makePart(defaultInk) {
     if (ink) {
       const outline = new THREE.Mesh(geometry, ink);
       outline.name = 'ink';
-      if (opts.order !== undefined) outline.renderOrder = opts.order - 1;
+      outline.renderOrder = opts.inkOrder ?? (opts.order !== undefined ? opts.order - 1 : 0);
       mesh.add(outline);
     }
     parent.add(mesh);
@@ -121,7 +124,8 @@ export function makePart(defaultInk) {
 
 // ---------------------------------------------------------------- textures painted in code
 
-export function paint(w, h, draw, { repeat, wrap = true, srgb = true } = {}) {
+// flipY false maps the canvas top to v = 0 (the top row of a skirt() or drape()).
+export function paint(w, h, draw, { repeat, wrap = true, srgb = true, flipY = true } = {}) {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
@@ -130,6 +134,7 @@ export function paint(w, h, draw, { repeat, wrap = true, srgb = true } = {}) {
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
   if (wrap) tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   if (repeat) tex.repeat.set(...repeat);
+  tex.flipY = flipY;
   tex.anisotropy = 4;
   return tex;
 }
@@ -385,6 +390,7 @@ export function rippleDrape(geo, { time = 0, ripple = 0.02, wave = 0.02, wind = 
 
 // ---------------------------------------------------------------- particles
 
+const colors = new Map();
 // Points that are born, drift and fade: drips, dust, bubbles, leaves. They live in `parent`'s space.
 export class Particles {
   constructor(count, { color = '#ffffff', size = 0.05, opacity = 1, additive = true, texture = dotTexture() } = {}) {
@@ -408,7 +414,8 @@ export class Particles {
     const i = this.next;
     this.next = (this.next + 1) % this.count;
     const q = this.p[i];
-    q.age = 0; q.life = life; q.vx = vx; q.vy = vy; q.vz = vz; q.c = color;
+    q.age = 0; q.life = life; q.vx = vx; q.vy = vy; q.vz = vz;
+    q.c = color ? (color.isColor ? color : (colors.get(color) ?? colors.set(color, new THREE.Color(color)).get(color))) : null;
     this.pos[i * 3] = x; this.pos[i * 3 + 1] = y; this.pos[i * 3 + 2] = z;
     return q;
   }

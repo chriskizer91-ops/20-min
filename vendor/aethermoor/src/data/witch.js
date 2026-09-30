@@ -58,7 +58,7 @@ export const WITCH_RELICS = {
     id: 'witchfire', name: 'Witchfire', kind: 'witchfire', slot: 'weapon', aspect: 'ember', rarity: 'worn', ilvl: 1,
     holder: 'In her hand', grip: 99,
     weapon: { dice: '1d8', dmg: 'ember', hands: 1, weight: -5, ability: ['WIS'], ranged: true, extra: [] },
-    stats: {},
+    stats: { hit: 1 }, // it goes where she looks: +1 to hit
     power: MOONRISE,
     lore: 'Witchfire burns nothing that belongs. It lights lamps, cauldrons and braziers, and it knows when the moon is up.',
     sockets: 0, deeds: ['first-blood', 'surge', 'untouched'],
@@ -114,7 +114,7 @@ export const WITCH_HEROES = {
   nettie: {
     id: 'nettie', name: 'Nettie', title: 'the Swamp Witch of Bogmire', race: 'human', role: 'Healer, herbalist, witch',
     base: { STR: 8, DEX: 10, CON: 14, INT: 14, WIS: 16, CHA: 11 },
-    hpDie: 8, mp: { base: 8, perLevel: 3, stat: 'WIS' },
+    hpDie: 8, mp: { base: 6, perLevel: 2, stat: 'WIS' },
     domain: 'attunement', secondary: ['craft'],
     prof: { weapons: ['staff'], armor: ['robe'], offhand: [] },
     asi: [['WIS', 'CON'], ['WIS', 'INT']],
@@ -154,22 +154,22 @@ export const WITCH_SKILLS = {
   // Inkblot
   pinch: {
     id: 'pinch', name: 'Pinch', domain: 'survival', mp: 2, delay: 0.8, target: 'enemy',
-    text: 'A beak where it hurts and a tug at whatever it holds: half-damage peck, 2d6 + DEX grip damage, and it Staggers (a charge comes to nothing).',
-    effects: [{ type: 'attack', weapon: true, mult: 0.5, grip: '2d6', gripStat: 'DEX', riders: [{ type: 'status', status: 'staggered' }] }],
+    text: 'A beak where it hurts and a tug at whatever it holds: half-damage peck, 2d6 + DEX grip damage, and it is Flustered (a charge comes to nothing).',
+    effects: [{ type: 'attack', weapon: true, mult: 0.5, hit: 2, grip: '2d6', gripStat: 'DEX', riders: [{ type: 'status', status: 'flustered' }] }],
   },
   kraa: {
-    id: 'kraa', name: 'Kraa!', domain: 'survival', mp: 1, delay: 0.7, target: 'all-enemies',
+    id: 'kraa', name: 'Kraa!', domain: 'survival', mp: 0, delay: 0.7, target: 'all-enemies',
     text: '"KRAA." Every foe is Provoked into going for him, and he Guards.',
     effects: [{ type: 'status', status: 'provoked', turns: 1 }, { type: 'status', status: 'guarding', self: true }],
   },
   // Nettie
   'mind-the-jars': {
-    id: 'mind-the-jars', name: 'Mind the Jars', domain: 'attunement', mp: 1, delay: 0.9, target: 'enemy',
+    id: 'mind-the-jars', name: 'Mind the Jars', domain: 'attunement', mp: 2, delay: 0.9, target: 'enemy',
     text: 'A jar of fen-water, thrown: 1d6 + WIS tide (the Lantern Mother\'s weakness). Some jars bite: DEX save or Snagged.',
     effects: [{ type: 'damage', dice: '1d6', stat: 'WIS', diceEvery: 4, kind: 'tide', aspect: 'tide' }, { type: 'status', status: 'bleeding', save: 'DEX' }],
   },
   'stir-the-pot': {
-    id: 'stir-the-pot', name: 'Stir the Pot', domain: 'attunement', mp: 3, delay: 1, target: 'ally',
+    id: 'stir-the-pot', name: 'Stir the Pot', domain: 'attunement', mp: 4, delay: 1, target: 'ally',
     text: 'A ladleful from the pot for whoever needs it most: heal 2d8 + WIS.',
     effects: [{ type: 'heal', dice: '2d8', stat: 'WIS', diceEvery: 4 }],
   },

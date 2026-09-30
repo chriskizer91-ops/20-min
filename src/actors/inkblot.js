@@ -22,7 +22,8 @@ const L1 = 0.07, L2 = 0.085; // drumstick and bare leg
 const FOOT = 0.012; // the foot joint's height above the ground when standing
 const HIP_X = 0.028;
 const PRIMARY_SPREAD = [0.3, 0.55, 0.8, 1.05, 1.3]; // fan angles of the five "fingers" with the wing open
-const ARM = 0.055, FOREARM = 0.07; // wing bones: shoulder to elbow, elbow to wrist
+const ARM = 0.05, FOREARM = 0.065; // wing bones: shoulder to elbow, elbow to wrist
+const BODY_W = 0.86; // a bird is narrower than it is deep; the folded wings lie on its upper flanks
 const TAIL_SLOTS = 8, TAIL_GAP = 5; // one slot left empty: the missing feather
 
 export function createInkblot() {
@@ -34,13 +35,13 @@ export function createInkblot() {
   trunk.rotation.x = -TILT;
 
   // ---------------------------------------------------------------- body: an egg of overlapping feathers
-  const bodyTex = scallops({ cols: 10, rows: 9, base: C.feather, dark: C.dark, edge: C.sheen, strength: 0.42 });
+  const bodyTex = scallops({ cols: 10, rows: 9, base: C.feather, dark: C.dark, edge: C.sheen, strength: 0.32 });
   const bodyMat = toonMap(bodyTex);
   const torsoGeo = lathe([[0.002, -0.15], [0.03, -0.14], [0.056, -0.11], [0.076, -0.062], [0.087, -0.01], [0.089, 0.035], [0.083, 0.074], [0.066, 0.106], [0.036, 0.127], [0.002, 0.133]], 16);
   torsoGeo.rotateX(Math.PI / 2); // along +z (the front)
   const torso = part(trunk, torsoGeo, bodyMat);
-  const breastTex = scallops({ cols: 12, rows: 8, base: C.feather, dark: C.dark, edge: C.sheen2, sheenByU: false, strength: 0.26 });
-  const breast = part(trunk, sphere(0.068, 14, 10), toonMap(breastTex), { pos: [0, -0.024, 0.058], scale: [1.02, 0.98, 0.95] });
+  const breastTex = scallops({ cols: 16, rows: 10, base: C.feather, dark: C.dark, edge: C.sheen2, sheenByU: false, strength: 0.2 });
+  const breast = part(trunk, sphere(0.068, 14, 10), toonMap(breastTex), { pos: [0, -0.024, 0.058], scale: [0.95, 0.98, 0.95] });
   part(trunk, sphere(0.056, 12, 8), toonMap(breastTex), { pos: [0, 0.03, 0.094] }); // the thick neck, under the head
 
   // ---------------------------------------------------------------- head, beak, eyes
@@ -49,7 +50,8 @@ export function createInkblot() {
   const head = joint(neck, [0, 0.052, 0.018], 'head');
   head.rotation.order = 'YXZ';
   const headTex = scallops({ cols: 16, rows: 8, base: C.feather, dark: C.dark, edge: C.sheen, sheenByU: false, strength: 0.22 });
-  part(head, sphere(0.07, 18, 14), toonMap(headTex), { scale: [0.94, 0.9, 1.06] });
+  // poles at the beak and the nape, so the feathers' tips all point back
+  part(head, sphere(0.07, 18, 14), toonMap(headTex), { rot: [Math.PI / 2, 0, 0], scale: [0.94, 1.06, 0.9] });
   // the scruffy crown: a few feathers at the back that never lie flat
   const crown = part(head, merge([
     taperedTube([[0.004, 0.056, -0.012], [0.008, 0.07, -0.03], [0.012, 0.07, -0.048]], 0.01, 0.0015, 8, 5),
@@ -74,20 +76,20 @@ export function createInkblot() {
   const pupilMat = new THREE.MeshBasicMaterial({ color: C.pupil });
   const glintMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
   const eyes = [-1, 1].map((s) => {
-    const e = joint(head, [s * 0.043, 0.006, 0.043]);
-    e.rotation.y = s * 0.74;
+    const e = joint(head, [s * 0.042, 0.006, 0.045]);
+    e.rotation.y = s * 0.66;
     const lid = joint(e, [0, 0, 0]);
-    part(lid, sphere(0.0168, 14, 10), toon(C.dark), { scale: [1.06, 1.06, 0.5], pos: [0, 0, -0.002], ink: false }); // the dark rim
-    part(lid, sphere(0.0158, 14, 10), irisMat, { scale: [1, 1, 0.5], ink: false });
-    part(lid, sphere(0.0082, 10, 8), pupilMat, { pos: [0, 0, 0.0062], scale: [1, 1, 0.5], ink: false });
-    part(lid, sphere(0.0034, 6, 5), glintMat, { pos: [s * -0.003, 0.0058, 0.0098], ink: false });
+    part(lid, sphere(0.0178, 14, 10), toon(C.dark), { scale: [1.06, 1.06, 0.5], pos: [0, 0, -0.002], ink: false }); // the dark rim
+    part(lid, sphere(0.0168, 14, 10), irisMat, { scale: [1, 1, 0.5], ink: false });
+    part(lid, sphere(0.0068, 10, 8), pupilMat, { pos: [0, 0, 0.0068], scale: [1, 1, 0.5], ink: false });
+    part(lid, sphere(0.0033, 6, 5), glintMat, { pos: [s * -0.0032, 0.006, 0.0102], ink: false });
     return lid;
   });
   // feathered brow ridges: they frown, rise and scheme
   const brows = [-1, 1].map((s) => {
-    const b = joint(head, [s * 0.037, 0.028, 0.049]);
-    b.rotation.set(0.25, s * 0.55, 0, 'YXZ');
-    part(b, sphere(0.015, 10, 6), toon(C.dark), { scale: [1.6, 0.42, 0.8] });
+    const b = joint(head, [s * 0.036, 0.026, 0.05]);
+    b.rotation.set(0.25, s * 0.6, 0, 'YXZ');
+    part(b, taperedTube([[-s * 0.016, -0.002, 0], [0, 0.003, 0.002], [s * 0.016, 0.001, -0.002]], 0.0045, 0.0025, 6, 5), toon(C.dark), { ink: false });
     return { b, s };
   });
 
@@ -105,14 +107,15 @@ export function createInkblot() {
 
   // ---------------------------------------------------------------- wings
   // Three bones, as a bird's: the arm (tertials), the forearm (coverts and four secondaries) and the hand (five long
-  // primaries, the "fingers" a crow shows in flight). Folded, the arm points back along his side, the forearm doubles
-  // forward over it and the hand points back again, so the wing's top faces out and the feathers close up behind it;
-  // open, every bone lines up and the feathers fan out. Each joint slerps between the two.
+  // primaries, the "fingers" a crow shows in flight). The wing folds in its own plane, as a real one does: the elbow
+  // and wrist are hinges that close it into a Z (forearm doubled back along the arm, hand pointing out again) while
+  // the feathers turn to lie along it; the shoulder then lays the folded wing along his flank, top facing out.
+  // Half-folded, it looks like a half-folded wing, and on each upstroke in flight the wing half-closes by itself.
   const featherMat = toonMap(featherTexture(C.feather, C.sheen));
   const primaryMat = toonMap(featherTexture(C.dark, C.sheen2));
   const covertMat = toonMap(featherTexture(C.feather, C.sheen, true));
-  const secGeo = bladeGeometry(0.11, 0.038, { thick: 0.12, profile: PROFILE.feather, bend: -0.008 });
-  const priGeos = [0.17, 0.185, 0.195, 0.198, 0.185].map((len, i) => bladeGeometry(len, 0.036 - i * 0.0022, { thick: 0.11, profile: PROFILE.primary, bend: -0.012 }));
+  const secGeo = bladeGeometry(0.115, 0.04, { thick: 0.12, profile: PROFILE.feather, bend: -0.008 });
+  const priGeos = [0.215, 0.235, 0.25, 0.255, 0.24].map((len, i) => bladeGeometry(len, 0.037 - i * 0.0024, { thick: 0.11, profile: PROFILE.primary, bend: -0.014 }));
   const basis = (x, y) => {
     const X = new THREE.Vector3(...x).normalize(), Y = new THREE.Vector3(...y);
     Y.addScaledVector(X, -Y.dot(X)).normalize();
@@ -120,37 +123,31 @@ export function createInkblot() {
   };
   const euler = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
   const wings = [-1, 1].map((s) => {
-    // Folded orientations in the body's frame (x: the bone, y: the wing's top, z: toward its leading edge)
-    const armFold = basis([0, -0.3 * s, -s], [-s, 0.25, 0]); // back and down; top turned in, under the forearm
-    const foreFold = basis([0, 0.1 * s, s], [s, 0.4, 0]); // forward; top facing out
-    const handFold = basis([-0.12, -0.14 * s, -s], [s, 0.4, 0]); // back again, tips drawn in over the tail
-    const Q = {
-      armSpread: euler(0, s * 0.1, 0), armFold,
-      foreSpread: euler(0, -s * 0.08, 0), foreFold: armFold.clone().invert().multiply(foreFold),
-      handSpread: euler(0, s * 0.18, 0), handFold: foreFold.clone().invert().multiply(handFold),
-    };
-    const shoulder = joint(trunk, [s * 0.07, 0.05, 0.058]);
-    part(shoulder, merge([0, 1].map((i) => bladeGeometry(0.085, 0.034, { thick: 0.13, profile: PROFILE.feather, bend: -0.005 }).translate(s * (0.014 + i * 0.024), 0.004 - i * 0.003, 0.002))), featherMat);
+    // The folded wing laid along the body (x: toward the wingtip, y: the wing's top, z: its leading edge)
+    const Q = { armSpread: euler(0, s * 0.1, 0), armFold: basis([-0.06 * s, -0.2 * s, -s], [s, 0.3, 0]) };
+    const shoulder = joint(trunk, [s * 0.068, 0.07, 0.05]);
+    const tertials = joint(shoulder, [s * 0.012, 0.004, 0.002]);
+    part(tertials, merge([0, 1].map((i) => bladeGeometry(0.085, 0.034, { thick: 0.13, profile: PROFILE.feather, bend: -0.005 }).translate(s * i * 0.024, -i * 0.003, 0))), featherMat);
     const elbow = joint(shoulder, [s * ARM, 0, 0]);
     // coverts: two rows of short feathers along the forearm (merged: one mesh, one outline, every edge drawn)
     const coverts = [];
     for (let i = 0; i < 4; i++) {
-      coverts.push(bladeGeometry(0.046, 0.032, { thick: 0.16, profile: PROFILE.covert }).rotateY(s * 0.25).translate(s * (0.0 + i * 0.022), 0.012, 0.012));
-      coverts.push(bladeGeometry(0.066, 0.034, { thick: 0.14, profile: PROFILE.covert }).rotateY(s * 0.2).translate(s * (0.006 + i * 0.022), 0.008, -0.004));
+      coverts.push(bladeGeometry(0.05, 0.034, { thick: 0.16, profile: PROFILE.covert }).rotateY(s * 0.35).translate(s * (0.0 + i * 0.021), 0.014, 0.012));
+      coverts.push(bladeGeometry(0.072, 0.036, { thick: 0.14, profile: PROFILE.covert }).rotateY(s * 0.3).translate(s * (0.006 + i * 0.021), 0.009, -0.004));
     }
     part(elbow, merge(coverts), covertMat);
     const secondaries = [0, 1, 2, 3].map((i) => {
-      const j = joint(elbow, [s * (0.004 + i * 0.021), 0.004 - i * 0.0026, -0.006]);
+      const j = joint(elbow, [s * (0.004 + i * 0.02), 0.004 - i * 0.003, -0.006]);
       part(j, secGeo, featherMat);
       return j;
     });
     const wrist = joint(elbow, [s * FOREARM, 0, 0]);
     const primaries = priGeos.map((geo, i) => {
-      const j = joint(wrist, [s * i * 0.009, -0.009 - i * 0.0026, 0.002]);
+      const j = joint(wrist, [s * i * 0.009, -0.006 - i * 0.003, 0.002]);
       part(j, geo, primaryMat);
       return j;
     });
-    return { s, shoulder, elbow, wrist, secondaries, primaries, Q };
+    return { s, shoulder, tertials, elbow, wrist, secondaries, primaries, Q };
   });
 
   // ---------------------------------------------------------------- tail, with the gap
@@ -160,7 +157,7 @@ export function createInkblot() {
     if (i === TAIL_GAP) continue;
     const mid = Math.abs(i - (TAIL_SLOTS - 1) / 2);
     const j = joint(tail, [0, 0.0028 * (4 - mid), 0]);
-    part(j, bladeGeometry(0.158 - mid * 0.006, 0.042, { thick: 0.11, profile: PROFILE.tail, bend: -0.006 }), featherMat);
+    part(j, bladeGeometry(0.158 - mid * 0.006, 0.037, { thick: 0.12, profile: PROFILE.tail, bend: -0.006 }), featherMat);
     tailFeathers.push({ j, i });
   }
   part(trunk, sphere(0.04, 10, 8), bodyMat, { pos: [0, -0.012, -0.118], scale: [1, 0.7, 1.3] }); // under-tail coverts
@@ -198,7 +195,7 @@ export function createInkblot() {
   // A brew for Fetch, carried in his feet
   const bottlePivot = joint(legs[1].foot, [0, -0.008, 0.02]);
   const bottle = joint(bottlePivot, [0, 0, 0]);
-  part(bottle, lathe([[0.001, -0.04], [0.016, -0.038], [0.018, -0.02], [0.01, -0.006], [0.0065, 0.0], [0.007, 0.006]].reverse(), 10), new THREE.MeshToonMaterial({ color: '#b8ffd0', transparent: true, opacity: 0.8 }));
+  part(bottle, lathe([[0.001, -0.04], [0.016, -0.038], [0.018, -0.02], [0.01, -0.006], [0.0065, 0.0], [0.007, 0.006]], 10), new THREE.MeshToonMaterial({ color: '#b8ffd0', transparent: true, opacity: 0.8 }));
   part(bottle, sphere(0.014, 8, 6), new THREE.MeshBasicMaterial({ color: '#6dffa0' }), { pos: [0, -0.026, 0], ink: false });
   part(bottle, cyl(0.006, 0.0055, 0.01, 6), toon('#8a5a36'), { pos: [0, 0.008, 0], ink: false });
   const bottleGlow = glowSprite('#7dffb0', 0.14, 0.6);
@@ -393,9 +390,9 @@ export function createInkblot() {
             // Puff up, half-open the wings over his back, and shout twice. Foes can't help but look.
             const on = win(k, 0, 1, 0.14);
             P.puff += on; P.tailSpread += on * 0.9; P.brow += on;
-            for (const w of P.wings) { w.fold -= on * 0.5; w.flap += on * 0.35; w.twist -= on * 0.2; }
             const c1 = arch(k, 0.18, 0.42), c2 = arch(k, 0.5, 0.8);
             const c = c1 * 0.8 + c2;
+            for (const w of P.wings) { w.fold -= on * 0.22 + c * 0.25; w.flap += on * 0.3 + c * 0.2; }
             P.beak += c; P.neckZ += c * 0.024; P.headPitch -= c * 0.32; P.pitch += c * 0.2; P.tailPitch -= c * 0.35;
             P.hipY -= c * 0.01;
             once('r1', 0.24, () => spawnRing(0));
@@ -633,8 +630,8 @@ export function createInkblot() {
     hips.rotation.set(P.pitch, P.hipYaw, P.roll);
     const puff = S.puff.update(clamp(P.puff, 0, 1.3), dt);
     const breathe = 1 + Math.sin(time * 2.6) * 0.012;
-    torso.scale.set(1 + puff * 0.1, (1 + puff * 0.12) * breathe, 1 + puff * 0.04);
-    breast.scale.set(1.02 + puff * 0.2, (0.98 + puff * 0.18) * breathe, 0.95 + puff * 0.2);
+    torso.scale.set(BODY_W + puff * 0.1, (1 + puff * 0.12) * breathe, 1 + puff * 0.04);
+    breast.scale.set(0.95 + puff * 0.2, (0.98 + puff * 0.18) * breathe, 0.95 + puff * 0.2);
     hackles.scale.setScalar(1 + puff * 0.35);
     crown.scale.setScalar(1 + puff * 0.4);
     neck.position.set(0, 0.046 + P.neckY, 0.1 + P.neckZ);
@@ -655,14 +652,16 @@ export function createInkblot() {
       // shoulder: sweep and flap (in the body's frame), then the fold, then a twist about the bone
       W.shoulder.quaternion.setFromEuler(eu.set(0, s * w.sweep, s * w.flap * (1 - f * 0.55)));
       W.shoulder.quaternion.multiply(qTmp.slerpQuaternions(Q.armSpread, Q.armFold, f)).multiply(q1.setFromAxisAngle(AX, w.twist));
-      W.elbow.quaternion.slerpQuaternions(Q.foreSpread, Q.foreFold, f);
-      W.wrist.quaternion.slerpQuaternions(Q.handSpread, Q.handFold, f).multiply(q1.setFromEuler(eu.set(0, s * w.hand, -s * w.bend)));
-      W.secondaries.forEach((j, n) => (j.rotation.y = lerp(-s * (0.02 + n * 0.06), s * (1.12 - n * 0.05), f)));
-      W.primaries.forEach((j, n) => (j.rotation.y = -s * lerp(PRIMARY_SPREAD[n], 1.5 + n * 0.02, f)));
+      W.elbow.rotation.set(0, -s * (0.08 + 2.92 * f), 0); // the Z-fold: forearm doubles back along the arm...
+      W.wrist.rotation.set(0, s * (0.18 + 2.84 * f + w.hand), -s * w.bend); // ...and the hand points out again
+      W.tertials.rotation.y = -s * 1.75 * f;
+      W.secondaries.forEach((j, n) => (j.rotation.y = lerp(-s * (0.02 + n * 0.06), s * (1.2 - n * 0.05), f)));
+      W.primaries.forEach((j, n) => (j.rotation.y = -s * lerp(PRIMARY_SPREAD[n], 1.56 + n * 0.02, f)));
     }
     tail.rotation.set(S.tail.update(P.tailPitch, dt), P.tailYaw, 0);
-    const spread = lerp(0.085, 0.21, clamp(S.spread.update(P.tailSpread, dt), 0, 1.2));
-    for (const { j, i } of tailFeathers) j.rotation.y = (i - (TAIL_SLOTS - 1) / 2) * spread;
+    const spread = lerp(0.1, 0.24, clamp(S.spread.update(P.tailSpread, dt), 0, 1.2));
+    // the feathers either side of the gap lean away from it, so the notch shows even with the tail closed
+    for (const { j, i } of tailFeathers) j.rotation.y = (i - (TAIL_SLOTS - 1) / 2) * spread + Math.sign(i - TAIL_GAP) * (Math.abs(i - TAIL_GAP) === 1 ? 0.06 : 0.02);
 
     // legs: two-bone IK in the side plane; the heel bends back (or forward, sitting with his legs out)
     for (const [i, L] of legs.entries()) {
@@ -782,7 +781,7 @@ function legTexture() {
   return canvasTexture(32, 64, (g, w, h) => {
     g.fillStyle = C.leg;
     g.fillRect(0, 0, w, h);
-    g.strokeStyle = '#5a5566';
+    g.strokeStyle = '#46404f';
     g.lineWidth = 1.5;
     for (let y = 4; y < h; y += 8) {
       g.beginPath();

@@ -418,15 +418,16 @@ export function createWillowWight() {
             const down = ss(k, 0.64, 0.72) * (1 - ss(k, 0.86, 1));
             const tremble = up * Math.sin(time * 40) * 0.04 * ss(k, 0.3, 0.6);
             for (const A of arms) {
-              A.shoulder.rotation.y += -A.side * (up + down) * 0.85;
-              A.shoulder.rotation.z += A.side * (up * 0.55 + down * 0.3);
-              A.shoulder.rotation.x += -up * 1.1 + down * 0.55 + tremble;
-              A.elbow.rotation.z += A.side * up * 0.3;
-              A.elbow.rotation.x = -up * 0.3;
+              A.shoulder.rotation.y += -A.side * (up + down) * 0.9;
+              A.shoulder.rotation.z += A.side * (up * 0.7 + down * 0.3);
+              A.shoulder.rotation.x += -up * 0.55 + down * 0.6 + tremble;
+              A.elbow.rotation.z += A.side * up * 0.45;
+              A.elbow.rotation.x = -up * 0.5;
             }
-            trunk.rotation.x += -up * 0.16 + down * 0.3 + tremble * 0.5;
-            crown.rotation.x += -up * 0.1 + down * 0.2;
-            body.position.z = down * 0.45 - up * 0.06;
+            // the whole crown rears back like a wave, then crashes forward
+            trunk.rotation.x += -up * 0.3 + down * 0.42 + tremble * 0.5;
+            crown.rotation.x += -up * 0.18 + down * 0.3;
+            body.position.z = down * 0.4 - up * 0.1;
             // a step forward with the front roots as it comes down
             legs[0].hip.rotation.x = -window4(k, 0.55, 0.64, 0.7, 0.85) * 0.35;
             legs[1].hip.rotation.x = -window4(k, 0.58, 0.66, 0.72, 0.88) * 0.3;
@@ -499,7 +500,7 @@ export function createWillowWight() {
 
       // ---- hurt flash
       const hurtK = a && a.name === 'hurt' ? Math.sin(a.k * Math.PI) : 0;
-      if (hurtK > 0 || flashOn) { flash(own, hurtK * 0.6); flashOn = hurtK > 0; }
+      if (hurtK > 0 || flashOn) { flash(own, hurtK * 0.28, '#fff4d8'); flashOn = hurtK > 0; }
 
       // ---- the fronds: the upright hangers on the boughs, then every strand's spring
       root.getWorldQuaternion(q);

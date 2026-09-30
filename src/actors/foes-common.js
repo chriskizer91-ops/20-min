@@ -464,7 +464,8 @@ export class Tube {
     this.r = new Float32Array(n);
   }
   // points: n Vector3s. radius: (t, i) => r. up: which way the texture's middle column faces at the start.
-  update(points, radius, up = UP) {
+  // flat: (t) => how much to squash the cross-section top-to-bottom (1 round, 0.7 a slug's flattened body).
+  update(points, radius, up = UP, flat) {
     const { n, radial, T, N, B, r } = this;
     for (let i = 0; i < n; i++) {
       const a = points[Math.max(0, i - 1)], b = points[Math.min(n - 1, i + 1)];
@@ -484,12 +485,14 @@ export class Tube {
     for (let i = 0; i < n; i++) {
       const seg = points[Math.min(n - 1, i + 1)].distanceTo(points[Math.max(0, i - 1)]) || 1e-4;
       const slope = (r[Math.min(n - 1, i + 1)] - r[Math.max(0, i - 1)]) / seg;
+      const aN = flat ? flat(i / (n - 1)) : 1, aB = 1 / Math.sqrt(aN);
       for (let j = 0; j <= radial; j++) {
         const ang = (j / radial) * Math.PI * 2 - Math.PI;
-        d.copy(N[i]).multiplyScalar(Math.cos(ang)).addScaledVector(B[i], Math.sin(ang));
+        const c = Math.cos(ang), sn = Math.sin(ang);
+        d.copy(N[i]).multiplyScalar(c * aN).addScaledVector(B[i], sn * aB);
         const k = i * (radial + 1) + j;
         pos.setXYZ(k, points[i].x + d.x * r[i], points[i].y + d.y * r[i], points[i].z + d.z * r[i]);
-        nn.copy(d).addScaledVector(T[i], -slope).normalize();
+        nn.copy(N[i]).multiplyScalar(c / aN).addScaledVector(B[i], sn / aB).normalize().addScaledVector(T[i], -slope).normalize();
         nor.setXYZ(k, nn.x, nn.y, nn.z);
       }
     }
@@ -502,8 +505,11 @@ const UP = new THREE.Vector3(0, 1, 0);
 // ---------------------------------------------------------------- painted faces
 // A patch of sphere in front of a head, painted on a canvas per mood. draw(g, w, h, mood) paints one mood on a
 // transparent canvas. The patch spans `width` x `height` radians of a sphere of `radius`, centred on +z.
-export function paintedFace(H, { radius, width = 1.4, height = 1.1, size = [256, 192], moods, draw, rim = 0.3, lit = true }) {
-  const geo = new THREE.SphereGeometry(radius, 20, 14, Math.PI / 2 - width / 2, width, Math.PI / 2 - height / 2, height);
+// Or, with cone: { top, bottom, height } (radii and metres), on a patch of a cone, for faces on stems and roots.
+export function paintedFace(H, { radius, width = 1.4, height = 1.1, cone, size = [256, 192], moods, draw, rim = 0.3, lit = true }) {
+  const geo = cone
+    ? new THREE.CylinderGeometry(cone.top, cone.bottom, cone.height, 16, 4, true, -width / 2, width)
+    : new THREE.SphereGeometry(radius, 20, 14, Math.PI / 2 - width / 2, width, Math.PI / 2 - height / 2, height);
   const tex = {};
   for (const m of moods) tex[m] = canvasTexture(size[0], size[1], (g, w, h) => draw(g, w, h, m));
   const opts = { transparent: true, polygonOffset: true, polygonOffsetFactor: -2, depthWrite: false };

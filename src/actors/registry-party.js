@@ -2,8 +2,10 @@
 // Each entry: { id, name, group, make: () => model, note }
 import { createWitch } from './witch.js';
 import { createInkblot } from './inkblot.js';
+import { createNettie } from './nettie.js';
 
 export const PARTY = [
   { id: 'witch', name: 'The Moonlight Witch', group: 'Party', make: createWitch, note: 'The standard every model is held to.' },
   { id: 'inkblot', name: 'Inkblot', group: 'Party', make: createInkblot, note: 'Mister Quill\'s crow: a thief with good intentions. "Kraa."' },
+  { id: 'nettie', name: 'Nettie the Swamp Witch', group: 'Party', make: createNettie, note: '"Healer, herbalist, witch. Two of those you can buy. The third you don\'t cross."' },
 ];

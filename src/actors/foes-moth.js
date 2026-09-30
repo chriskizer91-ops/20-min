@@ -12,8 +12,8 @@ import { Hollow, hollowDressing, Actions, Motes, texture, canvasTexture, space, 
 // the flame, which floats home, and settles on the ground to rest.
 
 const C = {
-  fur: '#ead7a0', furLight: '#fbf0cc', furDark: '#c2a262', leg: '#9c7e48', eye: '#241830',
-  wing: '#f1dfa6', wingEdge: '#fbf2d4', vein: 'rgba(150,112,58,0.55)', band: '#a27a40', spot: '#6b3f7a',
+  fur: '#e6c270', furLight: '#f7e2a4', furDark: '#b58d45', leg: '#9c7e48', eye: '#241830',
+  wing: '#efcf82', wingEdge: '#f9e8b8', vein: 'rgba(150,112,58,0.55)', band: '#a27a40', spot: '#6b3f7a',
 };
 
 // ---------------------------------------------------------------- textures, painted in code
@@ -273,32 +273,32 @@ export function createLampMoth({ hollowed = false } = {}) {
   part(prev, taperedTube([[0, 0, -0.06], [0, 0.005, -0.085], [0, 0.02, -0.1]], 0.02, 0.004, 5, 6), H.toon(C.furLight), { ink: false });
 
   // Legs: six, jointed, furry at the top; the front pair holds the flame
-  const legMat = H.toon(C.leg);
+  const legMat = H.toon('#7a6038');
   const legs = [];
   for (const [i, z] of [0.035, 0, -0.035].entries())
     for (const side of [-1, 1]) {
       const hip = joint(body, [side * 0.035, -0.055, z]);
       const front = i === 0;
       const pts = front
-        ? [[0, 0, 0], [side * 0.025, -0.05, 0.03], [side * 0.018, -0.1, 0.025], [side * 0.012, -0.125, 0.02]]
-        : [[0, 0, 0], [side * 0.05, -0.02, z * 0.4], [side * 0.06, -0.06, z * 0.8], [side * 0.05, -0.085, z]];
-      part(hip, taperedTube(pts, 0.011, 0.004, 8, 5), legMat, {});
+        ? [[0, 0, 0], [side * 0.03, -0.045, 0.035], [side * 0.02, -0.095, 0.03], [side * 0.01, -0.12, 0.02]]
+        : [[0, 0, 0], [side * 0.03, -0.025, -0.01], [side * 0.035, -0.035, -0.05 - i * 0.02], [side * 0.02, -0.03, -0.08 - i * 0.02]];
+      part(hip, taperedTube(pts, 0.009, 0.004, 8, 5), legMat, { ink: front });
       legs.push({ hip, side, i, phase: Math.random() * 6 });
     }
 
   // ---------------------------------------------------------------- wings
   const foreTex = wingTexture('fore'), hindTex = wingTexture('hind');
-  const wingOpts = { side: THREE.DoubleSide, alphaTest: 0.5, rim: 0.6, emissive: new THREE.Color('#5a4a28'), emissiveIntensity: 0.35 };
+  const wingOpts = { side: THREE.DoubleSide, alphaTest: 0.5, rim: 0.6, emissive: new THREE.Color('#6a4c18'), emissiveIntensity: 0.45 };
   const foreMat = H.toonMap(foreTex, wingOpts), hindMat = H.toonMap(hindTex, wingOpts);
   const wings = [];
   for (const side of [-1, 1]) {
-    for (const [kind, span, chord, pos, sweep] of [['fore', 0.36, 0.2, [0.04, 0.025, 0.025], -0.12], ['hind', 0.27, 0.2, [0.035, 0.005, -0.04], 0.55]]) {
+    for (const [kind, span, chord, pos, sweep] of [['fore', 0.4, 0.22, [0.04, 0.025, 0.025], -0.12], ['hind', 0.3, 0.22, [0.035, 0.005, -0.04], 0.55]]) {
       const pivot = joint(body, [side * pos[0], pos[1], pos[2]]);
-      pivot.rotation.y = side * sweep;
+      pivot.rotation.set(kind === 'fore' ? 0.35 : 0.2, side * sweep, 0);
       const geo = wingGeometry(span, chord, side);
       const mesh = new THREE.Mesh(geo, kind === 'fore' ? foreMat : hindMat);
       // Shift so the texture's root (left middle) sits on the pivot
-      mesh.position.z = kind === 'fore' ? 0.005 : -0.0375;
+      mesh.position.z = kind === 'fore' ? 0.0055 : -0.041;
       pivot.add(mesh);
       wings.push({ pivot, geo, side, kind, flex: new Spring(90, 9) });
     }
@@ -319,12 +319,9 @@ export function createLampMoth({ hollowed = false } = {}) {
   const flameHolder = new THREE.Group();
   flameHolder.add(flame, flameGlow);
   hang.add(flameHolder);
-  const fireLight = new THREE.PointLight('#c77dff', 1.2, 2.2, 2);
-  fireLight.position.y = 0.04;
+  const fireLight = new THREE.PointLight('#c77dff', 0.3, 2.2, 2);
+  fireLight.position.set(0, -0.1, 0.18);
   flameHolder.add(fireLight);
-  // A soft golden halo of its own
-  const halo = glowSprite('#ffd98a', 0.75, 0.22);
-  body.add(halo);
 
   const shadow = blobShadow(0.2, 0.22);
   root.add(shadow);
@@ -333,7 +330,7 @@ export function createLampMoth({ hollowed = false } = {}) {
   // ---------------------------------------------------------------- effects
   const dust = new Motes(fx, { count: 36, map: texture('sparkle') });
   const puffs = new Motes(fx, { count: 8, map: texture('puff'), blending: THREE.AdditiveBlending });
-  const trail = new Trail('#ffd98a', 0.35);
+  const trail = new Trail('#ffd98a', 0.25);
   fx.add(trail.mesh);
   const dressing = hollowDressing({ root, fx, sp, radius: 0.35, body: () => [(Math.random() - 0.5) * 0.3, 0.9 + Math.random() * 0.1, (Math.random() - 0.5) * 0.2] });
 
@@ -498,9 +495,9 @@ export function createLampMoth({ hollowed = false } = {}) {
       phase += dt * freq * Math.PI * 2;
       const s = Math.sin(phase);
       const stroke = s > 0 ? s : s * 0.75;
-      const glideAngle = 0.55 + Math.sin(t * 9) * 0.04;
-      let foreAngle = (0.22 + 0.78 * stroke * amp) * (1 - gliding) + glideAngle * gliding;
-      let hindAngle = (0.18 + 0.65 * Math.sin(phase - 0.5) * amp) * (1 - gliding) + (glideAngle - 0.1) * gliding;
+      const glideAngle = 0.75 + Math.sin(t * 9) * 0.04;
+      let foreAngle = (0.5 + 0.7 * stroke * amp) * (1 - gliding) + glideAngle * gliding;
+      let hindAngle = (0.42 + 0.6 * Math.sin(phase - 0.5) * amp) * (1 - gliding) + (glideAngle - 0.1) * gliding;
       if (a?.wingOverride !== undefined) { foreAngle += a.wingOverride; hindAngle += a.wingOverride * 0.8; }
       if (restWings) {
         const breathe = act.beaten ? Math.max(0, Math.sin(t * 0.8)) * 0.35 : 0;
@@ -545,7 +542,7 @@ export function createLampMoth({ hollowed = false } = {}) {
       frame += dt * 12;
       fireTex.offset.x = (Math.floor(frame) % 8) / 8;
       const flick = 0.85 + Math.sin(t * 17) * 0.08 + Math.sin(t * 29) * 0.07;
-      fireLight.intensity = 1.2 * flick * (1 - hs.k * 0.5);
+      fireLight.intensity = 0.3 * flick * (1 - hs.k * 0.5);
       flameGlow.material.opacity = 0.6 * flick;
       if (dropped) {
         // Down a little, a moment's pause, then up and away home
@@ -564,11 +561,10 @@ export function createLampMoth({ hollowed = false } = {}) {
         if (d > 3.2) flameHolder.visible = false;
       } else flame.material.opacity = 1;
 
-      halo.material.opacity = (0.22 + Math.sin(t * 3) * 0.04) * (1 - hs.k * 0.7) * (1 - ground * 0.6);
       shadow.position.set(x, 0.004, z);
       shadow.material.opacity = 0.22 + ground * 0.3 - (y - 0.07) * 0.1;
       shadow.scale.setScalar(1 - (y - 0.07) * 0.3);
-      foreMat.emissiveIntensity = hindMat.emissiveIntensity = 0.35 + flashK * 2;
+      foreMat.emissiveIntensity = hindMat.emissiveIntensity = 0.45 + flashK * 2;
 
       // A little golden dust drifts off the wings as it flies
       if (!act.beaten && Math.random() < dt * 3) {
@@ -578,7 +574,7 @@ export function createLampMoth({ hollowed = false } = {}) {
       dust.update(dt);
       puffs.update(dt);
       sp.of(body, v);
-      trail.update(dt, v, v2.copy(v).add(sp.dir(0, 0.09, 0, v3)));
+      trail.update(dt, v, v2.copy(v).add(sp.dir(0, 0.05, 0, v3)));
     },
   };
   return api;

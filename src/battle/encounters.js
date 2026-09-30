@@ -66,8 +66,8 @@ export const ENCOUNTERS = {
     id: 'B4', name: 'The Murkway', where: 'the Murkway, a plank path over black pools',
     backdrop: 'battle-open-fen', stopgap: 'graveyard-night',
     foes: [
-      { family: 'boglurcher', level: 2, omens: ['hollowed'], name: 'Hollowed Boglurcher' },
       { family: 'mire-leech', level: 2, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
+      { family: 'boglurcher', level: 4, omens: ['hollowed'], name: 'Hollowed Boglurcher' },
       { family: 'mire-leech', level: 2, omens: ['hollowed'], name: 'Hollowed Mire Leech' },
     ],
     party: ['witch', 'inkblot', 'nettie'],
@@ -80,9 +80,9 @@ export const ENCOUNTERS = {
     id: 'B5', name: 'The Long Boardwalk', where: 'the Long Boardwalk, on stilts in the mist',
     backdrop: 'battle-long-boardwalk',
     foes: [
-      { family: 'drowned', level: 3, variant: 'choir', name: 'Drowned Chorister' },
-      { family: 'willow-wight', level: 3, name: 'Willow-Wight' },
-      { family: 'drowned', level: 3, variant: 'choir', name: 'Drowned Chorister' },
+      { family: 'drowned', level: 1, variant: 'choir', name: 'Drowned Chorister' },
+      { family: 'willow-wight', level: 6, name: 'Willow-Wight' },
+      { family: 'drowned', level: 1, variant: 'choir', name: 'Drowned Chorister' },
     ],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
@@ -93,7 +93,7 @@ export const ENCOUNTERS = {
   B6: {
     id: 'B6', name: 'The Lantern Mother', where: 'Mother\'s Hollow, the sunken house',
     backdrop: 'battle-mothers-hollow', stopgap: 'TH: battle-dark-cathedral.png',
-    foes: [{ family: 'lantern-mother', level: 4, variant: 'moonlight', name: 'The Lantern Mother' }],
+    foes: [{ family: 'lantern-mother', level: 5, variant: 'moonlight', name: 'The Lantern Mother' }],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
     bag: { 'heartsease-tonic': 1, 'lantern-oil': 1, moonwater: 1 },
@@ -106,7 +106,7 @@ export const ENCOUNTERS = {
   B6b: {
     id: 'B6b', name: 'Lights Out', where: 'Mother\'s Hollow, every lamp out but two',
     backdrop: 'battle-mothers-hollow-dark',
-    foes: [{ family: 'lantern-mother', level: 4, variant: 'lights-out', name: 'The Lantern Mother' }],
+    foes: [{ family: 'lantern-mother', level: 5, variant: 'lights-out', name: 'The Lantern Mother' }],
     allies: [{ family: 'silas', level: 4, name: 'Silas' }],
     party: ['witch', 'inkblot', 'nettie'],
     wears: { ...INKBLOT_FEATHER, ...NETTIE_SHAWL },
@@ -125,7 +125,7 @@ export const ORDER = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 // so a player who skips the optional fights (B2, B4) is never walled, and one who fights them is a little ahead.
 // Inkblot joins in the square (before B1) and Nettie at her hut (before B4), each with the witch's XP.
 export const STORY_FLOORS = {
-  B3: { xp: xpForLevel(2), why: 'Silas relit, and the Hollow opens: level 2.' },
+  B2: { xp: xpForLevel(2), why: 'Silas relit at the wayside kettle, and the way to the Hollow opens: level 2.' },
   B4: { xp: xpForLevel(3), why: 'Nettie\'s hut: the middle turn, an hour\'s sleep, and Nettie joins. Level 3.' },
 };
 

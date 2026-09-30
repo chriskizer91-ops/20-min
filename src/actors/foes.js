@@ -18,3 +18,7 @@ export { createLampMoth } from './foes-moth.js';
 
 // Aethermoor's marsh-light, drawn as the Sour Wisp.
 export function createMarshLight(tint = '#8fe89a', opts) { return createSourWisp(tint, opts); }
+export { createGlowcap } from './foes-glowcap.js';
+export { createMandrake } from './foes-mandrake.js';
+export { createBoglurcher } from './foes-bog.js';
+export { createMireLeech } from './foes-leech.js';
