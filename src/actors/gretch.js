@@ -16,7 +16,7 @@ import { paintedFace, canvasTexture, merge, ellipse, mixColor, win, arch, lerp }
 
 const C = {
   skin: '#f0c9ad', skinShade: '#d9a88c', cheek: 'rgba(222,104,104,0.5)', lip: '#a44850', line: 'rgba(140,80,64,0.5)',
-  hair: '#d9d6e0', hairShade: '#aaa6b8', hairDark: '#8a8698', brow: '#b8b4c4',
+  hair: '#dcd6cf', hairShade: '#b4aca4', hairDark: '#6e6672', brow: '#c8c2bc',
   gown: '#9c2230', gownDark: '#6e1622', gold: '#e2b85a', goldDark: '#a8812e', topaz: '#ffc640',
   fur: '#8a7866', furLight: '#b8a890', furDark: '#5a4a3c', leather: '#3a2a22', leatherLight: '#5a4030',
   boot: '#2e221e', mud: '#5a4630', mudWet: '#3e3024', petticoat: '#3a2e3a', ledger: '#3f5a3a', page: '#efe4c4',
@@ -144,28 +144,28 @@ export function createGretch() {
   const face = paintedFace(skull, ['calm', 'blink', 'talk', 'happy', 'cross', 'surprised', 'fuss'], drawGretchFace, { rim: 0.3 });
   const skinMat = toon(C.skin, { rim: 0.4 });
   // a double chin, a round button nose (a little pink), and ears
-  part(head, sphere(0.125, 14, 10), skinMat, { pos: [0, -0.12, 0.045], scale: [1.12, 0.55, 0.92] });
-  part(head, sphere(0.032, 10, 8), toon('#f2b8a4', { rim: 0.5 }), { pos: [0, -0.03, 0.19], scale: [1.1, 0.95, 0.85] });
+  part(head, sphere(0.125, 14, 10), skinMat, { pos: [0, -0.158, 0.03], scale: [1.1, 0.5, 0.9] });
+  part(head, sphere(0.028, 10, 8), toon('#f2b8a4', { rim: 0.5 }), { pos: [0, -0.028, 0.188], scale: [1.1, 0.95, 0.85] });
   for (const s of [-1, 1]) part(head, sphere(0.034, 8, 6), skinMat, { pos: [s * 0.192, -0.01, -0.005], scale: [0.45, 1, 0.75] });
   // pince-nez on her nose, and the cord that ties them to her chain
-  const specs = joint(head, [0, 0.012, 0.188], 'pince-nez');
+  const specs = joint(head, [0, -0.006, 0.18], 'pince-nez');
   part(specs, merge([
-    new THREE.TorusGeometry(0.028, 0.0035, 4, 14).translate(-0.042, 0, 0.004),
-    new THREE.TorusGeometry(0.028, 0.0035, 4, 14).translate(0.042, 0, 0.004),
-    new THREE.TorusGeometry(0.014, 0.003, 4, 8, Math.PI).translate(0, 0.004, 0.008),
+    new THREE.TorusGeometry(0.03, 0.0035, 4, 14).rotateY(-0.3).translate(-0.058, 0, -0.006),
+    new THREE.TorusGeometry(0.03, 0.0035, 4, 14).rotateY(0.3).translate(0.058, 0, -0.006),
+    new THREE.TorusGeometry(0.03, 0.003, 4, 8, Math.PI).scale(1, 0.4, 1).translate(0, 0.004, 0.012),
   ]), toon(C.gold, { rim: 0.2 }), { ink: false });
-  part(head, taperedTube([[0.068, 0.012, 0.185], [0.13, -0.08, 0.16], [0.14, -0.2, 0.14], [0.12, -0.3, 0.16]], 0.0028, 0.0028, 10, 4), toon(C.ribbon), { ink: false });
+  part(head, taperedTube([[0.088, -0.006, 0.168], [0.13, -0.08, 0.16], [0.14, -0.2, 0.14], [0.12, -0.3, 0.16]], 0.0028, 0.0028, 10, 4), toon(C.ribbon), { ink: false });
 
   const hair = joint(head, [0, 0, 0], 'hair');
   const hairMat = toon(C.hair, { side: THREE.DoubleSide });
   // Scalp: all but the face; the crown
   part(hair, new THREE.SphereGeometry(0.203, 24, 14, Math.PI / 2 + 1.0, Math.PI * 2 - 2.0, 0, Math.PI * 0.6), hairMat, { pos: [0, 0.01, -0.005] });
-  part(hair, new THREE.SphereGeometry(0.205, 24, 8, 0, Math.PI * 2, 0, 0.72), toon(C.hair), { pos: [0, 0.012, 0] });
+  part(hair, new THREE.SphereGeometry(0.205, 24, 8, 0, Math.PI * 2, 0, 0.72), toon(C.hair), { pos: [0, 0.012, 0], ink: false });
   // Swept back hard from the forehead to the bun, in firm silver waves; two stubborn curls over the ears
   part(hair, merge([-0.55, -0.2, 0.2, 0.55].map((a) => {
     const x = Math.sin(a) * 0.19, z = Math.cos(a) * 0.19;
-    return taperedTube([[x * 0.9, 0.1, z * 0.95], [x * 1.05, 0.17, z * 0.5], [x * 0.6, 0.21, -0.02], [x * 0.2, 0.2, -0.1]], 0.04, 0.022, 10, 6);
-  })), toon(C.hairShade), {});
+    return taperedTube([[x * 0.92, 0.13, z * 0.86], [x * 1.02, 0.18, z * 0.45], [x * 0.62, 0.205, -0.02], [x * 0.2, 0.2, -0.1]], 0.02, 0.014, 10, 6);
+  })), toon(C.hairShade), { ink: false });
   const curls = [-1, 1].map((s) => {
     const j = joint(hair, [s * 0.175, -0.02, 0.08]);
     const pts = [];
@@ -257,7 +257,7 @@ export function createGretch() {
       ledgerPivot.position.set(0.01, -0.04, 0.02);
       finger.scale.setScalar(0.01);
       head.rotation.set(0, 0, 0);
-      specs.position.set(0, 0.012, 0.188);
+      specs.position.set(0, -0.006, 0.18);
       let keyKick = 0, faceNow = null;
 
       // Idle fidgets: pat the keys, tug the chain straight, peer at the ledger, rock on her heels
@@ -293,7 +293,7 @@ export function createGretch() {
           armL.wrist.rotation.z = lerp(-0.2, 0.3, p);
           ledgerPivot.rotation.set(lerp(0.1, -0.2, p), lerp(-0.3, 0.9, p), lerp(0, 0.2, p));
           head.rotation.set(0.28 * p, 0.35 * p, 0);
-          specs.position.y = 0.012 - 0.012 * p; // she looks over the top of them
+          specs.position.y = -0.006 - 0.016 * p; // she looks over the top of them
           faceNow = p > 0.5 ? 'fuss' : null;
           if (k >= 1) fidget = null;
         } else if (fidget.name === 'rock') {
@@ -369,7 +369,7 @@ export function createGretch() {
             armR.shoulder.rotation.set(lerp(armR.shoulder.rotation.x, -1.0 + taps * 0.15, p), 0, lerp(armR.shoulder.rotation.z, -0.05, p));
             armR.elbow.rotation.set(lerp(armR.elbow.rotation.x, -1.2 + taps * 0.25, p), lerp(armR.elbow.rotation.y, 0.9, p), 0);
             head.rotation.set(0.22 * p, 0.2 * p, 0);
-            specs.position.y = 0.012 - 0.01 * p;
+            specs.position.y = -0.006 - 0.014 * p;
             faceNow = 'fuss';
             hitAt(0.5);
             break;
@@ -432,7 +432,7 @@ export function createGretch() {
 
 // ---------------------------------------------------------------- the face
 // The canvas covers the front half of her head (see paintedFace in party-kit.js): x 256 is the middle of her face,
-// y 262 her eye line, y 350 her mouth. Her own left is the viewer's right. Round rosy cheeks, small bright eyes under
+// y 262 her eye line, y 320 her mouth (just above the modelled double chin). Her own left is the viewer's right. Round rosy cheeks, small bright eyes under
 // heavy silver brows, laugh lines she'd deny, and a small mouth that purses when she's fussing.
 function drawGretchFace(g, mood, S) {
   const k = S / 512;
@@ -441,59 +441,59 @@ function drawGretchFace(g, mood, S) {
   g.fillStyle = C.skin;
   g.fillRect(0, 0, 512, 512);
   // cheeks, big and round, rosier when she's pleased or cross
-  for (const x of [186, 326]) {
-    const grad = g.createRadialGradient(x, 318, 4, x, 318, 46);
+  for (const x of [180, 332]) {
+    const grad = g.createRadialGradient(x, 300, 4, x, 300, 44);
     grad.addColorStop(0, mood === 'happy' || mood === 'cross' ? 'rgba(226,96,96,0.62)' : C.cheek);
     grad.addColorStop(1, 'rgba(226,110,110,0)');
     g.fillStyle = grad;
-    ellipse(g, x, 318, 50, 40);
+    ellipse(g, x, 300, 48, 38);
     g.fill();
   }
   g.strokeStyle = C.line;
-  g.lineWidth = 2.4;
+  g.lineWidth = 2.6;
   g.lineCap = 'round';
   for (const s of [-1, 1]) {
     g.beginPath(); // laugh lines, from nose to mouth
-    g.moveTo(256 + s * 26, 322);
-    g.quadraticCurveTo(256 + s * 40, 338, 256 + s * 36, 362);
+    g.moveTo(256 + s * 28, 292);
+    g.quadraticCurveTo(256 + s * 42, 306, 256 + s * 38, 330);
     g.stroke();
     for (const a of [-0.4, 0.1, 0.55]) { // crow's feet
       g.beginPath();
-      g.moveTo(256 + s * 74, 266 + a * 8);
-      g.lineTo(256 + s * 86, 262 + a * 22);
+      g.moveTo(256 + s * 80, 262 + a * 8);
+      g.lineTo(256 + s * 92, 258 + a * 22);
       g.stroke();
     }
   }
   g.fillStyle = 'rgba(160,90,70,0.3)'; // under the nose (the nose is modelled)
-  ellipse(g, 256, 322, 16, 5);
+  ellipse(g, 256, 298, 18, 5);
   g.fill();
   g.fillStyle = '#7a4a3a';
   g.beginPath(); // a beauty mark, which she calls a beauty mark
-  g.arc(318, 352, 3.2, 0, Math.PI * 2);
+  g.arc(314, 326, 3.4, 0, Math.PI * 2);
   g.fill();
 
-  // brows: heavy and silver, and they do most of her talking
+  // brows: heavy and silver-grey, and they do most of her talking
   const brows = {
-    calm: [[-1, 222, 0.05], [1, 222, 0.05]], blink: [[-1, 224, 0.05], [1, 224, 0.05]], talk: [[-1, 216, -0.1], [1, 214, -0.1]],
-    happy: [[-1, 216, -0.15], [1, 216, -0.15]], cross: [[-1, 230, 0.5], [1, 230, 0.5]], surprised: [[-1, 200, -0.2], [1, 198, -0.2]],
-    fuss: [[-1, 228, 0.25], [1, 206, -0.3]],
+    calm: [[-1, 214, 0.05], [1, 214, 0.05]], blink: [[-1, 216, 0.05], [1, 216, 0.05]], talk: [[-1, 208, -0.1], [1, 206, -0.1]],
+    happy: [[-1, 208, -0.15], [1, 208, -0.15]], cross: [[-1, 224, 0.55], [1, 224, 0.55]], surprised: [[-1, 192, -0.2], [1, 190, -0.2]],
+    fuss: [[-1, 222, 0.3], [1, 198, -0.3]],
   };
   for (const [s, y, tilt] of brows[mood]) {
-    const inner = 256 + s * 18, outer = 256 + s * 80;
+    const inner = 256 + s * 20, outer = 256 + s * 84;
     g.strokeStyle = C.hairDark;
-    g.lineWidth = 17;
+    g.lineWidth = 19;
     g.beginPath();
     g.moveTo(inner, y + tilt * 18);
-    g.quadraticCurveTo(256 + s * 48, y - 12 + tilt * 4, outer, y + 6 - tilt * 6);
+    g.quadraticCurveTo(256 + s * 50, y - 12 + tilt * 4, outer, y + 6 - tilt * 6);
     g.stroke();
     g.strokeStyle = C.brow;
-    g.lineWidth = 11;
+    g.lineWidth = 9;
     g.stroke();
   }
 
-  // eyes: small and bright, pale blue
+  // eyes: bright, pale blue, under a heavy lid
   const eye = (s, { open = 1, lid = 0.3, look = 0 } = {}) => {
-    const cx = 256 + s * 50, cy = 266, rx = 21, ry = 14 * open;
+    const cx = 256 + s * 52, cy = 262, rx = 26, ry = 17 * open;
     g.save();
     g.beginPath();
     g.moveTo(cx - rx, cy);
@@ -503,20 +503,20 @@ function drawGretchFace(g, mood, S) {
     g.fillStyle = '#f6efe2';
     g.fill();
     g.clip();
-    const ix = cx + look * 4, iy = cy;
-    g.fillStyle = '#3a5a8a';
-    g.beginPath(); g.arc(ix, iy, 12, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#7aa2d8';
-    g.beginPath(); g.arc(ix, iy, 9, 0, Math.PI * 2); g.fill();
+    const ix = cx + look * 5, iy = cy;
+    g.fillStyle = '#2e4a7a';
+    g.beginPath(); g.arc(ix, iy, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#6f9ad6';
+    g.beginPath(); g.arc(ix, iy, 10.5, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#10141c';
-    g.beginPath(); g.arc(ix, iy, 5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix, iy, 6, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#ffffff';
-    g.beginPath(); g.arc(ix - 4, iy - 4.5, 3.4, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix - 5, iy - 5, 4, 0, Math.PI * 2); g.fill();
     g.fillStyle = mixColor(C.skin, C.skinShade, 0.5);
-    g.fillRect(cx - rx - 2, cy - 30, rx * 2 + 4, 30 - ry * (1.5 - lid * 2.4) + 10 * lid);
+    g.fillRect(cx - rx - 2, cy - 34, rx * 2 + 4, 34 - ry * (1.5 - lid * 2.4) + 10 * lid);
     g.restore();
     g.strokeStyle = '#3a2a2a';
-    g.lineWidth = 4.5;
+    g.lineWidth = 5;
     const lidY = cy - ry * (1.5 - lid * 2.4) + 10 * lid;
     g.beginPath();
     g.moveTo(cx - rx - 1, cy + 1);
@@ -524,61 +524,61 @@ function drawGretchFace(g, mood, S) {
     g.stroke();
   };
   const closed = (s, curve) => {
-    const cx = 256 + s * 50, cy = 268;
+    const cx = 256 + s * 52, cy = 264;
     g.strokeStyle = '#3a2a2a';
-    g.lineWidth = 4.5;
+    g.lineWidth = 5;
     g.beginPath();
-    g.moveTo(cx - 19, cy - curve * 0.3);
-    g.quadraticCurveTo(cx, cy + curve, cx + 19, cy - curve * 0.3);
+    g.moveTo(cx - 22, cy - curve * 0.3);
+    g.quadraticCurveTo(cx, cy + curve, cx + 22, cy - curve * 0.3);
     g.stroke();
   };
   for (const s of [-1, 1]) {
     if (mood === 'blink') closed(s, 5);
-    else if (mood === 'happy') closed(s, -10);
-    else if (mood === 'surprised') eye(s, { open: 1.25, lid: -0.1 });
-    else if (mood === 'cross') eye(s, { open: 0.85, lid: 0.55 });
-    else if (mood === 'fuss') eye(s, { lid: s > 0 ? 0.15 : 0.5, look: -0.6 });
-    else eye(s, { lid: 0.28, look: 0.3 });
+    else if (mood === 'happy') closed(s, -11);
+    else if (mood === 'surprised') eye(s, { open: 1.2, lid: -0.1 });
+    else if (mood === 'cross') eye(s, { open: 0.9, lid: 0.55 });
+    else if (mood === 'fuss') eye(s, { lid: s > 0 ? 0.12 : 0.5, look: -0.6 });
+    else eye(s, { lid: 0.26, look: 0.3 });
   }
 
   // mouth: small, and pursed when she's fussing
   g.strokeStyle = C.lip;
   g.fillStyle = '#6a2830';
   g.lineCap = 'round';
-  g.lineWidth = 6;
+  g.lineWidth = 6.5;
   if (mood === 'calm' || mood === 'blink') {
     g.beginPath(); // a small, satisfied smile
-    g.moveTo(236, 352);
-    g.quadraticCurveTo(256, 362, 278, 350);
+    g.moveTo(234, 318);
+    g.quadraticCurveTo(256, 330, 280, 316);
     g.stroke();
   } else if (mood === 'talk') {
-    ellipse(g, 257, 356, 15, 11);
+    ellipse(g, 257, 322, 16, 12);
     g.fill();
     g.fillStyle = '#f2e8dc';
-    g.fillRect(246, 346, 22, 5);
+    g.fillRect(245, 311, 24, 5);
   } else if (mood === 'happy') {
     g.beginPath();
-    g.moveTo(226, 344);
-    g.quadraticCurveTo(256, 356, 288, 344);
-    g.quadraticCurveTo(258, 390, 226, 344);
+    g.moveTo(224, 312);
+    g.quadraticCurveTo(256, 324, 290, 312);
+    g.quadraticCurveTo(258, 356, 224, 312);
     g.fill();
     g.fillStyle = '#f2e8dc';
-    g.fillRect(238, 347, 38, 6);
+    g.fillRect(238, 315, 38, 6);
   } else if (mood === 'cross') {
     g.beginPath(); // tight, and turned down
-    g.moveTo(236, 360);
-    g.quadraticCurveTo(256, 348, 278, 360);
+    g.moveTo(234, 326);
+    g.quadraticCurveTo(256, 312, 280, 326);
     g.stroke();
   } else if (mood === 'surprised') {
-    ellipse(g, 257, 358, 10, 14);
+    ellipse(g, 257, 324, 11, 14);
     g.fill();
   } else if (mood === 'fuss') {
     g.beginPath(); // pursed, pulled to one side
-    g.moveTo(258, 354);
-    g.quadraticCurveTo(270, 348, 282, 356);
+    g.moveTo(256, 320);
+    g.quadraticCurveTo(270, 313, 284, 322);
     g.stroke();
     g.lineWidth = 2;
-    g.beginPath(); g.moveTo(262, 346); g.lineTo(264, 342); g.moveTo(272, 345); g.lineTo(274, 341); g.stroke();
+    g.beginPath(); g.moveTo(262, 310); g.lineTo(264, 305); g.moveTo(273, 309); g.lineTo(275, 304); g.stroke();
   }
   g.restore();
 }
