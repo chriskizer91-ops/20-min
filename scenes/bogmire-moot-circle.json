@@ -19,7 +19,7 @@
         [572, 1024], [590, 985], [640, 905], [690, 835], [722, 760], [730, 742], [755, 735], [756, 645], [700, 634],
         [640, 624], [585, 608], [578, 590], [565, 572], [470, 566], [452, 580], [410, 582], [402, 566], [365, 585],
         [345, 596], [320, 605], [305, 620], [300, 640], [262, 662], [220, 688], [150, 722], [80, 750], [0, 768],
-        [0, 700], [55, 688], [105, 676], [168, 668], [168, 625], [160, 600], [165, 592], [190, 592], [200, 603],
+        [0, 700], [55, 688], [105, 676], [168, 668], [168, 640], [150, 608], [150, 590], [202, 588], [214, 600],
         [258, 601], [262, 546], [330, 545], [398, 550], [399, 520], [410, 503], [440, 494], [500, 488], [528, 485],
         [570, 488], [612, 482], [625, 460], [700, 452], [745, 441], [748, 437], [873, 437], [930, 452], [990, 458],
         [996, 488], [1040, 494], [1085, 490], [1100, 480], [1150, 492], [1165, 505], [1200, 515], [1245, 535],
@@ -266,7 +266,7 @@
     "fire": [804, 530],
     "mast": [1377, 552],
     "hall door": [810, 366, 0.85],
-    "violet lamp": [1040, 470]
+    "violet lamp": [575, 468]
   },
   "herbs": [
     ["bogwick", 519, 552, 0.5], ["bogwick", 1106, 550, 0.5], ["bogwick", 1041, 451, 0.45],
@@ -275,13 +275,13 @@
   ],
   "spawn": {"pixel": [1440, 598], "facing": "left"},
   "arrivals": {
-    "nettie-hut": {"pixel": [184, 600], "walk": [232, 628], "facing": "right"}
+    "nettie-hut": {"pixel": [178, 600], "walk": [236, 632], "facing": "right"}
   },
   "exits": [
     {
       "name": "Nettie's hut",
       "to": "nettie-hut",
-      "zone": [[150, 578], [196, 578], [196, 597], [150, 597]],
+      "zone": [[140, 572], [214, 572], [214, 610], [140, 610]],
       "line": "Nettie's hut."
     },
     {
@@ -300,5 +300,6 @@
       "line": "Past the mast, the Long Boardwalk runs out into the mist. Keep to the lamps, and count them. Another night."
     }
   ],
-  "_herbs": "Herbs she can gather: [kind, x, y] on the planks, or [kind, x, y, height] for one growing in a planter (the pixel is where the plant shows). Bogwick in the lamp-pole planters, silver mugwort at the plank edges, lavender in Nettie's door barrel and the pier's planter (LORE.md \u00a78)."
+  "_herbs": "Herbs she can gather: [kind, x, y] on the planks, or [kind, x, y, height] for one growing in a planter (the pixel is where the plant shows). Bogwick in the lamp-pole planters, silver mugwort at the plank edges, lavender in Nettie's door barrel and the pier's planter (LORE.md \u00a78).",
+  "_spots": "Where the cast stands and what she can look at: Gretch, the fire ring, the mooring mast, the moot-hall door (on its landing, 0.85 m up) and the back-left violet lamp."
 }

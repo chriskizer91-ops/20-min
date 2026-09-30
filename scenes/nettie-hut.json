@@ -186,5 +186,7 @@
       "zone": [[590, 842], [960, 842], [960, 896], [590, 896]],
       "line": "Out to the moot-circle."
     }
-  ]
+  ],
+  "_spots": "Where Nettie stands and what she can look at: the cauldron, the rain-butt (three moonwater), the jars under the worktable and on the shelves, and the bed.",
+  "_herbs": "Nothing to pick in here: the jars are hers."
 }

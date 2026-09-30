@@ -108,14 +108,14 @@ export class Field {
   }
 
   // Herbs to gather: [kind, x, y] in painting pixels, plus a height for one growing in a pot. Each is picked once
-  // a night: one she's already gathered isn't planted again when she comes back.
-  plantHerbs(list, scale = 1.7) {
+  // a night: one she's already gathered isn't planted again when she comes back. glow: see createHerb.
+  plantHerbs(list, scale = 1.7, glow) {
     for (const [key, x, y, lift = 0] of list) {
       const id = `${this.scene.id}:${key}:${x},${y}`;
       if (this.picked.has(id)) continue;
       const herb = HERBS[key];
       const pos = this.paint.toWorld(x, y, lift);
-      const plant = createHerb(key);
+      const plant = createHerb(key, glow ? { glow } : undefined);
       plant.root.position.copy(pos);
       plant.root.rotation.y = Math.random() * Math.PI * 2;
       plant.root.scale.setScalar(scale); // a touch bigger than life, so they're easy to spot

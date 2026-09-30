@@ -152,12 +152,14 @@ function frond(len) {
   return s;
 }
 
-export function createHerb(kind) {
+// glow: how wide the soft glow round it is (m, before the field scales the plant up). Smaller for herbs that grow
+// in pots she can stand right behind, so the glow doesn't wash over her.
+export function createHerb(kind, { glow: glowSize = 0.9 } = {}) {
   const root = new THREE.Group();
   root.name = `herb-${kind}`;
   const plant = joint(root, [0, 0, 0]);
   const glowColor = (MAKERS[kind] ?? MAKERS.moonpetal)(plant);
-  const glow = glowSprite(glowColor, 0.9, 0.45);
+  const glow = glowSprite(glowColor, glowSize, 0.45);
   glow.position.y = 0.1;
   root.add(glow);
   // The twinkle: a small four-point star that turns and pulses above the plant

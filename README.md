@@ -12,6 +12,7 @@ right before the full build.
 | Page | What it shows |
 |---|---|
 | `dist/wickhollow-square.html` | FF9's field trick: the 3D witch walking over the painted square, behind the well and lamps, up the chapel steps. Talk to Hilde, Agnes and Inkblot; gather 11 herbs into her basket. "Behind the scenes" flies the camera out to show how it's built. |
+| `dist/bogmire.html` | Bogmire, the fen town on stilts, over two paintings joined by a door: the moot-circle (plank streets round the fire ring, the moot-hall, the mooring mast where the Magpie is tied) and, through the bottle-lined door on the left, Nettie's hut. She walks behind posts, planters, lamps, the fire ring and the rain-butt. Mayor Gretch (a new model, also in the bestiary) keeps the mud outside; Nettie tells the middle turn; Inkblot warms his toes by the fire; the lamps burn violet, borrowed from Wickhollow. Gather bogwick, silver mugwort and lavender, and fill up with three moonwater at Nettie's rain-butt. |
 | `dist/witch-up-close.html` | The witch model on a turntable: her walk, gathering with the athame, witchfire (raise and throw), Moonlight, tracing a rune, the athame dash, her veil, drinking a brew, and her faces. |
 | `dist/airship.html` | The skiff: the Magpie, Quill's sunstone skiff, in 3D and wearing the paint of Thareia's turnaround sheet, with the witch at the wheel and Inkblot on the rail, flying over Thareia's painted Gloomfen between Wickhollow and Bogmire. Tap the map to fly, steer with the keys, or pick a town and she flies there and sets down at its dock. Town cards list the herbs in town and the wild places on foot from it (their foes and herbs). Painted flames drift down the Sable to show the way, under the batch's painted night clouds. |
 | `dist/bestiary.html` | Every 3D model on a turntable next to the witch, with their moves: the party (the witch, Inkblot, Nettie), six Gloomfen foes (Sour Wisp, Lamp-Moth, Glowcap, Hollowed Mandrake, Boglurcher, Mire Leech), and the veterans and bosses (Willow-Wight, Drowned Chorister, the Gloamwing, the Lantern Mother). Foes can be shown Hollowed. |
@@ -34,6 +35,9 @@ Open **`dist/wickhollow-square.html`** in a browser. It is one file of about 3 M
 | Talk, next line | Space, Enter or E | tap the person, then tap the box |
 | Behind the scenes | B | the button, top right |
 | Show the layers | L | the button, top right |
+
+**Bogmire** plays the same way. Walk into Nettie's door (the cottage with bottles in the window, on the left) to go
+inside; the gate at the bottom of her hut leads back out. On these wider paintings the arrow keys follow the screen.
 
 In **the airship demo**, tap anywhere on the map to fly over it, or steer with the arrow keys or WASD. Tap a
 town's name (or "Fly to") and she flies there and lands. Space lands when a town is near, or takes off from a dock.
