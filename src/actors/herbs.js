@@ -3,7 +3,7 @@ import { toon, part, joint, sphere, cyl, cone, taperedTube, glowSprite, onLayer 
 
 // Herbs as small 3D plants, in full colour, so they read against the night paintings. Each has a twinkle over it
 // (like FF9's glinting pick-ups) and a soft glow on the ground. createHerb(kind) returns { root, update(dt) }.
-// Kinds match art/herbs: moonpetal, lavender, nightrose, chapel_moss, and a generic fallback.
+// Kinds match art/herbs: moonpetal, lavender, nightrose, chapel_moss, bogwick, silver_mugwort, and a generic fallback.
 
 const STEM = '#4f8a3c', LEAF = '#5fa34a', LEAF_DARK = '#3d6e31';
 
@@ -86,7 +86,71 @@ const MAKERS = {
     }
     return '#b8f0a0';
   },
+  // Bulrushes whose velvet-brown heads end in a little lit wick: Bogmire grows it in its lamp-pole planters
+  bogwick(g) {
+    for (const [i, [x, z, h, tilt]] of [[0, 0, 0.42, 0], [0.06, 0.03, 0.34, 0.22], [-0.05, 0.04, 0.37, -0.18], [0.02, -0.06, 0.3, 0.12], [-0.03, -0.04, 0.26, -0.3]].entries()) {
+      const stem = joint(g, [x, 0, z]);
+      stem.rotation.set(tilt * 0.5, 0, tilt);
+      part(stem, cyl(0.005, 0.008, h, 5), toon('#5f8f3e'), { pos: [0, h / 2, 0], ink: false });
+      // the head: a fat brown spindle, darker at the top
+      const head = part(stem, sphere(0.024, 8, 6), toon(i % 2 ? '#8a5530' : '#7a4526', { emissive: new THREE.Color('#2a1206'), emissiveIntensity: 0.4 }), { pos: [0, h - 0.035, 0] });
+      head.scale.set(1, 2.6, 1);
+      // and its wick, alight
+      part(stem, cone(0.009, 0.03, 5), new THREE.MeshBasicMaterial({ color: '#f2ff9a' }), { pos: [0, h + 0.04, 0], ink: false });
+      part(stem, sphere(0.013, 6, 5), new THREE.MeshBasicMaterial({ color: '#d8ff6a', transparent: true, opacity: 0.55 }), { pos: [0, h + 0.035, 0], ink: false });
+    }
+    // long blades, standing up round the stems
+    for (let i = 0; i < 9; i++) leaf(g, 0.2 + (i % 3) * 0.05, (i / 9) * Math.PI * 2 + 0.2, 1.05 + (i % 2) * 0.25, i % 3 ? '#6aa84a' : LEAF_DARK);
+    return '#e2ff8a';
+  },
+  // Feathery silver leaves, pale as moonlight on water, with small clusters of yellow flowers on top
+  silver_mugwort(g) {
+    const silver = toon('#d7dde8', { side: THREE.DoubleSide, emissive: new THREE.Color('#6a7390'), emissiveIntensity: 0.35 });
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + 0.4, r = 0.03 + (i % 2) * 0.02, h = 0.22 + (i % 3) * 0.05;
+      const stem = joint(g, [Math.cos(a) * r, 0, Math.sin(a) * r]);
+      stem.rotation.set(Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3);
+      part(stem, cyl(0.005, 0.007, h, 4), toon('#8a9a7a'), { pos: [0, h / 2, 0], ink: false });
+      // silver fronds up the stem, each a little leaf turned out and up
+      for (let k = 0; k < 3; k++) {
+        const f = joint(stem, [0, 0.05 + k * h * 0.25, 0]);
+        f.rotation.y = k * 2.1 + i;
+        const m = part(f, new THREE.ShapeGeometry(frond(0.08 - k * 0.015), 4), silver, { ink: false });
+        m.rotation.set(-0.5, 0, 0);
+      }
+      // the flower cluster: small yellow buds
+      for (let k = 0; k < 5; k++) {
+        const b = k * 2.4;
+        part(stem, sphere(0.011, 5, 4), toon(k % 2 ? '#f2cf4a' : '#ffe27a', { emissive: new THREE.Color('#6a4a00'), emissiveIntensity: 0.5 }), { pos: [Math.cos(b) * 0.018, h + (k % 3) * 0.012, Math.sin(b) * 0.018], ink: false });
+      }
+    }
+    for (let i = 0; i < 7; i++) {
+      const m = part(g, new THREE.ShapeGeometry(frond(0.11), 4), silver, { ink: false });
+      m.rotation.set(-Math.PI / 2 + 0.45, (i / 7) * Math.PI * 2, 0);
+    }
+    return '#e6ecff';
+  },
 };
+
+// A feathery frond: a leaf with deep notches down both sides, lying along +x
+function frond(len) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  const n = 4;
+  for (let i = 1; i <= n; i++) {
+    const x = (i / n) * len, w = len * 0.2 * Math.sin((i / n) * Math.PI * 0.9 + 0.2);
+    s.lineTo(x - len / n / 2, w);
+    s.lineTo(x - len / n / 4, w * 0.35);
+  }
+  s.lineTo(len, 0);
+  for (let i = n; i >= 1; i--) {
+    const x = (i / n) * len, w = len * 0.2 * Math.sin((i / n) * Math.PI * 0.9 + 0.2);
+    s.lineTo(x - len / n / 4, -w * 0.35);
+    s.lineTo(x - len / n / 2, -w);
+  }
+  s.lineTo(0, 0);
+  return s;
+}
 
 export function createHerb(kind) {
   const root = new THREE.Group();

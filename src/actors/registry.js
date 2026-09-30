@@ -2,5 +2,6 @@
 import { PARTY } from './registry-party.js';
 import { FOES } from './registry-foes.js';
 import { BOSSES } from './registry-bosses.js';
+import { PEOPLE } from './registry-people.js';
 
-export const MODELS = [...PARTY, ...FOES, ...BOSSES];
+export const MODELS = [...PARTY, ...FOES, ...BOSSES, ...PEOPLE];

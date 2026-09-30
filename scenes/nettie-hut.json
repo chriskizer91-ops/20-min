@@ -1,0 +1,190 @@
+{
+  "_about": "Inside Nettie's hut, in Bogmire: her cauldron over the hearth at the back, shelves of jars, her bed and her rain-butt on the right, a worktable and stool on the left, and the gate out at the bottom. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/nettie-hut.json out.png",
+  "id": "nettie-hut",
+  "title": "Nettie's hut",
+  "subtitle": "Bogmire",
+  "image": "art/backgrounds/nettie-hut-inside.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "A close room. The big rug's sides meet at (800, 71), so the horizon is near the top of the painting; the hearth's stone ring and the rain-butt's lid are ellipses about 0.23 and 0.3 as tall as wide, which a camera 16.5 degrees down through a 38 degree lens gives at those heights. At 150 pixels to the meter the chest by the bed is knee-high, the bed a little higher, the rain-butt reaches her shoulder and the cauldron is almost a meter across; she stands about 240 px tall by the hearth and twice that at the gate.",
+    "fov": 38,
+    "pitch": 16.5,
+    "ppm": 150
+  },
+  "ambient": {"sky": "#b07a58", "ground": "#2a1610", "hemi": 1.15, "moon": "#b8b0ff", "moonlight": 0.6, "moonFrom": [-6, 4, -3]},
+  "walk": [
+    {
+      "name": "floorboards",
+      "points": [
+        [590, 455], [632, 453], [700, 455], [800, 456], [893, 453], [935, 459], [985, 459], [1015, 480], [1020, 493],
+        [1135, 495], [1150, 503], [1238, 557], [1242, 638], [1202, 642], [1200, 756], [1250, 760], [1252, 896],
+        [345, 896], [345, 700], [385, 688], [383, 594], [330, 590], [330, 480], [392, 456]
+      ],
+      "holes": [
+        {"ellipse": [442, 488, 44, 11], "segments": 12, "_what": "the stool"}
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "the gate and the front rail",
+      "base": [[0, 1010], [1536, 1010]],
+      "outline": [
+        [
+          [0, 1024], [0, 890], [432, 886], [436, 876], [500, 876], [504, 888], [556, 894], [770, 902], [980, 894],
+          [1030, 886], [1034, 876], [1100, 876], [1104, 888], [1536, 888], [1536, 1024]
+        ]
+      ]
+    },
+    {
+      "name": "stool",
+      "base": [442, 488],
+      "outline": [
+        [[401, 497], [401, 396], [405, 383], [478, 383], [482, 396], [482, 497]]
+      ]
+    },
+    {
+      "name": "hearth and cauldron",
+      "base": [763, 425],
+      "outline": [
+        [
+          [630, 452], [630, 396], [650, 388], [700, 380], [700, 262], [720, 250], [740, 232], [768, 222], [796, 232],
+          [818, 250], [838, 262], [838, 380], [880, 388], [895, 396], [895, 452], [800, 457], [700, 456]
+        ]
+      ]
+    },
+    {
+      "name": "rain-butt, bucket and jug",
+      "base": [[1255, 885], [1536, 905]],
+      "outline": [
+        [
+          [1258, 888], [1258, 760], [1300, 752], [1305, 770], [1325, 760], [1325, 540], [1360, 522], [1420, 515],
+          [1480, 522], [1515, 540], [1536, 560], [1536, 900], [1395, 902], [1300, 900]
+        ]
+      ]
+    },
+    {
+      "name": "bottles, left",
+      "base": [347, 682],
+      "outline": [
+        [
+          [314, 684], [314, 612], [322, 600], [334, 598], [345, 612], [350, 606], [352, 591], [364, 590], [366, 606],
+          [379, 622], [379, 684]
+        ]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "the hearth",
+      "pixel": [768, 352],
+      "base": [768, 425],
+      "color": "#ff8a2a",
+      "intensity": 14,
+      "distance": 9,
+      "glow": 1.4
+    },
+    {
+      "_what": "candle on the worktable",
+      "pixel": [365, 312],
+      "base": [365, 455],
+      "color": "#ffb45e",
+      "intensity": 2.5,
+      "distance": 4,
+      "glow": 0.35
+    },
+    {
+      "_what": "candle by the shelves",
+      "pixel": [613, 282],
+      "base": [613, 452],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 3.5,
+      "glow": 0.3
+    },
+    {
+      "_what": "lantern on the crate",
+      "pixel": [220, 512],
+      "base": [220, 565],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.45
+    },
+    {
+      "_what": "lantern by the window",
+      "pixel": [125, 282],
+      "base": [125, 470],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 4,
+      "glow": 0.4
+    },
+    {
+      "_what": "hanging lantern",
+      "pixel": [1065, 94],
+      "base": [1065, 480],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 5,
+      "glow": 0.45
+    },
+    {
+      "_what": "candles on the chest",
+      "pixel": [1080, 380],
+      "base": [1078, 488],
+      "color": "#ffb45e",
+      "intensity": 2.5,
+      "distance": 4,
+      "glow": 0.35
+    },
+    {
+      "_what": "candle on the side table",
+      "pixel": [1290, 594],
+      "base": [1290, 656],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.4
+    },
+    {
+      "_what": "candles by the bed",
+      "pixel": [1420, 430],
+      "base": [1420, 472],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 4,
+      "glow": 0.35
+    },
+    {
+      "_what": "moonlight at the window",
+      "pixel": [250, 190],
+      "base": [250, 470],
+      "color": "#9f9aff",
+      "intensity": 1.5,
+      "distance": 5,
+      "glow": 0
+    }
+  ],
+  "spots": {
+    "nettie": [930, 490],
+    "cauldron": [765, 458],
+    "rain-butt": [1290, 760],
+    "jars, left": [360, 470],
+    "jars, right": [1000, 480],
+    "bed": [1180, 525]
+  },
+  "herbs": [],
+  "spawn": {"pixel": [775, 760], "facing": "up"},
+  "arrivals": {
+    "bogmire-moot-circle": {"pixel": [775, 852], "walk": [775, 770], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "Bogmire",
+      "to": "bogmire-moot-circle",
+      "zone": [[590, 842], [960, 842], [960, 896], [590, 896]],
+      "line": "Out to the moot-circle."
+    }
+  ]
+}

@@ -10,7 +10,7 @@ const NIGHT = '#07050b';
 
 // The camera: [x, y, zoom] -> screen = painting * s + (ox, oy). zoom 1 just covers the screen; x and y (0-1)
 // are the point of the painting to centre, clamped so the painting always covers the screen.
-export function place(vw, vh, w, h, [fx, fy, zoom]) {
+function place(vw, vh, w, h, [fx, fy, zoom]) {
   const s = Math.max(vw / w, vh / h) * Math.max(1, zoom);
   return { s, cx: clampCentre(fx * w, vw / (2 * s), w), cy: clampCentre(fy * h, vh / (2 * s), h) };
 }
@@ -69,12 +69,6 @@ export function createScreen(canvas) {
     view,
     // Fade a shot in over `dur` seconds, over whatever is showing
     push(shot, dur, now) { layers.push({ shot, t0: now, dur }); },
-    get top() { return layers[layers.length - 1]?.shot ?? null; },
-    // Is this shot showing at all, or has something covered it completely?
-    showing(shot, now) {
-      const i = layers.findIndex((L) => L.shot === shot);
-      return i >= 0 && !layers.slice(i + 1).some((L) => alphaOf(L, now) >= 1);
-    },
     draw(now) {
       let first = 0;
       layers.forEach((L, i) => { if (alphaOf(L, now) >= 1) first = i; });

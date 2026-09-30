@@ -3,8 +3,9 @@
 dist/title.html carries ten stills and two field paintings as base64, which adds a third to their size. At the
 originals' quality the page came to 7.4 MB, so this writes copies to art/title/ that the page imports instead
 (the originals in art/stills/ and art/backgrounds/ stay as they are, for everything else):
-  - the heavier stills, re-encoded at a slightly lower quality (a painted still survives it; the pans never
-    zoom past about 1.4x);
+  - every still but the title painting, re-encoded at a slightly lower quality (a painted still survives it;
+    the pans never zoom past about 1.6x). The title painting stays as it is: it's on screen longest, and at
+    this quality its sky loses some of its faint painted stars;
   - the two field paintings, cropped from 3:2 to 16:9 (the cut-scenes only frame the part kept) and re-encoded;
   - the night clouds, cut down to the three puffy cells the title drifts (a 3x1 strip of 256 px cells).
 """
@@ -15,9 +16,8 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'art' / 'title'
 QUALITY = 72
 
-# Stills already this light are imported from art/stills/ directly.
-HEAVY = ['moonrise', 'square-from-the-well', 'lights-go-down-the-river', 'witch-at-her-door', 'the-skiff-wakes',
-         'lights-go-home', 'two-lamplighters']
+STILLS = ['moonrise', 'square-from-the-well', 'lights-go-down-the-river', 'witch-at-her-door', 'the-skiff-wakes',
+          'the-night-misthollow-sank', 'witchfire-cauldron', 'lights-go-home', 'two-lamplighters']
 # Field paintings: (file, top row of the 16:9 crop). Nettie's hut keeps its rafters and loses some of the fence
 # along the bottom; Bogmire keeps the top of the mooring mast and loses the near boardwalk.
 CROPS = [('nettie-hut-inside', 40), ('bogmire-moot-circle', 0)]
@@ -32,7 +32,7 @@ def save(im, name, **opts):
 
 def main():
     OUT.mkdir(exist_ok=True)
-    for name in HEAVY:
+    for name in STILLS:
         save(Image.open(ROOT / 'art' / 'stills' / f'{name}.webp').convert('RGB'), name, quality=QUALITY)
     for name, top in CROPS:
         im = Image.open(ROOT / 'art' / 'backgrounds' / f'{name}.webp').convert('RGB')

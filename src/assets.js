@@ -21,11 +21,13 @@ import chapelMoss from '../art/herbs/chapel_moss.webp';
 import graveyardNight from '../art/battle/graveyard-night.webp';
 import jacquard from '../art/fonts/Jacquard12-Regular.ttf';
 import pixelify from '../art/fonts/PixelifySans[wght].ttf';
+import bogwick from '../art/herbs/bogwick.webp';
+import silverMugwort from '../art/herbs/silver_mugwort.webp';
 
 export const images = { 'art/backgrounds/wickhollow-square.webp': wickhollowSquare, 'art/backgrounds/cottage-inside.webp': cottageInside };
 export const portraits = { hilde, agnes, inkblot, witch: witchCalm, 'witch-calm': witchCalm, 'witch-delighted': witchDelighted, 'witch-surprised': witchSurprised, 'witch-sly': witchSly };
 export const faces = { witch: witchFace, hildeAgnes: hildeAgnesFaces, nettieLanternMother: nettieLanternMotherFaces };
 export const fx = { witchfire, sparks, mothsFireflies };
-export const herbs = { moonpetal, lavender, nightrose, chapel_moss: chapelMoss };
+export const herbs = { moonpetal, lavender, nightrose, chapel_moss: chapelMoss, bogwick, silver_mugwort: silverMugwort };
 export const battleArt = { 'art/battle/graveyard-night.webp': graveyardNight };
 export const fonts = { 'Jacquard 12': jacquard, 'Pixelify Sans': pixelify };

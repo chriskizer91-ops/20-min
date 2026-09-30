@@ -20,6 +20,15 @@ export const HERBS = {
     name: 'Chapel moss', icon: icons.chapel_moss, glow: '#b8f0a0',
     note: 'Chapel moss, from the oldest stones. Wren said it was so nobody is forgotten.',
   },
+  // Bogmire's two (LORE.md §8): bogwick from the lamp-pole planters, silver mugwort from the plank edges
+  bogwick: {
+    name: 'Bogwick', icon: icons.bogwick, glow: '#e2ff8a',
+    note: 'Bogwick. Every head ends in a little wick, lit. Moonpetal and bogwick make Lantern Oil.',
+  },
+  silver_mugwort: {
+    name: 'Silver mugwort', icon: icons.silver_mugwort, glow: '#e6ecff',
+    note: "Silver mugwort, for remembering and for holding on. It likes a plank's edge and a bit of damp.",
+  },
 };
 
 // Where they grow in the well square: the source game's own herb spots on this painting, keeping the ones

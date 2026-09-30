@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Moonlight in the Aether</title>
+<style>
+  /* The title screen and the cut-scenes. The paintings are drawn on the canvas; everything here floats over
+     them in the house look: plum panels with a cream edge and an inner plum line, gold for names, Jacquard 12
+     for display text and Pixelify Sans for the rest. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --gold: #e2bd67;
+    --logo: #f6ecd2;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    --top: env(safe-area-inset-top, 0px);
+    --bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; opacity: 0; transition: opacity 1s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* The logo, in the empty sky the painting leaves at the top. Cream with a soft moonlit glow; "Follow me down"
+     in gold beneath. On a tall phone the title takes two lines. */
+  #logo { position: fixed; left: var(--gutter); right: var(--gutter); top: calc(var(--top) + clamp(14px, 6vh, 64px)); margin: 0;
+    text-align: center; pointer-events: none; opacity: 0; transform: translateY(8px); filter: blur(6px);
+    transition: opacity 1.8s ease-out, transform 2.4s ease-out, filter 1.8s ease-out; }
+  #logo.show { opacity: 1; transform: none; filter: none; }
+  #logo h1 { margin: 0; font: 400 clamp(44px, 8.4vw, 124px)/0.9 var(--display); color: var(--logo); letter-spacing: 0.01em;
+    text-shadow: 0 3px 0 rgba(26, 10, 34, 0.85), 0 0 14px rgba(255, 244, 220, 0.5), 0 0 38px rgba(186, 150, 255, 0.55), 0 0 80px rgba(120, 90, 220, 0.35); }
+  #logo.show h1 { animation: breathe 7s ease-in-out 2s infinite; }
+  @keyframes breathe { 50% { text-shadow: 0 3px 0 rgba(26, 10, 34, 0.85), 0 0 18px rgba(255, 244, 220, 0.62), 0 0 48px rgba(186, 150, 255, 0.7), 0 0 96px rgba(120, 90, 220, 0.45); } }
+  #logo h1 span { white-space: nowrap; }
+  #logo p { margin: 0.35em 0 0; font: 400 clamp(22px, 2.9vw, 40px)/1 var(--display); color: var(--gold); letter-spacing: 0.05em;
+    text-shadow: 0 2px 0 rgba(26, 10, 34, 0.9), 0 0 16px rgba(226, 189, 103, 0.45); opacity: 0; transition: opacity 1.6s ease-out 1.1s; }
+  #logo.show p { opacity: 1; }
+
+  /* Tap to begin */
+  #press { position: fixed; left: 50%; bottom: calc(var(--bottom) + max(28px, 9vh)); transform: translateX(-50%); margin: 0; padding: 8px 20px 9px;
+    font-size: 18px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream); white-space: nowrap; background: rgba(24, 12, 30, 0.78);
+    border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); pointer-events: none; animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+
+  /* The menu: one plum panel, bottom centre, with a gold cursor on the chosen line */
+  #menu { position: fixed; left: 50%; bottom: calc(var(--bottom) + max(20px, 6vh)); transform: translateX(-50%); width: max-content;
+    min-width: 230px; max-width: calc(100% - 2 * var(--gutter)); padding: 10px 14px 12px 8px; background: var(--panel); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.3), 0 12px 32px rgba(0, 0, 0, 0.6); animation: rise 0.45s ease-out; }
+  @keyframes rise { from { opacity: 0; translate: 0 10px; } }
+  #menu-title { margin: 0 0 4px 30px; font: 400 26px/1 var(--display); color: var(--gold); }
+  #menu ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  #menu button { position: relative; display: block; width: 100%; padding: 3px 10px 4px 30px; border: 0; border-radius: 4px; background: none; text-align: left;
+    font: 400 31px/1.05 var(--display); color: var(--cream); }
+  #menu button small { display: block; margin: 0 0 2px; font: 13px/1.2 var(--body); color: var(--dim); }
+  #menu button.on { color: var(--gold); background: linear-gradient(90deg, rgba(226, 189, 103, 0.16), rgba(226, 189, 103, 0)); }
+  #menu button.on::before { content: ''; position: absolute; left: 9px; top: 0.5em; border: 7px solid transparent; border-left: 10px solid var(--gold); border-right: 0;
+    filter: drop-shadow(0 1px 0 #000); animation: nudge 0.9s ease-in-out infinite; }
+  #menu button:focus-visible { outline: none; }
+  @keyframes nudge { 50% { translate: 3px 0; } }
+
+  /* The cut-scenes: a tap anywhere moves on */
+  #cut { position: fixed; inset: 0; cursor: pointer; }
+  #scrim { position: fixed; left: 0; right: 0; bottom: 0; height: 48%; pointer-events: none; opacity: 0; transition: opacity 0.8s;
+    background: linear-gradient(180deg, rgba(7, 5, 11, 0), rgba(7, 5, 11, 0.5) 40%, rgba(7, 5, 11, 0.86)); }
+  body.captioned:not(.bare) #scrim { opacity: 1; }
+  #scene-name { position: fixed; top: calc(12px + var(--top)); left: var(--gutter); margin: 0; font: 400 clamp(32px, 4.6vw, 52px)/0.95 var(--display); color: var(--cream);
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); pointer-events: none; opacity: 0; }
+  #scene-name.fade { animation: named 4.2s ease-in-out forwards; }
+  @keyframes named { 12% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+  #scene-tools { position: fixed; top: calc(12px + var(--top)); right: var(--gutter); display: flex; gap: 8px; }
+  #scene-tools button { min-height: 34px; padding: 6px 12px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #scene-tools button:hover { border-color: var(--cream); }
+  #btn-auto[aria-pressed='true'] { border-color: var(--gold); color: var(--gold); }
+
+  /* Narration: a centred caption low on the screen, over a dark scrim so the painting can't swallow it */
+  #caption { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(var(--bottom) + max(30px, 9vh)); margin: 0 auto; max-width: 34em;
+    text-align: center; font: 400 clamp(18px, 2.05vw, 25px)/1.5 var(--body); color: #f8f0de; text-wrap: balance;
+    text-shadow: 0 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.95), 0 0 28px rgba(0, 0, 0, 0.8); pointer-events: none; }
+  #caption .rest, #talk-text .rest { visibility: hidden; }
+  #caption .more { margin-left: 0.4em; font-size: 0.7em; color: var(--gold); animation: blink 0.8s steps(2) infinite; }
+
+  /* Dialogue: the field screens' box, at the bottom */
+  #talk { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + var(--bottom)); margin: 0 auto; max-width: 760px; display: flex; gap: 16px;
+    align-items: flex-start; padding: 16px 20px 18px 16px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.94), rgba(20, 9, 26, 0.95));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 10px 30px rgba(0, 0, 0, 0.6); }
+  #talk.rise { animation: rise 0.35s ease-out; }
+  #talk-face { width: 96px; height: 96px; flex: none; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; object-fit: cover; }
+  #talk-face.pixel { image-rendering: pixelated; }
+  #talk.faceless #talk-face { display: none; }
+  #talk .words { min-width: 0; flex: 1; }
+  #talk-name { margin: 0 0 4px; font: 400 30px/1 var(--display); color: var(--gold); }
+  #talk-text { margin: 0; font-size: 19px; line-height: 1.45; min-height: 2.9em; max-width: 60ch; }
+  #talk-more { position: absolute; right: 16px; bottom: 8px; color: var(--cream); font-size: 14px; animation: blink 0.8s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Each whole line, for screen readers (the typed text would be read out a letter at a time) */
+  .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; }
+
+  /* A tall phone: the title on two lines, and a smaller box */
+  @media (max-aspect-ratio: 4/5) {
+    #logo h1 { font-size: clamp(44px, 14.5vw, 96px); line-height: 0.88; }
+    #logo h1 span { display: block; }
+    #logo p { font-size: clamp(22px, 6.4vw, 36px); }
+    #menu { bottom: calc(var(--bottom) + 16px); }
+  }
+  @media (max-width: 560px) {
+    #talk { gap: 12px; padding: 12px 14px 16px 12px; }
+    #talk-face { width: 64px; height: 64px; }
+    #talk-name { font-size: 26px; }
+    #talk-text { font-size: 16px; }
+    #menu button { font-size: 29px; }
+    #scene-tools button { min-height: 32px; padding: 5px 10px; font-size: 13px; }
+  }
+  /* A phone on its side: little height, so the logo shrinks and the menu moves to the right-hand side */
+  @media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+    #logo { top: calc(var(--top) + 10px); }
+    #logo h1 { font-size: clamp(34px, 6.6vw, 60px); }
+    #logo p { font-size: clamp(16px, 2.6vw, 24px); margin-top: 0.25em; }
+    #menu { left: auto; right: var(--gutter); bottom: calc(var(--bottom) + 12px); transform: none; min-width: 200px; padding: 6px 10px 8px 6px; }
+    #menu button { font-size: 24px; padding: 1px 10px 2px 28px; }
+    #menu button small { display: none; }
+    #menu-title { font-size: 22px; margin-bottom: 0; }
+    #press { bottom: calc(var(--bottom) + 18px); }
+    #caption { bottom: calc(var(--bottom) + 18px); font-size: 17px; max-width: 40em; }
+    #talk { bottom: calc(8px + var(--bottom)); padding: 10px 14px 12px 10px; gap: 12px; max-width: 700px; }
+    #talk-face { width: 60px; height: 60px; }
+    #talk-name { font-size: 24px; }
+    #talk-text { font-size: 16px; min-height: 2.6em; }
+    #scene-name { font-size: 30px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #logo, #logo p { transition: opacity 1s; transform: none; filter: none; }
+    #logo.show h1, #press, #menu, #menu button.on::before, #talk.rise, #caption .more, #talk-more { animation: none; }
+  }
+</style>
+
+<canvas id="stage" aria-label="The Magpie, a small sunstone skiff, sails over a moonlit valley"></canvas>
+<header id="logo"><h1><span>Moonlight</span> <span>in the Aether</span></h1><p>Follow me down</p></header>
+<p id="press" hidden>Tap to begin</p>
+<nav id="menu" hidden aria-label="Title menu">
+  <h2 id="menu-title" hidden>Story</h2>
+  <ul id="menu-list"></ul>
+</nav>
+<section id="cut" hidden>
+  <div id="scrim"></div>
+  <h2 id="scene-name" hidden></h2>
+  <nav id="scene-tools" aria-label="Cut-scene">
+    <button id="btn-auto" type="button" aria-pressed="true" title="Lines move on by themselves once read">Auto</button>
+    <button id="btn-skip" type="button" title="End the scene (Escape)">Skip ▸▸</button>
+  </nav>
+  <p id="caption" hidden><span class="shown"></span><span class="rest"></span><span class="more" hidden>▼</span></p>
+  <section id="talk" hidden>
+    <img id="talk-face" alt="">
+    <div class="words"><h2 id="talk-name"></h2><p id="talk-text"><span class="shown"></span><span class="rest"></span></p></div>
+    <span id="talk-more" hidden>▼</span>
+  </section>
+</section>
+<p id="sr-line" class="sr" aria-live="polite"></p>
+<p id="error" hidden></p>
+<!-- /PAGE -->
+<script type="module" src="dev/title.js"></script>
+</html>

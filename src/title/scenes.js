@@ -10,17 +10,18 @@
 //   music     switches the music as the beat starts (it fades itself; see ../audio/sound.js)
 //   sfx       plays as the beat starts; a line can have its own
 //   hold      seconds a beat without lines stays up before moving on by itself
+//   min       with Auto on, the least time the beat stays up (7 s unless it says), so its camera move can land
 //
 // Framing notes are in the comments, in painting terms.
 
-// Who speaks. The witch has no name (LORE §3), so her box says what SLICE calls her. Pitches are the synth's
-// dialogue blip (Hz); Inkblot only says "Kraa", so he croaks instead of blipping.
+// Who speaks. The witch has no name (LORE §3), so her box says what SLICE calls her. Quill has no portrait, so
+// his box shows his name alone. Pitches are the synth's dialogue blip (Hz); Inkblot only says "Kraa", so he
+// croaks instead of blipping.
 export const SPEAKERS = {
   witch: { name: 'The Witch', pitch: 520 },
   nettie: { name: 'Nettie', pitch: 430 },
   mother: { name: 'The Lantern Mother', pitch: 760 },
   quill: { name: 'Quill', pitch: 330 },
-  silas: { name: 'Silas', pitch: 360 },
   inkblot: { name: 'Inkblot', sfx: 'kraa' },
 };
 
@@ -38,7 +39,7 @@ export const SCENES = [
       { still: 'lights-go-down-the-river', from: [0.2, 0.84, 1.42], to: [0.64, 0.5, 1.12], sfx: 'river',
         lines: [{ say: "Each little flame lifts off its wick and floats down the Sable, like a leaf that knows where it's going." }] },
       // Her door: start out on the path, then pull back into the cottage to find her in the doorway
-      { still: 'witch-at-her-door', from: [0.64, 0.46, 1.5], to: [0.47, 0.5, 1.03],
+      { still: 'witch-at-her-door', from: [0.64, 0.46, 1.5], to: [0.44, 0.5, 1.03],
         lines: [{ say: 'Where they pass, the riverbank goes grey.' }, { who: 'witch', face: 'sly', say: 'Right. Boots. Basket. Hat.' }] },
       // The title card: the title painting with the logo, then back to the title screen
       { still: 'title', music: 'title', sfx: 'chapter', hold: 6, card: true },
@@ -51,11 +52,12 @@ export const SCENES = [
       // the water.
       { still: 'lights-go-down-the-river', from: [0.12, 0.5, 1.5], to: [0.26, 0.62, 1.3], music: 'wickhollow',
         lines: [{ who: 'quill', say: "Everything's a swap." }, { who: 'quill', say: 'Bring her back with the lights in her.' }] },
-      // Witchfire to the brazier: close on the crystals, easing out to find Inkblot on the rail
-      { still: 'the-skiff-wakes', from: [0.52, 0.42, 1.55], to: [0.6, 0.5, 1.12], music: 'flight', sfx: 'resonance',
+      // Witchfire to the brazier: close on the crystals, easing out to find Inkblot on the rail (a wide screen
+      // stops where it holds both; a tall phone carries on to him)
+      { still: 'the-skiff-wakes', from: [0.52, 0.42, 1.55], to: [0.74, 0.5, 1.12], music: 'flight', sfx: 'resonance',
         lines: [{ who: 'inkblot', face: 'calm', say: 'Kraa.' }] },
       // She lifts: the camera climbs from the hull and the water up the sails to the moon
-      { still: 'the-skiff-wakes', from: [0.58, 0.82, 1.35], to: [0.66, 0.1, 1.1], sfx: 'ship-takeoff',
+      { still: 'the-skiff-wakes', from: [0.58, 0.82, 1.35], to: [0.66, 0.1, 1.1], sfx: 'ship-takeoff', min: 9,
         lines: [{ who: 'witch', face: 'delighted', say: "It's a broom with ambitions." }] },
     ],
   },

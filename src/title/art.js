@@ -29,8 +29,6 @@ import motherGrieving from '../../art/portraits/lantern-mother-veiled-grieving.w
 import motherSurprised from '../../art/portraits/lantern-mother-unveiled-surprised.webp';
 import motherSmiling from '../../art/portraits/lantern-mother-unveiled-smiling.webp';
 import inkblot from '../../art/portraits/inkblot.png';
-import hilde from '../../art/portraits/hilde.png';
-import agnes from '../../art/portraits/agnes.png';
 import jacquard from '../../art/fonts/Jacquard12-Regular.ttf';
 import pixelify from '../../art/fonts/PixelifySans[wght].ttf';
 
@@ -55,15 +53,14 @@ export const STILLS = {
 // bottom row four of golden motes, 128 px cells.
 export const FX = { clouds, lights };
 
-// Portraits by speaker and expression. The three villagers' are small pixel-art PNGs, drawn pixelated.
+// Portraits by speaker and expression (every expression there is, so a line's face can be re-picked in
+// scenes.js alone). Inkblot's is a small pixel-art PNG, drawn pixelated.
 export const PORTRAITS = {
   witch: { calm: witchCalm, delighted: witchDelighted, surprised: witchSurprised, sly: witchSly },
   nettie: { calm: nettieCalm, delighted: nettieDelighted, cross: nettieCross, sly: nettieSly },
   mother: { veiled: motherVeiled, grieving: motherGrieving, surprised: motherSurprised, smiling: motherSmiling },
   inkblot: { calm: inkblot },
-  hilde: { calm: hilde },
-  agnes: { calm: agnes },
 };
-export const PIXEL_PORTRAITS = new Set([inkblot, hilde, agnes]);
+export const PIXEL_PORTRAITS = new Set([inkblot]);
 
 export const FONTS = { 'Jacquard 12': jacquard, 'Pixelify Sans': pixelify };
