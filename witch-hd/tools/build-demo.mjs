@@ -171,7 +171,7 @@ ${LOADING_HTML}
   const PART = 12 * 1024 * 1024;
   const parts = [];
   for (let i = 0, o = 0; o < glb.length; i++, o += PART) {
-    const name = `witch-hd.part${i + 1}.bin`;
+    const name = `witch-hd.part${i + 1}.wasm`; // .wasm: a type hosts serve as raw bytes
     const chunk = glb.subarray(o, Math.min(glb.length, o + PART));
     writeFileSync(resolve(out, name), chunk);
     parts.push({ name, size: chunk.length });
