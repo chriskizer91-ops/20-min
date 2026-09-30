@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#222}</style>
+<script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+<canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#2a2530');
+scene.add(new THREE.HemisphereLight('#cfd6ff', '#3a2a30', 1.3));
+const key = new THREE.DirectionalLight('#fff1e0', 2.6); key.position.set(-1.5, 2.5, 3); scene.add(key);
+const fill = new THREE.DirectionalLight('#b8c4ff', 0.9); fill.position.set(2.5, 1.2, 1.5); scene.add(fill);
+const rim = new THREE.DirectionalLight('#e8d8ff', 1.8); rim.position.set(0.5, 2, -3); scene.add(rim);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.MeshStandardMaterial({ color: '#3b3440', roughness: 1 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 50);
+let model, mixer, gltf;
+
+window.load = async (url) => {
+  gltf = await new GLTFLoader().loadAsync(url + '?' + Date.now());
+  model = gltf.scene;
+  model.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+  scene.add(model);
+  mixer = new THREE.AnimationMixer(model);
+  let tris = 0;
+  model.traverse((o) => { if (o.isMesh) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+  return { tris, clips: gltf.animations.map((a) => `${a.name} ${a.duration.toFixed(2)}s`), bones: (() => { let n = 0; model.traverse((o) => { if (o.isBone) n++; }); return n; })() };
+};
+
+// views: [{yaw (deg), pitch (deg), dist, target:[x,y,z], fov}]; returns a PNG data URL of the grid
+window.render = ({ views, size = 512, cols = views.length, clip = null, time = 0, morphs = null, hide = [] }) => {
+  mixer.stopAllAction();
+  model.traverse((o) => { if (o.isBone) { o.position.copy(o.userData.p0 ??= o.position.clone()); o.quaternion.copy(o.userData.q0 ??= o.quaternion.clone()); o.scale.copy(o.userData.s0 ??= o.scale.clone()); } });
+  if (clip) {
+    const c = gltf.animations.find((a) => a.name === clip);
+    const act = mixer.clipAction(c); act.play(); mixer.setTime(time);
+  }
+  model.traverse((o) => {
+    if (o.isMesh && o.morphTargetInfluences) {
+      const names = o.morphTargetDictionary;
+      if (morphs) for (const [k, v] of Object.entries(morphs)) if (names[k] != null) o.morphTargetInfluences[names[k]] = v;
+    }
+    if (o.isMesh) o.visible = !hide.some((h) => o.name.startsWith(h) || o.parent?.name?.startsWith(h));
+  });
+  const rows = Math.ceil(views.length / cols);
+  const out = document.createElement('canvas');
+  out.width = size * cols; out.height = size * rows;
+  const g = out.getContext('2d');
+  renderer.setSize(size, size, false);
+  views.forEach((v, i) => {
+    const t = new THREE.Vector3(...(v.target ?? [0, 0.85, 0]));
+    const yaw = THREE.MathUtils.degToRad(v.yaw ?? 0), pitch = THREE.MathUtils.degToRad(v.pitch ?? 5);
+    const d = v.dist ?? 3.2;
+    camera.fov = v.fov ?? 30; camera.updateProjectionMatrix();
+    camera.position.set(t.x + Math.sin(yaw) * Math.cos(pitch) * d, t.y + Math.sin(pitch) * d, t.z + Math.cos(yaw) * Math.cos(pitch) * d);
+    camera.lookAt(t);
+    renderer.render(scene, camera);
+    g.drawImage(canvas, (i % cols) * size, Math.floor(i / cols) * size);
+  });
+  return out.toDataURL('image/png');
+};
+window.ready = true;
+</script>
+</html>

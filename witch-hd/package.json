@@ -1,0 +1,17 @@
+{
+  "name": "witch-hd",
+  "private": true,
+  "type": "module",
+  "description": "A high-detail, rigged and animated 3D Moonlight Witch (glTF), built in code.",
+  "scripts": {
+    "textures": "node tools/paint-textures.mjs",
+    "build": "node tools/build-model.mjs",
+    "demo": "node tools/build-demo.mjs",
+    "test": "node tools/test-demo.mjs",
+    "shot": "node tools/shot.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.186.1"
+  }
+}
