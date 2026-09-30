@@ -3,7 +3,7 @@ import * as esbuild from 'esbuild';
 
 const port = Number(process.env.PORT || 8000);
 const ctx = await esbuild.context({
-  entryPoints: { main: 'src/main.js', viewer: 'src/viewer.js', battle: 'src/battle/main.js', bestiary: 'src/bestiary.js' },
+  entryPoints: { main: 'src/main.js', viewer: 'src/viewer.js', battle: 'src/battle/main.js', bestiary: 'src/bestiary.js', airship: 'src/airship/main.js' },
   bundle: true,
   format: 'esm',
   outdir: 'dev',

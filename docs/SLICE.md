@@ -1,145 +1,178 @@
-# Moonlight & Mire: the slice
+# Moonlight in the Aether: the slice
 
-This is the play outline for one full-moon night, 20 to 40 minutes long. It has 11 field screens, 6 fights (4 of them required), 3 places to brew and 3 cut-scenes. The lore is in `LORE.md`.
+This is the play outline for one full-moon night, about 20 to 40 minutes of play. The lore is in `LORE.md`, and the art to commission is in `art-requests/batch-02.md`.
+
+The slice has:
+- Two towns, Wickhollow and Bogmire.
+- Five wild places, where all the foes live.
+- A painted world map that the skiff flies over, with no fights in the air.
+- 12 field screens, plus the world map.
+- 6 fights, 4 of them required.
+- 3 places to brew.
+- 4 cut-scenes.
 
 Path keys:
 - `20m/` = `/home/user/20-min/`
 - `WW/` = `/home/user/follow-me-down-witch-way/`
 - `TH:` = New-game branch `origin/claude/tender-babbage-4wiplk`
-- `HH:` = New-game branch `origin/claude/cool-ptolemy-uc93gg`
+- **B2 #n** = prompt n in `art-requests/batch-02.md`
 
 ## 1. The route
 
-The route follows WW's own map. The lantern path leaves from the bottom of the square. The Hollow lies over the stone bridge in the square's top corner, through the twisted grove, which is a Wisp-Calm gate in WW. The witch visits the lantern path first, walks back up through the square, and then crosses the bridge.
+```
+ WICKHOLLOW (town)                                   BOGMIRE (town)
+ cottage · garden · square · riverbank jetty  ≈ skiff ≈  mast & moot-circle · Nettie's hut
+      |                                                        |
+ wild: the lantern path (B1)                               wild: the Murkway (B4)
+ wild: Sable bridge → the Hollow (B2, B3)                  wild: the Long Boardwalk (B5)
+                                                           wild: Mother's Hollow (B6)
+```
+
+**The order is fixed where it matters.** The Hollow opens once Silas has told her where the moths go, so B1 comes before B2 and B3. The skiff flies once Quill has his swap and the Gloamwing's moths have shown the way. Nettie joins before the first fen fight.
+
+### Wickhollow (town): herbs, friends, no foes
+
+| # | Screen | Painting | What happens | Herbs | People | Min |
+|---|---|---|---|---|---|---|
+| 1 | Cottage, inside | `20m/art/backgrounds/cottage-inside.webp` | The opening cut-scene ends here. She takes the hag stone and 2 moonwater. After the garden she comes back for the brewing tutorial (Heartsease). The armchair is where she rests and saves. | — | — | 1-1.5 |
+| 2 | Cottage garden | `20m/art/backgrounds/cottage-outside.webp` | The gathering tutorial. One lavender bed is grey, and Moonlight shows a rot trail. A mandrake climbs out of the grey bed and scuttles off toward the Gloamwood. | lavender, moonpetal, witch's bells | — | 1-2 |
+| 3 | Wickhollow square | `20m/art/backgrounds/wickhollow-square.webp` (demo 1) | This is the hub. Inkblot drops a rescued flame in her basket and settles on her hat: **Inkblot joins.** Hilde gives the Horseshoe charm, and Agnes points to the chapel moss. The well gives moonwater (3 a night, shared with the lantern path). Exits lead to the riverbank, the lantern path and the stone bridge. | chapel moss, moonpetal | Hilde, Agnes | 1.5-2.5 |
+| 4 | The Sable riverbank | `WW/game/art/backgrounds/sable-riverbank.webp` | Quill sits by his cold skiff at the old jetty (the skiff is 3D). Lamp-moths carry flames past on the water. Quill sets his swap: warm hands and a bow-lamp that won't blow out. She comes back here later to take off. | nightrose | Quill; Rosalind (optional: a nightrose earns the Bell charm) | 1, then 0.5 |
+
+### Wickhollow's wild places (the Gloamwood): foes and herbs
 
 | # | Screen | Painting | What happens | Herbs | People | Fight | Min |
 |---|---|---|---|---|---|---|---|
-| 1 | Cottage, inside | `20m/art/backgrounds/cottage-inside.webp` | The opening cut-scene ends here. Inkblot taps the round window with a flame in his beak, then flies off. She takes the hag stone and 2 moonwater. After the garden she comes back for the first brew (Heartsease). The armchair is the rest and save point. | — | Inkblot, at the window | — | 1-2 |
-| 2 | Cottage garden | `20m/art/backgrounds/cottage-outside.webp` | Gathering tutorial. One lavender bed is grey. Moonlight shows a rot trail running down the path. A mandrake climbs out of its bed, and a glowcap waddles toward her lit window. | lavender, moonpetal, witch's bells | — | B1 | 2-3 |
-| 3 | The lane | `20m/art/backgrounds/the-lane.webp` | Every bracket lantern is dark. She relights one with witchfire. It flickers as if it wants to leave. "Stay." | nightrose, moonpetal | — | — | 1 |
-| 4 | Wickhollow square | `20m/art/backgrounds/wickhollow-square.webp` (demo 1) | This is the hub. Hilde talks about the lost lights ("Mine went Tuesday") and gives the Horseshoe charm. Agnes points to the chapel moss. The well gives moonwater, sharing three with the lantern path. Inkblot shows up again and heads for Quill's. | chapel moss | Hilde, Agnes, Inkblot | — | 2-4 |
-| 5 | Quill's stall | `20m/art/backgrounds/quills-stall.webp` | Quill explains that the bird has been ferrying lights home all week, one at a time. "Take him. Everything's a swap." **Inkblot joins.** The swap shop opens. | — | Quill | — | 2 |
-| 6 | The lantern path | `WW/witch_game_assets/backgrounds/lantern_path.webp` | Silas stands among his dark lanterns. His garden is here, and so are the wayside kettle, a moonwater source and a bench to rest and save. She brews Lantern Oil, his pole lights, and he gives her the Owl charm. She can also brew Wisp-Calm here. | witch's bells, ember-star lily, silver mugwort, lavender, wisp-sprout, bogwick | Silas | — | 4-5 |
-| 7 | The Sable bridge | `20m/art/backgrounds/sable-bridge.webp` | Lamp-moths carry lights downriver under the arches. Moonlight shows Witch Way's first runestone. At the far end, sour wisps crowd the twisted grove. Wisp-Calm lets her by; otherwise she fights. | — | Rosalind (optional: a nightrose earns the Bell charm) | B2 (skip with Wisp-Calm) | 1-2 |
-| 8 | The Hollow | `WW/witch_game_assets/backgrounds/hollow.webp` | A marsh graveyard. The iron gate stays shut. Inkblot's nest holds his lost tail feather. The Gloamwing hangs in the bone-hung trees, fat with light. After the fight, the rot trail runs off the Hollow's low end and down. | one hollowed bed; clean it for bogwick | — | B3 (boss) | 2-3 |
-| 9 | The Murkway | `TH: thareia/art-in/scenes/walk-graveyard-path-night.png` | A plank path over black pools, past old fen graves. Hollowed patches are everywhere. Fog covers the low path, and Hag-Sight shows which planks hold. | hollowed patches (bogwick, lavender) | — | B4 (can walk round) | 2 |
-| 10 | Nettie's hut, Long Boardwalk | **New art.** Layout reference: `HH: art-in/batch-3/map-long-boardwalk-a.png` | The lamp-posts burn with violet Wickhollow flames. The middle-turn cut-scene plays. She brews Hush Tea and **Nettie joins.** The rain-butt gives 3 moonwater, and there is a rest point and a cauldron (Remembrance Incense, more Lantern Oil). Then she goes on along the boardwalk. | — | Nettie | B5 | 4-6 |
-| 11 | Mother's Hollow | **New art.** Layout reference: `HH: art-in/batch-3/map-mothers-hollow.png` | Black willows stand around a sunken house. Every window is lit with Wickhollow's lanterns. The Lantern Mother waits on the step. | — | The Lantern Mother | B6 (final) | 1, plus the fight |
+| 5 | The lantern path | `WW/witch_game_assets/backgrounds/lantern_path.webp` | Silas stands among his dark lanterns. The runaway mandrake and a glowcap block the path. At the wayside kettle (moonwater, a bench, a cauldron) she brews Lantern Oil. Silas relights, gives her the Owl charm and a bow-lamp flame, and says the moths gather in the Hollow. She also brews the Warming Balm, using glowcap Gathered in B1. | witch's bells, ember-star lily, silver mugwort; Silas's garden: lavender, wisp-sprout, bogwick | Silas | **B1** | 3-4 |
+| 6 | The Sable bridge | `20m/art/backgrounds/sable-bridge.webp` | Crossing the bridge on the way to the Hollow. Lights float away under the arches. Sour wisps crowd the twisted grove at the far end: Wisp-Calm lets her by, or she fights. | — | — | **B2** (skip with Wisp-Calm) | 0.5-1.5 |
+| 7 | The Hollow | `WW/witch_game_assets/backgrounds/hollow.webp` | A marsh graveyard. The iron gate stays shut. Inkblot's nest holds his tail feather. The Gloamwing hangs in the bone-hung trees, fat with light. Once it's beaten, every moth rises and streams away downriver: "Further than I can walk tonight." | one hollowed bed; clean it for bogwick | — | **B3** (boss) | 1-2 |
 
-**Optional rooms** add time on a longer run and are not counted in the 11. They use paintings that already exist:
-- Hilde's smithy (`20m/art/backgrounds/smithy-inside.webp`), where she can temper one charm by +1.
-- The graveyard (`graveyard.webp`), which has more chapel moss.
-- The chapel (`chapel-inside.webp`), where Agnes tells her story.
+### The flight
 
-**New field art: screens 10 and 11 only.** Paint them like batch 1: a 30° three-quarter view, at night, with the floor left empty. HH's Gloomfen maps are top-down daytime paintings, so use them only as layout references.
+| # | Screen | Painting | What happens | Min |
+|---|---|---|---|---|
+| 8 | The world map | **New: B2 #01** (stopgap: `TH: thareia/art-in/regions/04-Gloomfen-Marsh.png`, night-graded in code) | "The skiff wakes" plays at the jetty. Then the 3D skiff lifts off and flies free over the painted map, with the violet lights drifting down the river below to show the way. It lands at Bogmire's mast, or back at the Wickhollow jetty whenever she likes. There is music, clouds and a trail of motes: no fights, no fuel, no clock. | about 1 each way |
 
-**Unused for now:** WW's stepping stones, pond, crypt and Sable riverbank. They're good for a longer cut.
+### Bogmire (town): herbs, friends, no foes
+
+| # | Screen | Painting | What happens | Herbs | People | Min |
+|---|---|---|---|---|---|---|
+| 9 | Bogmire | **New: B2 #02** | Plank streets on stilts around the moot-circle, with the mooring mast where the skiff lands. Every lamp-pole burns a borrowed violet flame, and the window boxes have gone grey. Mayor Gretch is glad of the light and sorry about the herbs. | bogwick (lamp-pole planters), silver mugwort (plank edges) | Mayor Gretch | 1-2 |
+| 10 | Nettie's hut | **New: B2 #03** | The middle-turn cut-scene plays here. She brews Hush Tea, Nettie sleeps an hour, wakes cross and rested, and **Nettie joins.** The rain-butt gives 3 moonwater. There is a rest point and a cauldron for Remembrance Incense and Lantern Oil. | lavender (window boxes) | Nettie | 2-3 |
+
+### Bogmire's wild places (the fen): foes and herbs
+
+| # | Screen | Painting | What happens | Herbs | Fight | Min |
+|---|---|---|---|---|---|---|
+| 11 | The Murkway | `20m/art/backgrounds/graveyard-path.webp` (Thareia's walk-graveyard-path-night) | A plank path over black pools, past old fen graves. Hollowed patches are everywhere. Fog covers the low path, and Hag-Sight shows which planks hold. | hollowed patches: bogwick, silver mugwort | **B4** (can walk round) | 1 |
+| 12 | The Long Boardwalk | **New: B2 #04** | Planks on stilts, with lamp-posts burning Wickhollow's flames out into the mist. | reed islets: silver mugwort | **B5** | 1 |
+| 13 | Mother's Hollow | **New: B2 #05** | Black willows around a sunken house with every window lit. The Lantern Mother waits on the step. | — | **B6** (final) | 0.5, plus the fight |
+
+**Optional rooms.** These use existing paintings and aren't counted in the 12:
+- Quill's stall (`20m/art/backgrounds/quills-stall.webp`), the swap shop.
+- The lane (`the-lane.webp`), with nightrose and a lantern to relight.
+- Hilde's smithy (`smithy-inside.webp`), to temper a charm +1.
+- The graveyard (`graveyard.webp`).
+- The chapel (`chapel-inside.webp`).
+
+**Not used yet:** WW's stepping stones, pond and crypt.
+
+**New art.** The world map, two Bogmire screens and two fen screens are new. For the other wild places the slice reuses existing paintings: WW's lantern path and Hollow, WW's Sable riverbank, the 20-min Sable bridge, and Thareia's graveyard path (the Murkway).
 
 ## 2. The battles
 
-| # | Where | Line-up | Difficulty | Backdrop | What it teaches |
-|---|---|---|---|---|---|
-| B1 | Garden gate, at the Gloamwood's edge | Hollowed Mandrake, Glowcap | Tutorial; you can't really lose | **New:** `battle-gloamwood-night` (stopgap: `TH: battle-forest-ruins.png` night-graded in code) | d20 rolls, grazes, intent dice, Witchfire beating Verdant, Gather, the "gentle" rule and the hat gag |
-| B2 | The twisted grove, where it opens into the Hollow | Sour Wisp ×2 (A's `marsh-light`), Lamp-Moth | Easy | `TH: thareia/art-in/scenes/battle-graveyard-night.png`, which the battle demo already uses | Moonlight is weak against light (Radiant on Radiant is ×0.5). Inkblot's Pinch takes a flame. Wisp-Calm ends the fight. |
-| B3 | The Hollow | The Gloamwing, which calls up to 2 Lamp-Moths | Medium: the first boss | `TH: thareia/art-in/scenes/battle-graveyard-night.png`, which already looks like the Hollow | Grip & Claim on the Dawnbell, Stagger cancelling a charge, Witchfire against a boss weak to Ember, the gold card slam |
-| B4 | The Murkway | Boglurcher and Mire Leech ×2, all Hollowed | Easy if she strikes first, medium if not | `battle-graveyard-night.png` again | A First Strike from field Moonlight; Radiant against Blight, where the first hit wins |
-| B5 | Long Boardwalk | Willow-Wight, Drowned Chorister ×2 | Hard: the last test before the boss | **New:** `battle-long-boardwalk` | Nettie's heals and Tide; Hexed and Rooted; Remembrance Incense |
-| B6 | Mother's Hollow | The Lantern Mother: a champion with 3 phases who calls Lamp-Moths. Silas joins as a guest in phase 3. | Boss; losing once is fine | **New:** `battle-mothers-hollow` (stopgap: `TH: battle-dark-cathedral.png`, read as the sunken house) | Two grip meters, thrown moonwater and Nettie's Tide against her weakness, Lantern Oil against Lights Out |
+This is the list for the balance agent. Foes live only in the wild places. They are visible on the field, and Moonlight cast on a foe's back gives a First Strike. Target levels are suggestions; `docs/BALANCE.md` decides.
 
-**Lengths:**
-- Rabble fights: about 1-2 minutes each.
-- B5: about 2-3 minutes.
-- B6: about 4-6 minutes.
+| # | Where | Line-up | Party | Target level | Required? | Difficulty | Backdrop | What it teaches |
+|---|---|---|---|---|---|---|---|---|
+| B1 | Lantern path (Wickhollow wilds) | Hollowed Mandrake, Glowcap | Witch, Inkblot | 1 | yes | tutorial | **New: B2 #06** Gloamwood at night (stopgap: `TH: battle-forest-ruins.png`, night-graded) | d20, grazes, intent dice, Witchfire beating Verdant, Gather (glowcap for the Warming Balm), the gentle rule and the hat gag |
+| B2 | Twisted grove, off the Sable bridge | Sour Wisp ×2 (A's `marsh-light`), Lamp-Moth | Witch, Inkblot | 1-2 | no (Wisp-Calm skips it) | easy | `20m/art/battle/graveyard-night.webp` (already in `battle.html`) | Radiant on Radiant is ×0.5; Pinch takes a flame; Wisp-Calm ends a fight |
+| B3 | The Hollow | The Gloamwing (it calls up to 2 Lamp-Moths) | Witch, Inkblot | 2 | yes | medium: first boss | `20m/art/battle/graveyard-night.webp` | Grip & Claim on the Dawnbell, Stagger cancelling a charge, Ember against a boss weak to it, the gold card |
+| B4 | The Murkway (fen) | Boglurcher, Mire Leech ×2, all Hollowed | Witch, Inkblot, Nettie | 3 | no (can walk round) | easy with a First Strike, medium without | **New: B2 #07** open fen | Nettie's first fight; Radiant against Blight, first hit wins |
+| B5 | The Long Boardwalk | Willow-Wight, Drowned Chorister ×2 | Witch, Inkblot, Nettie | 3-4 | yes | hard: the last test | **New: B2 #08** the boardwalk | Nettie's heals and Tide; Hexed and Rooted; Remembrance Incense |
+| B6 | Mother's Hollow | The Lantern Mother (champion, 3 phases, calls Lamp-Moths) | Witch, Inkblot, Nettie; **Silas joins as a guest in phase 3** | 4 | yes | boss; losing once is fine | **New: B2 #09** the sunken house (stopgap: `TH: battle-dark-cathedral.png`) | Two grip meters; Tide (thrown moonwater, Nettie) against her weakness; Lantern Oil against Lights Out |
 
-The party goes from level 1 to about level 5.
+**How long fights take:** rabble fights about 1-2 min, B3 about 3, B5 about 2-3, and B6 about 4-5.
 
 ## 3. Story beats
 
-**Opening.** Painted stills, slow pans and text:
-1. `20m/art/stills/moonrise.webp`: "When the moon rises, an old path wakes in the woods. They call it Witch Way." (This is WW's intro.)
+**Opening.** Painted stills with slow pans and text:
+1. `20m/art/stills/moonrise.webp`: "When the moon rises, an old path wakes in the woods. They call it Witch Way." (WW's intro)
 2. `20m/art/stills/square-from-the-well.webp`: "This month, Wickhollow's lanterns started going out. One a night. No wind."
-3. **New still**, `lights-down-the-sable`: "Each little flame lifts off its wick and floats down the Sable, like a leaf that knows where it's going."
+3. **B2 #10**, lights down the Sable: "Each little flame lifts off its wick and floats down the Sable, like a leaf that knows where it's going."
 4. `20m/art/stills/witch-at-her-door.webp`: "Where they pass, the riverbank goes grey." The witch: "Right. Boots. Basket. Hat."
-5. The title, *Moonlight & Mire*, with "Follow me down" in gold.
+5. **B2 #15**, the title: *Moonlight in the Aether*, with "Follow me down" in gold.
 
-**The middle turn.** This happens at Nettie's hut, on screen 10:
+**The skiff wakes.** This plays at the jetty, after B3:
+1. Quill flexes his warm fingers. "Everything's a swap. Bring her back with the lights in her."
+2. **B2 #11**: she holds witchfire to the brazier, and the amber crystals take on a violet heart. Silas's flame hangs at the bow. Inkblot, on the rail: "Kraa."
+3. The skiff lifts off the water. The witch: "It's a broom with ambitions." Then the world map.
+
+**The middle turn.** This plays at Nettie's hut:
 1. Nettie: "Your lamps weren't stolen. They were called."
-2. **New still**, `the-night-misthollow-sank`. It shows the event, not the party, as TH decided for cut-scenes: a young lamplighter leads a line of children along the boardwalk through mist. Text: "A hundred years ago the water came up. The lamplighter led the children out, and went back for the last one."
+2. **B2 #12**, the night Misthollow sank (the event, not the party, as Thareia does it): a young lamplighter leads a line of children, safe and holding hands, along the boardwalk through mist. "A hundred years ago the water came up. The lamplighter led the children out, and went back for the last one."
 3. Nettie: "They all got home. Nobody told her. She's still lighting the way, and every light she can't find, she borrows."
 4. Nettie: "Where she takes the light, the rot comes in behind. That's your grey riverbank."
 5. The witch: "So she's not a thief. She's someone who hasn't sat down in a hundred years." Nettie: "You'll have to fight her to sit her down. Then you can make her tea."
 
 **The ending.** This plays after B6:
-1. The veil falls. The Lantern Mother: "Are they safe? I was taking them home. The water came up the stair, and I went back for the last one…" (This line is A's.)
-2. The witch: "Everyone got home. Every one. You can put the lamp down." She pours Hush Tea, and `20m/art/stills/witchfire-cauldron.webp` can cover the brewing.
-3. **New still**, `lights-going-home`: the flames lift off the boardwalk and float back up the Sable.
-4. **New still**, `two-lamplighters`: Wickhollow is lit again, and Silas and the Lantern Mother walk the lantern path. Text: "She didn't fade. Ghosts in Wickhollow don't. They walk the path together, and neither has finished a round since, because they talk."
-5. Nettie, at the door: "If your village ever needs a witch, ask me. I'm not saying yes. I'm saying ask." (This is A's line, with one word changed.)
+1. The veil falls. The Lantern Mother: "Are they safe? I was taking them home. The water came up the stair, and I went back for the last one…" (A's line)
+2. The witch: "Everyone got home. Every one. You can put the lamp down." She pours Hush Tea (`20m/art/stills/witchfire-cauldron.webp`).
+3. At Bogmire's mast, Nettie: "If your village ever needs a witch, ask me. I'm not saying yes. I'm saying ask." (A's line, one word changed)
+4. **B2 #13**, the lights go home: the flames lift off the boardwalk and stream up the Sable, and the skiff follows them.
+5. **B2 #14**, two lamplighters: Wickhollow is lit again, and Silas and the Lantern Mother walk the lantern path. "She didn't fade. Ghosts in Wickhollow don't. They walk the path together, and neither has finished a round since, because they talk."
 6. The grimoire opens to the Dawnbell's page: it's a bell from somewhere far north. That leads onward.
 
 ## 4. Core loops
 
 | Loop | What you do | How long | What it feeds |
 |---|---|---|---|
-| Field | Walk, talk, cast Moonlight, gather herbs, relight lanterns | 1-3 min a screen | Herbs for brews, First Strikes for fights, and friends' troubles |
-| Brew | "Pick Your Poison": light it with witchfire, add moonwater and up to 3 herbs, stir, bless | 30-60 s a brew, at 3 stops | Brews solve troubles (which earn charms) and win fights |
-| Fight | Take turns on the ribbon; watch d20s and intents; Gather; Pinch | 1-2 min for rabble, up to 6 for the final boss | Herbs she can't pick tonight, loot, and cleaned patches that bloom |
+| Town | Talk, gather, trade swaps, rest | 1-3 min a screen | Friends' troubles (and their charms), herbs, the skiff |
+| Wild | Walk, gather, cast Moonlight on a foe's back, fight | 1-4 min a screen, plus fights | Herbs only foes carry, loot, cleaned patches that bloom |
+| Brew | "Pick Your Poison": witchfire, moonwater, up to 3 herbs, stir, bless | 30-60 s a brew, at 3 cauldrons | Brews solve troubles and win fights |
+| Fly | Take off, fly the map, land | about 1 min a trip | The way between towns; a breather with music |
 | Loot | Card reveal, equip, the grimoire at a rest | 10-20 s a card | Charms and gear shorten fights and speed up the field |
 
-**How the loops connect.** She gathers, brews and fights. In the fight she gathers what only foes carry, then brews again.
+**How they connect.** Town troubles send her into the wilds. The wilds give herbs and loot, brews solve the troubles, and solving them gets her the skiff to the next town.
 
-**The limit is moonwater.** She has about 8 for the night:
-- 2 she carries.
-- 3 shared between the well and the lantern path.
-- 3 from Nettie's rain-butt.
+**Before takeoff she needs:** a Warming Balm (its glowcap only comes from B1), Silas's bow-lamp (from Lantern Oil), and the Gloamwing beaten (B3).
 
-Those 8 have to cover:
-- Heartsease, for the tutorial.
-- Lantern Oil twice: once for Silas and once for the boss.
-- Hush Tea, for Nettie.
-- Remembrance Incense, for the boss.
-- Wisp-Calm (optional), to skip B2.
-- Any she throws raw at the Lantern Mother.
+**Moonwater is the limit: 8 for the night** (2 carried, 3 in Wickhollow, 3 at Nettie's).
 
-The choices are meant to be tight.
+| Brew | For | Required? | Herbs from |
+|---|---|---|---|
+| Lantern Oil | Silas and the bow-lamp | yes | garden or square; Silas's garden |
+| Warming Balm | Quill's hands, the skiff | yes | lantern path; B1 |
+| Hush Tea | Nettie joining | yes | garden; lantern path |
+| Heartsease | the brewing tutorial | no | garden |
+| Wisp-Calm | skipping B2 | no | Silas's garden |
+| Remembrance Incense, a second Lantern Oil, raw moonwater | the boss | no | square; lantern path |
 
-**Where the herbs come from:**
+That's 3 required brews and 5 choices for 8 moonwater.
 
-| Brew | Herbs | Where to get them |
-|---|---|---|
-| Lantern Oil | moonpetal, bogwick | Garden or lane; Silas's garden |
-| Hush Tea | lavender, silver mugwort | Garden; lantern path |
-| Remembrance Incense | chapel moss, silver mugwort | Square; lantern path |
-
-All of these can be gathered before the fen.
-
-**Total time:**
-- About 22 minutes at a brisk pace, skipping B2 and B4 and the optional talk.
-- About 32 minutes for a typical run.
-- About 40 minutes for a thorough run with the optional rooms.
+**Time.** About 25 minutes at a brisk pace (skipping B2, B4 and the optional talk), about 35 minutes for a typical run, and about 40 with the optional rooms.
 
 ## 5. Demo plan
 
-Build and polish these in order. Each one is a small page of its own.
+Build and polish these in order. Each is a small page of its own.
 
-1. **The witch model** (done). *Looks good when:* she reads clearly at 2× pixels from any angle, and the hat, horns and charms hold their shape as she moves.
-2. **Gathering in the square** (in progress). She kneels, the athame snips, the herb arcs into the basket, and "Found it!" pops up. Moonlight's circle reveals a hidden patch. A "gentle" mandrake knocks her hat off. *Looks good when:* the kneel and snip feel like one soft motion, and the hat gag lands.
-3. **Changing screens: garden → lane → square.** *Looks good when:* she walks off one painting and onto the next at the same size (each scene has its own `ppm`), the short fade goes to violet rather than black, and the music carries across.
-4. **A first battle.** This is in progress as `battle.html`, using B2's line-up on the graveyard backdrop. It needs the FF9-style cut into battle; the chunky 3D party on the left and foes on the right; the Initiative Ribbon; a d20 that tumbles and lands; intent dice over the foes' heads; a `koText` in place of a death; and a Worn drop card. Gather and the mandrake's hat gag come with B1. *Looks good when:* every number reads at a glance, and nothing waits on a menu longer than it needs to.
-5. **Pick Your Poison.** *Looks good when:* the witchfire strip (`20m/art/fx/witchfire.webp`) lights the pot, herbs float, violet steam rises, stir and bless feel like two separate gestures, and a dud is funny.
-6. **The Gloamwing, B3.** The relic glints, the greyed *HELD BY* card appears, Inkblot's Pinch drains the grip meter, and the gold card slams in. *Looks good when:* the moth is big and pale but never scary, and the relic reveal matches A's frame for frame.
-7. **The opening cut-scene.** Four stills with slow pans, typewriter text in Pixelify Sans, the title in Jacquard 12, and music made in code. *Looks good when:* the pans feel like camera moves, and no line stays up longer than it takes to read.
+1. **The witch model** (done). *Looks good when:* she reads clearly at 2× pixels from any angle, and the hat, horns and charms keep their shape in motion.
+2. **Gathering in the square** (done). *Looks good when:* the kneel and snip are one soft motion, and "Found it!" pops.
+3. **A first battle** (built as `battle.html`: B2's line-up on the graveyard backdrop). Next is B1, with Gather and the mandrake's hat gag. *Looks good when:* every number reads at a glance, and nothing waits on a menu longer than it needs to.
+4. **Screen changes: garden → square → riverbank.** *Looks good when:* she keeps the same size from painting to painting, the short fade goes to violet rather than black, and the music carries across.
+5. **Pick Your Poison.** *Looks good when:* the witchfire strip lights the pot, herbs float, violet steam rises, stir and bless feel like two separate gestures, and a dud is funny.
+6. **The flight.** The 3D skiff lifts off the riverbank jetty, flies over the world map (B2 #01), and lands at Bogmire's mast. *Looks good when:* the skiff bobs and banks; the crystals glow amber with a violet heart; a soft shadow slides over the map; clouds (B2 #19) pass above and below; motes (B2 #20) trail behind; the violet lights drift down the river; and a code-made flying theme, like Thareia's "Sunstone Wind", swells on take-off.
+7. **The opening cut-scene and title** (B2 #10 and #15). *Looks good when:* the pans feel like camera moves, and no line stays up longer than it takes to read.
 
-**Build as you go.** The foe models and the new characters are made in code, the same way as the witch:
-- Quill, Silas, Rosalind, Nettie and the Lantern Mother.
+**Build as you go.** These are modeled in code, the same way as the witch:
+- The skiff, from `TH: thareia/art-in/airship/airship-skiff-turnaround.png`.
+- Quill, Silas, Rosalind, Mayor Gretch, Nettie and the Lantern Mother.
 - All 10 foe families.
-
-For portraits, Quill, Silas and Rosalind can borrow WW's (`WW/witch_game_assets/npcs/<id>/`) until matching ones are painted. Nettie and the Lantern Mother need new portraits.
 
 ## 6. Open questions
 
-1. **Is the title *Moonlight & Mire*?** Recommended: yes, with "Follow me down" small above it.
-2. **Is this standalone, or does it follow WW Chapter 1?** Recommended: standalone, like WW's own side stories (*Silas's Last Lantern* also starts her with the hag stone and two moonwater). She knows the ghosts, but nothing depends on Chapter 1's plot.
-3. **Is the party three (the witch, Inkblot and Nettie), with Silas as a guest?** Recommended: yes. A fourth member, such as Hilde with a hammer, would double the battle work for a 40-minute game.
-4. **Should I commission art batch 2?** It would be 2 field paintings, 3 battle backdrops, 4 stills and 2 portraits. Recommended: yes. Start with the Gloamwood backdrop, because B1 is the only early fight that has no backdrop yet; until then, night-grade `battle-forest-ruins`. The two fen field paintings come next.
-5. **Can the party lose?** Recommended: yes, at no cost. She wakes in her armchair with everything, and the fight waits for her. Most players won't lose before the final boss.
+1. **Does the skiff have a name?** Recommended: no. Everyone calls it Quill's skiff, and a naming screen isn't worth the time in a slice.
+2. **Free flight, or pick a destination and watch?** Recommended: free flight over the map, about 45 seconds between towns, with the drifting lights showing the way and a landing ring at each dock.
+3. **Can she fly back to Wickhollow before the end?** Recommended: yes, to rest in her armchair or fetch chapel moss. The fen fights wait for her.
+4. **Standalone, or after WW Chapter 1?** (Still open.) Recommended: standalone, like WW's own side stories. She knows the ghosts, but nothing depends on Chapter 1's plot.
+5. **Can the party lose?** (Still open.) Recommended: yes, at no cost. She wakes at her last rest with everything she had, and the fight waits.

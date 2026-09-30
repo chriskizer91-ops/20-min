@@ -9,6 +9,7 @@ export const PAGES = [
   { html: 'witch.html', entry: 'src/viewer.js', name: 'witch-up-close' },
   { html: 'battle.html', entry: 'src/battle/main.js', name: 'hollow-battle' },
   { html: 'bestiary.html', entry: 'src/bestiary.js', name: 'bestiary' },
+  { html: 'airship.html', entry: 'src/airship/main.js', name: 'airship' },
 ];
 
 const only = process.argv[2];

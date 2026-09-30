@@ -1,6 +1,6 @@
 // Plays the built demos in headless Chromium: node tests/browser.mjs (run `npm run build` first).
 // Checks it starts without errors, walks with the keys, climbs the chapel steps by tapping, talks to
-// Hilde, and flies the camera out behind the scenes and back.
+// Hilde, and flies the camera out behind the scenes and back; opens a battle; and flies the skiff.
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -66,6 +66,20 @@ if (await game(() => !!window.__battle.director.targeting)) await page.keyboard.
 for (let i = 0; i < 40 && (await game(() => document.getElementById('menu').hidden)); i++) await wait(250);
 const after = await game(() => ({ hp: Object.values(window.__battle.director.state.units).filter((u) => u.side === 'foe').reduce((a, u) => a + u.hp, 0), turns: window.__battle.director.state.turn ?? 0 }));
 check(after.hp <= hpBefore, `Witchfire is thrown and the fight goes on to her next turn (foes' HP ${hpBefore} -> ${after.hp})`);
+
+// The airship: docked at Wickhollow, "Fly to Bogmire" takes off, and near Bogmire she sets down at its dock.
+await page.goto(pathToFileURL(resolve('dist/airship.html')).href);
+await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 30000 });
+const air = () => game(() => { const a = window.__airship, S = a.state; return { mode: S.mode, at: S.at, alt: S.alt, card: document.getElementById('card').hidden ? null : document.getElementById('card-name').textContent }; });
+check((await air()).card === 'Wickhollow', 'the skiff starts docked at Wickhollow, with the town card up');
+await page.locator('#btn-go').click();
+for (let i = 0; i < 40 && (await air()).alt < 3; i++) await wait(250);
+check((await air()).mode === 'flying', `"Fly to Bogmire" takes off (${(await air()).alt.toFixed(1)} m up)`);
+// Skip most of the trip: put her a little way short of Bogmire's dock, still heading there
+await game(() => { const a = window.__airship; a.state.pos.lerp(a.places.bogmire.dockAt, 0.97); });
+for (let i = 0; i < 120 && (await air()).mode !== 'docked'; i++) await wait(250);
+const landed = await air();
+check(landed.mode === 'docked' && landed.at === 'bogmire' && landed.card === 'Bogmire', `she lands at Bogmire's dock (${landed.mode} at ${landed.at})`);
 
 check(errors.length === 0, `no errors in the console${errors.length ? ': ' + errors.join(' | ') : ''}`);
 await browser.close();

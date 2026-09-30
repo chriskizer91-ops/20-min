@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Moonlight in the Aether: the skiff</title>
+<style>
+  /* The world map: the painted Gloomfen with the skiff over it. Same colours as the other demos: plum panels
+     with a cream edge, gold for names. Town names hang as banners; wild places are pins. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --wild: #9ff0b0;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  #title { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none;
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); }
+  #title h1 { margin: 0; font: 400 clamp(30px, 5vw, 48px)/0.95 var(--display); color: var(--cream); }
+  #title p { margin: 4px 0 0 2px; font-size: 13px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  #tools { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: var(--gutter); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 60%; }
+  #tools button { padding: 6px 10px; min-height: 34px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; font-size: 14px; }
+  #tools button[aria-pressed='true'] { border-color: var(--gold); color: var(--gold); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .label { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; background: none; white-space: nowrap; }
+  .label.town b { display: block; transform: translate(-50%, -150%); padding: 3px 12px 4px; font: 400 24px/1 var(--display); color: var(--plum);
+    background: var(--cream); border-radius: 4px; box-shadow: 0 0 0 2px var(--plum), 0 3px 0 2px rgba(0, 0, 0, 0.45); }
+  .label.town b::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -6px; border: 6px solid transparent; border-top: 7px solid var(--cream); border-bottom: 0; }
+  .label.wild { transform: translate(-7px, -7px); display: flex; align-items: center; gap: 6px; }
+  .label.wild i { width: 14px; height: 14px; border-radius: 50%; background: var(--wild); box-shadow: 0 0 0 2px #10301a, 0 0 12px var(--wild); }
+  .label.wild span { padding: 1px 7px; font-size: 13px; background: rgba(12, 6, 16, 0.78); border-radius: 999px; color: #e6ffe9; }
+  .label.sight { transform: translate(-50%, -50%); }
+  .label.sight span { font: italic 13px var(--body); color: #d8d0ec; text-shadow: 0 1px 0 #000, 0 0 8px #000; }
+  .label.goal b, .label.goal span { outline: 2px solid var(--gold); }
+
+  #tapmark { position: fixed; left: 0; top: 0; width: 40px; height: 20px; margin: -10px 0 0 -20px; border: 2px solid var(--cream);
+    border-radius: 50%; opacity: 0; pointer-events: none; }
+  #tapmark.on { animation: tap 0.7s ease-out; }
+  @keyframes tap { from { opacity: 0.9; transform-origin: center; scale: 0.4; } to { opacity: 0; scale: 1.5; } }
+
+  /* Bottom: where to fly, or the card for the place she's at */
+  #dock { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 8px; pointer-events: none; }
+  #dock > * { pointer-events: auto; }
+  #dest { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #dest span { color: var(--dim); font-size: 14px; }
+  .go { padding: 7px 14px; min-height: 38px; background: var(--plum); border: 2px solid var(--cream); border-radius: 6px; font: 400 22px/1 var(--display); color: var(--cream); }
+  .go:hover { color: var(--gold); border-color: var(--gold); }
+  #btn-land { animation: glow 1.4s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 0 3px rgba(226, 189, 103, 0.5); } }
+  #hint { margin: 0; font-size: 13px; color: #e9e0f2; text-shadow: 0 1px 0 #000, 0 0 10px #000; text-align: center; }
+
+  #card { width: min(560px, 100%); padding: 12px 16px 14px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.95), rgba(20, 9, 26, 0.95));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), 0 10px 30px rgba(0, 0, 0, 0.6); animation: rise 0.4s ease-out; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+  #card[data-kind='wild'] { border-color: var(--wild); }
+  #card header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  #card-name { margin: 0; font: 400 34px/1 var(--display); color: var(--gold); }
+  #card[data-kind='wild'] #card-name { color: var(--wild); }
+  #card-sub { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  #card-text { margin: 6px 0 8px; }
+  #card-rows p { margin: 3px 0; font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+  #card-rows b { color: var(--cream); font-weight: 400; margin-right: 2px; }
+  #card-rows span { padding: 1px 8px; background: rgba(236, 220, 184, 0.12); border-radius: 999px; }
+  #card .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+  #error { position: fixed; inset: auto 16px 16px; padding: 12px; background: #3a0d18; border: 1px solid #ff7a8a; border-radius: 6px; }
+  @media (max-width: 560px) {
+    #tools { max-width: none; left: var(--gutter); top: calc(70px + env(safe-area-inset-top, 0px)); justify-content: flex-start; gap: 4px; }
+    #tools button { min-height: 30px; padding: 4px 8px; font-size: 13px; }
+    #title h1 { font-size: 30px; }
+    #hint { display: none; }
+    .go { font-size: 20px; }
+  }
+</style>
+
+<canvas id="stage"></canvas>
+<div id="labels"></div>
+<div id="tapmark"></div>
+<header id="title"><h1>Moonlight in the Aether</h1><p>The skiff · over the Gloomfen</p></header>
+<nav id="tools" aria-label="View">
+  <button id="btn-time" type="button" title="Time of day">Night</button>
+  <button id="btn-map" type="button" aria-pressed="false" title="See the whole map">Map</button>
+  <button id="btn-tune" type="button" title="Change the flying music">♪ Sunstone Wind</button>
+  <button id="btn-sound" type="button">Sound on</button>
+</nav>
+<div id="dock">
+  <section id="card" hidden aria-live="polite">
+    <header><h2 id="card-name"></h2><span id="card-sub"></span></header>
+    <p id="card-text"></p>
+    <div id="card-rows"></div>
+    <div class="row">
+      <button id="btn-close" class="go" type="button">Fly on</button>
+      <button id="btn-go" class="go" type="button"></button>
+      <button id="btn-takeoff" class="go" type="button">Take off</button>
+    </div>
+  </section>
+  <button id="btn-land" class="go" type="button" hidden>Land</button>
+  <div id="dest">
+    <span>Fly to</span>
+    <button id="go-wickhollow" class="go" type="button">Wickhollow</button>
+    <button id="go-bogmire" class="go" type="button">Bogmire</button>
+  </div>
+  <p id="hint">Tap the map to fly there · arrow keys or WASD to steer · Space to land</p>
+</div>
+<p id="error" hidden></p>
+<!-- /PAGE -->
+<script type="module" src="dev/airship.js"></script>
+</html>

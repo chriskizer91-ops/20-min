@@ -32,13 +32,25 @@ export class Stage {
     this.window = { x: 0, y: 0, w: paint.width, h: paint.height };
 
     this.screenCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    this.bgUniforms = { painting: { value: painting }, rect: { value: new THREE.Vector4(0, 0, 1, 1) } };
+    // The painting can be graded (tinted, desaturated, vignetted), to turn a daytime painting to dusk or night.
+    this.grade = { tint: new THREE.Color(1, 1, 1), saturation: 1, lift: new THREE.Color(0, 0, 0), vignette: 0 };
+    this.bgUniforms = {
+      painting: { value: painting }, rect: { value: new THREE.Vector4(0, 0, 1, 1) },
+      tint: { value: this.grade.tint }, lift: { value: this.grade.lift }, saturation: { value: 1 }, vignette: { value: 0 },
+    };
     this.bgScene = screenQuad(new THREE.ShaderMaterial({
       uniforms: this.bgUniforms,
       vertexShader: QUAD_VS,
       fragmentShader: /* glsl */ `
-        uniform sampler2D painting; uniform vec4 rect; varying vec2 vUv;
-        void main() { gl_FragColor = texture2D(painting, mix(rect.xy, rect.zw, vUv));
+        uniform sampler2D painting; uniform vec4 rect; uniform vec3 tint; uniform vec3 lift; uniform float saturation; uniform float vignette;
+        varying vec2 vUv;
+        void main() {
+          vec4 c = texture2D(painting, mix(rect.xy, rect.zw, vUv));
+          float l = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
+          c.rgb = mix(vec3(l), c.rgb, saturation) * tint + lift;
+          vec2 q = vUv - 0.5;
+          c.rgb *= 1.0 - vignette * dot(q, q) * 1.6;
+          gl_FragColor = c;
           #include <colorspace_fragment>
         }`,
       depthTest: false, depthWrite: false,
@@ -159,6 +171,8 @@ export class Stage {
     }
     this.view.setViewOffset(P.width, P.height, W.x, W.y, W.w, W.h);
     this.view.updateProjectionMatrix();
+    this.bgUniforms.saturation.value = this.grade.saturation;
+    this.bgUniforms.vignette.value = this.grade.vignette;
     this.bgUniforms.rect.value.set(W.x / P.width, 1 - (W.y + W.h) / P.height, (W.x + W.w) / P.width, 1 - W.y / P.height);
 
     const R = this.reveal;
