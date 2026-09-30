@@ -785,22 +785,22 @@ export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = fal
 
 // ---- the whole night: fights in order, HP carried where the route has no rest ---------------------------------------
 // Rests (full HP and MP) where docs/SLICE.md puts them: her armchair before B1, Silas's bench at the wayside kettle
-// before B2, the skiff and Nettie's hut before B4, Bogmire again before B5. Nothing between B2 and B3, or between B5 and
-// B6. After a won fight, A's breather (TUNING.rest: +20% HP, +25% MP). The bag follows the brew plan (BALANCE.md §6):
+// before B2, the skiff and Nettie's hut before B4, Bogmire again before B5, and the lamp-post bench at the end of the
+// Long Boardwalk before B6. Nothing between B2 and B3. The path 'typical-norest' leaves out the bench before B6, as the
+// route first had it (BALANCE.md §7). After a won fight, A's breather (TUNING.rest: +20% HP, +25% MP). The bag follows the brew plan (BALANCE.md §6):
 // the tutorial Heartsease; at the kettle, one more Heartsease and a moonwater kept raw (or, on the brisk path, the
 // Wisp-Calm that skips B2 and one Heartsease); at Nettie's, Remembrance Incense and a second Lantern Oil. A lost fight:
 // she wakes at her last rest with everything she had when the fight began, and tries again (at most 6 times).
 export const CHAIN = {
-  rests: { typical: ['B1', 'B2', 'B4', 'B5'], brisk: ['B1', 'B3', 'B5'], 'typical+rest': ['B1', 'B2', 'B4', 'B5', 'B6'], 'brisk+rest': ['B1', 'B3', 'B5', 'B6'] },
+  rests: { typical: ['B1', 'B2', 'B4', 'B5', 'B6'], brisk: ['B1', 'B3', 'B5', 'B6'], 'typical-norest': ['B1', 'B2', 'B4', 'B5'] },
   brew: { typical: { B1: { 'heartsease-tonic': 1 }, B2: { 'heartsease-tonic': 1, moonwater: 1 }, B4: { 'remembrance-incense': 1, 'lantern-oil': 1 } },
     brisk: { B1: { 'heartsease-tonic': 1 }, B3: { 'heartsease-tonic': 1 }, B5: { 'remembrance-incense': 1, 'lantern-oil': 1 } } },
 };
-CHAIN.brew['typical+rest'] = CHAIN.brew.typical;
-CHAIN.brew['brisk+rest'] = CHAIN.brew.brisk;
+CHAIN.brew['typical-norest'] = CHAIN.brew.typical;
 
 // onEnter(id, party, bag): called as each fight is first met (the party as it walks in); return true to stop there
 export function playChain({ path = 'typical', policy = 'sensible', seed = 1, onEnter } = {}) {
-  const route = path.replace('+rest', '');
+  const route = path.replace('-norest', '');
   const ids = route === 'brisk' ? ['B1', 'B3', 'B5', 'B6'] : ORDER;
   const out = [];
   let carry = null, bag = {};
@@ -986,7 +986,7 @@ function parseArgs(argv) {
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (o.chain) {
-    for (const path of o.paths || ['typical', 'brisk', 'typical+rest']) for (const policy of o.policies) {
+    for (const path of o.paths || ['typical', 'brisk']) for (const policy of o.policies) {
       const c = chainBattery({ path, policy, n: o.n });
       console.log(`\n== the whole night, ${path} path, ${policy}: ${P(c.complete)} finish; ${c.lossesPerRun.toFixed(2)} lost fights per run`);
       for (const [id, p] of Object.entries(c.per)) console.log(`  ${id}: first try ${P(p.first / p.n)}  tries ${(p.tries / p.n).toFixed(2)}  enters at ${P(p.hurt / p.n)} HP ${P(p.mp / p.n)} MP  ${(p.minutes / p.n).toFixed(1)} min  bag in: ${Object.entries(p.bag).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} ${P(v / p.n).trim()}`).join(', ')}`);

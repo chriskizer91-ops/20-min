@@ -3,7 +3,7 @@
 // docs/BALANCE.md's targets because 50 fights are few. Run: node --test tests/balance.test.mjs (npm test runs it too).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { battery, playFight, arrivals, GATHERS } from '../tools/balance.mjs';
+import { battery, playFight, arrivals, GATHERS, CHAIN } from '../tools/balance.mjs';
 import { ENCOUNTERS, ORDER, CURVE, startEncounter, nextForm, partyFor } from '../src/battle/encounters.js';
 import { act, foeTurn, commands } from '../vendor/aethermoor/src/rules/battle.js';
 import { buildFoe } from '../vendor/aethermoor/src/rules/foe.js';
@@ -127,27 +127,23 @@ test('B5, the Long Boardwalk: hard for sensible play, fine for expert play', () 
   within(run('B5', 'expert').win, 0.84, 1, 'B5 expert');
 });
 
-test('B6, the Lantern Mother, rested (a retry from Nettie\'s hut): sensible usually wins, expert nearly always', () => {
+test('B6, the Lantern Mother, rested (the bench before her door): sensible usually wins, expert nearly always', () => {
   const s = run('B6', 'sensible'), e = run('B6', 'expert');
   within(s.win, 0.6, 0.92, 'B6 sensible, rested');
   within(e.win, 0.85, 1, 'B6 expert, rested');
 });
 
-test('B6 as the night leaves you (straight from B5, no rest): sensible loses it about a third of the time', () => {
+test('B6 as the night leaves you (after the bench at the end of the Long Boardwalk): still her fight', () => {
   const go = policy => battery('B6', { n: N, policy, seed0: SEED, arrive: arrivals('B6', { policy, n: N }) });
   const s = go('sensible'), e = go('expert');
-  within(s.win, 0.4, 0.85, 'B6 sensible, first try');
-  within(e.win, 0.75, 1, 'B6 expert, first try');
+  within(s.win, 0.5, 0.8, 'B6 sensible, first try');
+  within(e.win, 0.85, 1, 'B6 expert, first try');
 });
 
-test('the Lantern Mother opens by tending the party (Come In Out of the Wet)', () => {
-  let s = startEncounter('B6', { seed: 3 });
-  for (const u of Object.values(s.units)) if (u.side === 'hero') s.units[u.id] = { ...u, hp: 5, mp: 0 };
-  const lm = Object.values(s.units).find(u => u.side === 'foe');
-  assert.equal(lm.intent.move, 'come-in');
-  while (s.units[s.actor].side !== 'foe') s = act(s, { ...commands(s, s.actor).find(c => c.id === 'defend') }).state;
-  const r = foeTurn(s);
-  for (const u of Object.values(r.state.units)) if (u.side === 'hero') assert.ok(u.hp > 5 && u.mp >= 6, `${u.name} tended`);
+test('the party rests before the Lantern Mother, and she fights from her first turn', () => {
+  assert.ok(CHAIN.rests.typical.includes('B6') && CHAIN.rests.brisk.includes('B6'), 'a rest before B6 on both paths');
+  const lm = Object.values(startEncounter('B6', { seed: 3 }).units).find(u => u.side === 'foe');
+  assert.notEqual(lm.intent?.move, 'come-in', 'no healing opener');
 });
 
 test('fight lengths and hit rates stay in bounds', () => {

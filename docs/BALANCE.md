@@ -32,22 +32,22 @@ Each fight on its own, with the party rested:
 | B3 the Gloamwing | naive 40-65%, sensible 75-90%, expert 95%+ | 52 / 87 / 97 | met |
 | B4 the Murkway | sensible 70-85% without a First Strike, 90%+ with | without: 7 / 76 / 90; with: 15 / 98 / 100 | met |
 | B5 the Long Boardwalk | sensible 65-80%, expert 90%+ | 4 / 72 / 93 | met |
-| B6 the Lantern Mother | sensible 55-75% first try, expert 85%+ | rested (a retry): 2 / 78 / 97 | see below |
+| B6 the Lantern Mother | sensible 55-75% first try, expert 85%+ | 1 / 65 / 93 (rested: the bench before her door) | met |
 
-B3 and B6 come with no rest before them (SLICE: none between B2 and B3, or B5 and B6), so their real first try is with
-the party as the fight before left it (§7):
+B3 comes with no rest before it (SLICE: none between B2 and B3), so its real first try is with the party as B2 left
+it. B6 has a rest before it (the lamp-post bench at the end of the Long Boardwalk), so its first try is rested (§7):
 
 | First try, walking in from the night | naive / sensible / expert | |
 | --- | --- | --- |
 | B3, straight from B2 | 49 / 77 / 92 | sensible met; expert a shade under 95% |
-| B6, straight from B5 (typical path; brisk in brackets) | - / 60-66 (63-65) / 90-91 (92-94) | met |
+| B6, after the bench (typical path; brisk in brackets) | - / 61 (64) / 94 (94) | met |
 
 The other targets:
 
 | Target | Result |
 | --- | --- |
 | rabble fights 1-2 minutes | B1 1.0, B2 1.6, B4 2.3 (1.9 with a First Strike). B4 runs a little long: three heroes and three foes make a round about 30 seconds. |
-| boss fights 4-6 minutes (SLICE: B3 about 3, B5 2-3, B6 4-5) | B3 3.0, B5 3.1, B6 4.7. B3 and B5 follow SLICE's shorter times. |
+| boss fights 4-6 minutes (SLICE: B3 about 3, B5 2-3, B6 4-5) | B3 3.0, B5 3.1, B6 4.9. B3 and B5 follow SLICE's shorter times. |
 | no fight won in 1-2 turns | fastest wins: B1 4 hero turns, B2 5, B3 14, B4 11, B5 16, B6 23 |
 | Witchfire lands about 60-75% of the time | hits and crits 56-74% by fight, plus 13-18% grazes (half damage); 11-28% misses. The Lantern Mother has the highest Guard, so B6 is the low end. |
 | every command is worth using | §8: every command has a fight where taking it away costs wins |
@@ -90,8 +90,7 @@ bag a sensible player most often arrives with (§6). §7 plays the whole night i
 | B4 | all three (3) | 7% | 76% | 90% | 2.3 (1.6-3.1) | 18 | 44% |
 | B4, First Strike | all three (3) | 15% | 98% | 100% | 1.9 (1.6-2.6) | 16.5 | 64% |
 | B5 | all three (3) | 4% | 72% | 93% | 3.1 (2.0-4.1) | 24 | 42% |
-| B6, rested (both forms) | all three (4); Silas in Lights Out | 2% | 78% | 97% | 4.7 (3.3-6.1) | 37 | 36% |
-| B6, straight from B5 | all three (4) | - | 66% | 91% | 4.9 (3.5-6.3) | 38 | 30% |
+| B6, rested (both forms) | all three (4); Silas in Lights Out | 1% | 65% | 93% | 4.9 (3.7-6.5) | 39 | 25% |
 
 "Lowest party HP" is the median over fights of the party's lowest total HP. The sensible player flees B4 3% of the
 time and B5 8% (counted as not winning; the fight waits). Brews drunk a fight (sensible): B1 0.3, B2 0.7, B3 0.8, B4
@@ -138,8 +137,7 @@ expert's answer to the Bough-Fall is Kraa! and Pinch: it takes 10 HP a fight fro
 **B6, the Lantern Mother** (the champion, level 5, in two forms; all three, level 4; Silas joins in the second form).
 Required, no fleeing, the finale.
 
-- *Lamplight*. She takes the party for lost children, and her first move is always **Come In Out of the Wet**: every
-  hero heals 30% of their HP and gets 6 MP back. Then: Lamp-Pole (1d10 and her +6 damage, her main hit), Lantern
+- *Lamplight*. The party meets her rested, from the bench at the end of the Long Boardwalk. Her moves: Lamp-Pole (1d10 and her +6 damage, her main hit), Lantern
   Flare (1d8 to everyone, DEX for half), Lure (a charge: WIS or Charmed) and Hush Now (WIS or Hexed). At half HP, *the
   Children's Road*: Lead Them Down (a charge: WIS or Led Away), the Moths, and Mourning (WIS or Spooked, and Rotting).
 - *Lights Out* (the second form, after the cut; `B6b`): the lamps go out, Silas steps out of the bow-lamp's flame and
@@ -199,9 +197,9 @@ brews a night get drunk in battle, which is what the 8 moonwater leave after the
 
 `node tools/balance.mjs --chain` plays the night in order: HP, MP, the Full Moon meter and the bag carry from fight to
 fight; each won fight gives Aethermoor's breather (+20% HP, +25% MP); a rest (the armchair, Silas's bench, the skiff
-deck, Nettie's hut) puts everyone back to full; a loss puts her back at her last rest, whole, with the bag she had, and
-she tries again (up to six times). There is no rest between B2 and B3, or between B5 and B6 (SLICE).
-`node tools/balance.mjs B6 --arrive` plays one fight as the night leaves the party.
+deck, Nettie's hut, the lamp-post bench at the end of the Long Boardwalk) puts everyone back to full; a loss puts her
+back at her last rest, whole, with the bag she had, and she tries again (up to six times). There is no rest between B2
+and B3 (SLICE). `node tools/balance.mjs B3 --arrive` plays one fight as the night leaves the party.
 
 300 nights each; the chance to win each fight the first time it is met:
 
@@ -212,25 +210,20 @@ she tries again (up to six times). There is no rest between B2 and B3, or betwee
 | B3 (no rest after B2 on the typical path) | 77% (walks in at 86% HP) | 90% | 93% | 99% |
 | B4 | 79% | 93% | - | - |
 | B5 | 74% | 94% | 79% | 97% |
-| B6 (no rest after B5) | 60% (walks in at 83% HP, 73% MP) | 90% | 63% | 94% |
-| lost fights a night | 1.5 | 0.3 | 0.9 | 0.1 |
-| if there were a rest before B6: B6 | 72% | 95% | 74% | 98% |
+| B6 (rested, after the bench) | 61% | 94% | 64% | 94% |
+| lost fights a night | 1.6 | 0.3 | 1.1 | 0.1 |
 
 Naive play almost never finishes the night (1% on the typical path, 6% brisk, with six tries a fight): it loses B4, B5
 and B6 over and over. That is right; a player who never uses Moonlight on the Hollowed or Nettie's Tide on the Lantern
 Mother hasn't played the game the fights teach.
 
-**Why the Lantern Mother tends the party first.** Straight from B5, the party walks into B6 at about 83% HP and 73% MP
-(B5 costs Nettie most of her MP), and the fight is long. Tuned as it first was, that took the sensible first try from
-70% (rested) down to about 30%, and the expert's from 91% to 76%: the fight was one thing rested and another after the
-Boardwalk, and no one setting of her numbers fit both. Her opener, Come In Out of the Wet (heal 30% and 6 MP, capped at
-full), makes the gap small: a rested party gains nothing from it, a battered one gains a lot. It is her, too: she is
-"kind, and wrong", and she means to take them home. With it, the first try straight from B5 is 60-66% sensible and
-90-94% expert, and the retry (rested, from Nettie's hut) is 78% and 97%.
-
-If the game adds a rest before B6 after all, nothing needs changing (72-74% sensible, 95-98% expert). If she should not
-heal the party, take out her `opener` in `moonlight-foes.js` and add a rest before B6 instead, or lower her damage
-(Lights Out +7 back to +5) and accept a 30-35% sensible first try straight from B5.
+**The rest before the Lantern Mother.** Straight from B5, the party would walk into B6 at about 83% HP and 73% MP
+(B5 costs Nettie most of her MP), and the fight is long: tuned for a rested party, that took the sensible first try
+down to about 30%. An earlier pass fixed it inside the fight, with a healing opener for her (Come In Out of the Wet);
+the design keeps her fight as it is and puts a rest before it instead: a bench under a lamp-post on the last dry landing
+of the Long Boardwalk (SLICE, screen 12). So every B6 is fought rested: 61-65% sensible and 93-94% expert, in the band.
+Her numbers didn't need to change. `node tools/balance.mjs --chain --paths typical-norest` plays the night without the
+bench, for comparison.
 
 ## 8. Every command earns its place
 
@@ -332,11 +325,11 @@ Nettie are a little sturdier than Aethermoor's scholars (a d10 hit die for the w
 The foes (`vendor/aethermoor/src/data/moonlight-foes.js`): the Hollowed Omen; Flustered and In the Lamplight; the
 Hollowed Mandrake and Silas; and variants of Aethermoor's lamp-moth (carries a Wickhollow flame), Willow-Wight (26 HP,
 +8 damage: short and sharp), Gloamwing (84 HP, a 3d6 Moon-Dive, calls moths while the Dawnbell hums) and Lantern Mother
-(48 and 40 HP, +6 and then +7 damage, two forms, and Come In Out of the Wet). The rest (Sour Wisp, Glowcap, Boglurcher,
+(48 and 40 HP, +6 and then +7 damage, two forms). The rest (Sour Wisp, Glowcap, Boglurcher,
 Mire Leech, Drowned Chorister) are Aethermoor's own, at the levels `encounters.js` gives them.
 
 The last pass, after the whole night was played in order: Stir the Pot gains its die every 3 levels, not 4 (§8); the
-Lantern Mother opens with Come In Out of the Wet and hits +6, then +7 in Lights Out (§7); the Willow-Wight went from 24
+Lantern Mother hits +6, then +7 in Lights Out, and the party rests before her (§7); the Willow-Wight went from 24
 HP and +6 damage to 26 and +8 (harder and shorter); and the sensible player Hexes only the biggest foe, once a fight
 (before, it hexed every Chorister, and Hex looked worse than it is).
 
@@ -364,8 +357,6 @@ tests pass). The Hollowed Omen could not be data alone, because Aethermoor's Ome
 - **Held relics on a KO**: the fights are `gentle`, so a beaten holder drops its relics intact. LORE says some go home
   (the Wickhollow flames): filter what the loot screen shows.
 - **The Dawnbell** is a mace, which none of the three can wield (Nettie refuses maces). Make it a charm or a trophy.
-- **The Lantern Mother's opener** (§7) is a design choice made here to fix a balance problem. It's a good story beat,
-  but it is new: check it reads right, or swap it for a rest before B6.
 - **Hex** is the weakest command: it helps in B5 and little anywhere else. A cheap boost: every foe for two turns (3 MP), or it
   breaks a charge.
 - **B5 runs 3.1 minutes** for the sensible player against SLICE's 2-3, and the six fights take about 16 minutes of a
@@ -381,13 +372,13 @@ tests pass). The Hollowed Omen could not be data alone, because Aethermoor's Ome
 ```
 node tools/balance.mjs                      # every fight, every player, 400 seeds (a few minutes)
 node tools/balance.mjs B4 --n 1000          # one fight; B4 runs with and without a First Strike
-node tools/balance.mjs B6 --arrive          # as the night leaves the party (no rest before it)
+node tools/balance.mjs B3 --arrive          # as the night leaves the party (no rest before it)
 node tools/balance.mjs B6 --policy expert --seed 17 --trace   # one fight, move by move
 node tools/balance.mjs B3 --level 1         # off the curve
 node tools/balance.mjs B6 --bag heartsease-tonic:1,lantern-oil:1 --wears witch:hag-stone
 node tools/balance.mjs B5 --ban nettie:hex  # without a command
 node tools/balance.mjs --ablate             # every command taken away in turn (slow)
-node tools/balance.mjs --chain --paths typical,typical+rest   # the whole night
+node tools/balance.mjs --chain --paths typical,typical-norest   # the whole night, with and without the bench before B6
 HURT=1 node tools/balance.mjs B6            # what hurt the party, by move
 node --test tests/balance.test.mjs          # the fast check (npm test runs it)
 ```

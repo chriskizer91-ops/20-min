@@ -12,7 +12,7 @@ Sources and shorthand:
 
 ***Moonlight in the Aether*** (the user's choice). The title hints at the ship. In Thareia's canon, the Aether is the glowing air that sunstone ships sail on. Moonlight is her magic. On a full moon the Aether catches the moonlight and glows silver, so the title describes exactly what she sees from the deck.
 
-The logo keeps WW's style: the title in blackletter (Jacquard 12), with "Follow me down" small in gold above it. That line still fits, because the whole trip runs down the river.
+The logo on the title screen reads just ***Witch Way*** (the user's choice), in WW's blackletter (Jacquard 12), cream with a moonlit glow, alone in the sky above the skiff.
 
 ## 2. Premise
 
@@ -101,7 +101,7 @@ Same witch, no other name, same 3D model. She already knows the ghosts. Like WW'
 | Spirit Sight / Hag-Sight | WW + A hag stone | Sees ghosts. In fog, it shows which planks will hold. |
 | Gathering | WW | WW's rules, plus one new rule, **hollowed**: clean the patch before you pick. |
 | Flying | TH skiff | From the Wickhollow jetty or Bogmire's mast, over the painted map. No fights in the air. |
-| Rest | WW bed + A Hearthfire | Heal and save at her armchair, Silas's bench, the skiff's deck or Nettie's hut. She never sleeps, so the moon stays full. |
+| Rest | WW bed + A Hearthfire | Heal and save at her armchair, Silas's bench, the skiff's deck, Nettie's hut, or the lamp-post bench at the end of the Long Boardwalk, the last dry landing before Mother's Hollow. She never sleeps, so the moon stays full. |
 
 ### In battle
 

@@ -65,7 +65,7 @@ Path keys:
 | # | Screen | Painting | What happens | Herbs | Fight | Min |
 |---|---|---|---|---|---|---|
 | 11 | The Murkway | `20m/art/backgrounds/graveyard-path.webp` (Thareia's walk-graveyard-path-night) | A plank path over black pools, past old fen graves. Hollowed patches are everywhere. Fog covers the low path, and Hag-Sight shows which planks hold. | hollowed patches: bogwick, silver mugwort | **B4** (can walk round) | 1 |
-| 12 | The Long Boardwalk | **New: B2 #04** | Planks on stilts, with lamp-posts burning Wickhollow's flames out into the mist. | reed islets: silver mugwort | **B5** | 1 |
+| 12 | The Long Boardwalk | **New: B2 #04** | Planks on stilts, with lamp-posts burning Wickhollow's flames out into the mist. At the far end, past B5, the last dry landing before Mother's Hollow has a bench under a lamp-post: **a rest point** (heal and save), so the party meets the Lantern Mother rested. | reed islets: silver mugwort | **B5** | 1 |
 | 13 | Mother's Hollow | **New: B2 #05** | Black willows around a sunken house with every window lit. The Lantern Mother waits on the step. | — | **B6** (final) | 0.5, plus the fight |
 
 **Optional rooms.** These use existing paintings and aren't counted in the 12:
@@ -101,7 +101,7 @@ This is the list for the balance agent. Foes live only in the wild places. They 
 2. `20m/art/stills/square-from-the-well.webp`: "This month, Wickhollow's lanterns started going out. One a night. No wind."
 3. **B2 #10**, lights down the Sable: "Each little flame lifts off its wick and floats down the Sable, like a leaf that knows where it's going."
 4. `20m/art/stills/witch-at-her-door.webp`: "Where they pass, the riverbank goes grey." The witch: "Right. Boots. Basket. Hat."
-5. **B2 #15**, the title: *Moonlight in the Aether*, with "Follow me down" in gold.
+5. **B2 #15**, the title card: the logo, *Witch Way*.
 
 **The skiff wakes.** This plays at the jetty, after B3:
 1. Quill flexes his warm fingers. "Everything's a swap. Bring her back with the lights in her."

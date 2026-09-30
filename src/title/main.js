@@ -1,4 +1,4 @@
-// The title screen and the cut-scene player: Moonlight in the Aether's front door.
+// The title screen and the cut-scene player: the game's front door, under the logo "Witch Way".
 //
 // The title is art batch 2's painting of the skiff over the valley, alive with twinkling stars, drifting clouds and
 // flames, and motes off the crystals (./sky.js), with the logo in the empty sky. "Tap to begin" comes first,
