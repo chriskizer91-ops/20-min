@@ -27,10 +27,13 @@ export function buildScreen(data, painting) {
 }
 
 // One frame of her walking: the keys first; otherwise follow a tapped path. `free` is false while she's talking
-// or busy. Returns how fast she moved, in meters per second.
-export function walkPlayer(player, walk, keys, free, dt) {
+// or busy. Returns how fast she moved, in meters per second. Pass `paint` to make the keys follow the screen:
+// through a wide lens (the Bogmire screens) "up" then goes up the painting where she stands, rather than
+// straight away from the camera, which near the edges would carry her off at a slant.
+export function walkPlayer(player, walk, keys, free, dt, paint = null) {
   let speed = 0;
-  const dir = free ? keys.vector() : null;
+  let dir = free ? keys.vector() : null;
+  if (dir && paint) dir = screenDirection(paint, player.pos, dir);
   if (dir) {
     player.path = null;
     player.onArrive = null;
@@ -58,6 +61,14 @@ export function walkPlayer(player, walk, keys, free, dt) {
   }
   player.pos.y = walk.heightAt(player.pos.x, player.pos.z, player.pos.y);
   return speed;
+}
+
+// The direction on the floor that shows on screen as `dir` (x right, z down the screen), where she stands.
+function screenDirection(paint, pos, dir) {
+  const p = paint.toPixel(pos);
+  const q = paint.toWorld(p.x + dir.x * 40, p.y + dir.z * 40, pos.y);
+  const x = q.x - pos.x, z = q.z - pos.z, len = Math.hypot(x, z);
+  return len > 1e-6 ? { x: x / len, z: z / len } : dir;
 }
 
 export function loadTexture(url) {
