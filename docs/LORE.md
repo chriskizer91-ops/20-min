@@ -12,7 +12,7 @@ Sources and shorthand:
 
 ***Moonlight in the Aether*** (the user's choice). The title hints at the ship. In Thareia's canon, the Aether is the glowing air that sunstone ships sail on. Moonlight is her magic. On a full moon the Aether catches the moonlight and glows silver, so the title describes exactly what she sees from the deck.
 
-The logo on the title screen reads just ***Witch Way*** (the user's choice), in WW's blackletter (Jacquard 12), cream with a moonlit glow, alone in the sky above the skiff.
+The game is called *Moonlight in the Aether*, but the logo on the title screen reads just ***Witch Way*** (the user's choice), in WW's blackletter (Jacquard 12), cream with a moonlit glow, alone in the sky above the skiff.
 
 ## 2. Premise
 
