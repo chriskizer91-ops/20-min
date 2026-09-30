@@ -22,7 +22,7 @@ export class Stage {
 
     this.view = paint.camera.clone();
     this.view.layers.set(LAYER_ACTORS);
-    this.pixelSize = 2; // in painting pixels; 0 draws the characters smooth
+    this.pixelSize = 1; // in painting pixels; 0 draws the characters smooth
     this.showGuides = false;
 
     this.focus = new THREE.Vector2(paint.width / 2, paint.height / 2);

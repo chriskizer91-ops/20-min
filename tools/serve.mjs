@@ -3,7 +3,7 @@ import * as esbuild from 'esbuild';
 
 const port = Number(process.env.PORT || 8000);
 const ctx = await esbuild.context({
-  entryPoints: ['src/main.js'],
+  entryPoints: ['src/main.js', 'src/viewer.js'],
   bundle: true,
   format: 'esm',
   outdir: 'dev',
@@ -14,4 +14,4 @@ const ctx = await esbuild.context({
 });
 await ctx.watch();
 const { port: p } = await ctx.serve({ servedir: '.', port });
-console.log(`Wickhollow Square: http://localhost:${p}/`);
+console.log(`Wickhollow Square: http://localhost:${p}/   The witch up close: http://localhost:${p}/witch.html`);

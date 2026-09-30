@@ -67,6 +67,16 @@
   #toast { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 32px));
     margin: 0; padding: 10px 16px; text-align: center; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.6); border-radius: 6px; transition: opacity 0.8s; }
 
+  #basket { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); min-width: 180px; padding: 10px 12px;
+    background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #basket h2 { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--cream); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  #basket-count { font: 13px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
+  #basket ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+  #basket li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  #basket li img { width: 28px; height: 28px; image-rendering: pixelated; }
+  #basket li.fresh { color: var(--gold); animation: fresh 1.2s ease-out; }
+  @keyframes fresh { from { transform: translateX(-6px); } }
+  body:has(#talk:not([hidden])) #basket { display: none; }
   #hint { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: min(360px, calc(100% - 32px));
     padding: 8px 12px; font-size: 14px; color: var(--dim); background: var(--panel); border-radius: 6px; transition: opacity 1.2s; pointer-events: none; }
 
@@ -120,13 +130,14 @@
 <nav id="tools" aria-label="View">
   <button id="btn-backstage" aria-pressed="false" title="Fly the camera out to see how the scene is built (B)">Behind the scenes</button>
   <button id="btn-layers" aria-pressed="false" title="Show the floor and the cut-outs (L)">Layers</button>
-  <button id="btn-pixels" title="How chunky the 3D characters are drawn">Pixels 2×</button>
+  <button id="btn-pixels" title="How chunky the 3D characters are drawn">Pixels 1×</button>
   <button id="btn-sound" aria-pressed="true">Sound on</button>
 </nav>
 <button id="bang" hidden aria-label="Talk">!</button>
 <div id="tapmark"></div>
 <p id="hint">Arrow keys or WASD to walk. Space to talk. Or click anywhere.</p>
 <p id="toast" hidden></p>
+<section id="basket" hidden aria-live="polite"><h2>Basket <span id="basket-count"></span></h2><ul id="basket-list"></ul></section>
 
 <section id="talk" hidden aria-live="polite">
   <img id="talk-face" alt="">

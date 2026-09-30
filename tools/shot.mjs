@@ -21,7 +21,7 @@ const page = await browser.newPage({ viewport: { width: w, height: h }, deviceSc
 const errors = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`${m.type()}: ${m.text()}`); });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-await page.goto(pathToFileURL(resolve('dist/wickhollow-square.html')).href);
+await page.goto(pathToFileURL(resolve(`dist/${opt('--page', 'wickhollow-square')}.html`)).href);
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 20000 }).catch(() => errors.push('never became ready'));
 for (const js of evals) {
   const r = await page.evaluate(js);

@@ -44,6 +44,11 @@ check(talk.who === 'Hilde' && talk.text.startsWith('Ha!'), `Space talks to Hilde
 for (let i = 0; i < 12 && (await game(() => !!window.__game.field.talking)); i++) { await page.keyboard.press('Space'); await wait(400); }
 check(await game(() => !window.__game.field.talking), 'Space pages through and closes the dialogue');
 
+const herb = await game(() => { const g = window.__game; const h = g.field.things.find((t) => t.herb === 'lavender'); const p = h.pos.clone(); p.y += 0.2; const s = g.stage.worldToScreen(p); return [s.x, s.y]; });
+await page.mouse.click(herb[0], herb[1]);
+for (let i = 0; i < 40 && !(await game(() => window.__game.field.basket.lavender)); i++) await wait(250);
+check(await game(() => window.__game.field.basket.lavender === 1), 'tapping a lavender patch walks her over, kneels and puts it in the basket');
+
 await page.click('#btn-backstage');
 for (let i = 0; i < 20 && (await game(() => window.__game.stage.reveal.t < 1)); i++) await wait(250);
 check(await game(() => window.__game.stage.reveal.t === 1), `Behind the scenes flies the camera out (${await game(() => window.__game.stage.reveal.t.toFixed(2))})`);

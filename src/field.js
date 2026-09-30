@@ -3,7 +3,8 @@ import { createHilde, createAgnes, createCrow } from './actors/villagers.js';
 import { portraits } from './assets.js';
 import { createAudio } from './audio/synth.js';
 import { ring } from './paint.js';
-import { turnToward } from './actors/kit.js';
+import { turnToward, glowSprite } from './actors/kit.js';
+import { HERBS, SQUARE_HERBS } from './data/herbs.js';
 
 const REACH = 1.15; // meters: how close she has to be to talk to someone
 const $ = (id) => document.getElementById(id);
@@ -19,6 +20,7 @@ export class Field {
     this.moved = false;
     this.time = 0;
     this.sparks = new Sparks(world);
+    this.glints = new Sparks(world, '#efe6ff', 2.5);
 
     const at = (x, y, h = 0) => paint.toWorld(x, y, h);
     const headingTo = (from, to) => Math.atan2(to.x - from.x, to.z - from.z);
@@ -68,6 +70,29 @@ export class Field {
       { name: null, pos: at(300, 720), lines: DIALOGUE.stall },
     ];
     for (const t of this.things) t.visits = 0;
+
+    // Herbs to gather: the source game's patches on this painting, each one once a night.
+    this.basket = {};
+    const icons = {};
+    for (const [key, x, y] of SQUARE_HERBS) {
+      const herb = HERBS[key];
+      if (!icons[key]) {
+        icons[key] = new THREE.TextureLoader().load(herb.icon);
+        icons[key].colorSpace = THREE.SRGBColorSpace;
+        icons[key].magFilter = THREE.NearestFilter;
+      }
+      const pos = at(x, y);
+      const group = new THREE.Group();
+      group.position.copy(pos);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: icons[key], color: '#d9d0f0', alphaTest: 0.4 }));
+      sprite.center.set(0.5, 0.08);
+      sprite.scale.set(0.5, 0.5, 1);
+      const glow = glowSprite(herb.glow, 0.95, 0.35);
+      glow.position.y = 0.16;
+      group.add(glow, sprite);
+      world.add(group);
+      this.things.push({ name: herb.name, herb: key, pos, group, sprite, glow, visits: 0, seed: Math.random() * 6 });
+    }
     this.exits = scene.exits.map((e) => ({ ...e, zone: ring(e.zone), inside: false }));
 
     this.buildHud();
@@ -78,7 +103,7 @@ export class Field {
   // ---------------------------------------------------------------- input
 
   canWalk() {
-    return !this.talking;
+    return !this.talking && !this.player.actor.busy;
   }
 
   onKey(what) {
@@ -88,6 +113,7 @@ export class Field {
       return;
     }
     if (what === 'act') {
+      if (this.player.actor.busy) return;
       if (this.talking) this.advance();
       else if (this.nearby) this.talk(this.nearby);
     } else if (what === 'back') {
@@ -185,7 +211,7 @@ export class Field {
     let best = null, bestD = 44;
     for (const t of this.things) {
       if (t.crow && this.crow.state !== 'stand') continue;
-      const lift = t.crow ? 0.15 : t.actor ? 0.6 : 0.3;
+      const lift = t.crow ? 0.15 : t.actor ? 0.6 : t.herb ? 0.2 : 0.3;
       const s = this.stage.worldToScreen(t.pos.clone().setY(t.pos.y + lift));
       const d = Math.hypot(s.x - x, s.y - y) / Math.max(0.6, this.stage.scale);
       if (d < bestD) (bestD = d), (best = t);
@@ -205,7 +231,8 @@ export class Field {
   // ---------------------------------------------------------------- talking
 
   talk(thing) {
-    if (this.talking) return;
+    if (this.talking || this.player.actor.busy) return;
+    if (thing.herb) return this.gather(thing);
     const player = this.player;
     player.path = null;
     const lines = thing.visits > 0 && thing.lines.again ? thing.lines.again : thing.lines.first;
@@ -221,8 +248,9 @@ export class Field {
     box.classList.toggle('plain', !thing.name);
     $('talk-name').textContent = thing.name ?? '';
     const face = $('talk-face');
-    face.hidden = !thing.portrait;
-    if (thing.portrait) face.src = portraits[thing.portrait];
+    // Her own thoughts show her portrait with no name, the way a field message would.
+    face.src = portraits[thing.portrait ?? 'witch-calm'];
+    this.player.actor.setMood?.(thing.name ? 'happy' : 'calm');
     this.audio.sfx(thing.name ? 'confirm' : 'page');
     if (thing.crow) this.audio.sfx('kraa');
     this.advance();
@@ -244,11 +272,54 @@ export class Field {
     $('talk-more').hidden = true;
   }
 
+  // Kneel, pick, and into the basket it goes.
+  gather(thing) {
+    const player = this.player;
+    player.path = null;
+    player.heading = Math.atan2(thing.pos.x - player.pos.x, thing.pos.z - player.pos.z);
+    this.things = this.things.filter((t) => t !== thing);
+    this.audio.sfx('page');
+    player.actor.play('harvest', () => this.pick(thing));
+  }
+
+  pick(thing) {
+    const herb = HERBS[thing.herb];
+    thing.leaving = 0;
+    this.leaving = [...(this.leaving ?? []), thing];
+    this.glints.burst(thing.pos.clone().setY(thing.pos.y + 0.2), 22);
+    const first = !this.basket[thing.herb];
+    this.basket[thing.herb] = (this.basket[thing.herb] ?? 0) + 1;
+    this.showBasket(thing.herb);
+    this.toast(first ? herb.note : `${herb.name} went into the basket.`, 'chime');
+    this.player.actor.setMood?.('happy');
+    setTimeout(() => !this.talking && this.player.actor.setMood?.('calm'), 1400);
+  }
+
+  showBasket(fresh) {
+    const box = $('basket');
+    box.hidden = false;
+    const list = $('basket-list');
+    list.replaceChildren(...Object.entries(this.basket).map(([key, n]) => {
+      const li = document.createElement('li');
+      if (key === fresh) li.className = 'fresh';
+      const img = document.createElement('img');
+      img.src = HERBS[key].icon;
+      img.alt = '';
+      const label = document.createElement('span');
+      label.textContent = `${HERBS[key].name} ×${n}`;
+      li.append(img, label);
+      return li;
+    }));
+    const total = Object.values(this.basket).reduce((a, b) => a + b, 0);
+    $('basket-count').textContent = `${total} of ${SQUARE_HERBS.length}`;
+  }
+
   endTalk() {
     const { thing } = this.talking;
     this.talking = null;
     $('talk').hidden = true;
     thing.actor?.lookAt?.(null);
+    this.player.actor.setMood?.('calm');
     if (thing.crow) this.crowFlee(true);
     this.audio.sfx('back');
   }
@@ -263,6 +334,19 @@ export class Field {
     agnes.update(dt, agnes.rest);
     this.updateCrow(dt);
     this.sparks.update(dt);
+    this.glints.update(dt);
+    for (const t of this.things) if (t.herb) {
+      t.glow.material.opacity = 0.22 + Math.sin(time * 2.2 + t.seed) * 0.1;
+      t.sprite.position.y = Math.sin(time * 1.5 + t.seed) * 0.01;
+    }
+    for (const t of this.leaving ?? []) {
+      t.leaving += dt / 0.5;
+      const k = Math.min(1, t.leaving);
+      t.group.position.y = t.pos.y + k * 0.35;
+      t.group.scale.setScalar(1 - k);
+      if (k >= 1) this.world.remove(t.group);
+    }
+    this.leaving = (this.leaving ?? []).filter((t) => t.leaving < 1);
 
     // Typewriter
     const T = this.talking;
@@ -287,7 +371,7 @@ export class Field {
       for (const t of this.things) {
         if (t.crow && this.crow.state !== 'stand') continue;
         const to = new THREE.Vector3().subVectors(t.pos, player.pos).setY(0);
-        const d = to.length() - (t.actor?.radius ?? (t.crow ? 0.1 : 0.2));
+        const d = to.length() - (t.actor?.radius ?? (t.crow ? 0.1 : t.herb ? 0.05 : 0.2));
         if (d < best && (d < 0.35 || to.normalize().dot(facing) > 0.2)) (best = d), (this.nearby = t);
       }
     }
@@ -395,14 +479,14 @@ export class Field {
     }
   }
 
-  toast(text) {
+  toast(text, sound = 'door') {
     const t = $('toast');
     t.textContent = text;
     t.hidden = false;
     t.classList.remove('gone');
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => t.classList.add('gone'), 3800);
-    this.audio.sfx('door');
+    this.audio.sfx(sound);
   }
 
   // ---------------------------------------------------------------- buttons
@@ -424,7 +508,7 @@ export class Field {
     });
     $('btn-layers').addEventListener('click', () => this.toggleLayers());
     $('btn-pixels').addEventListener('click', () => {
-      const sizes = [2, 1, 0];
+      const sizes = [1, 2, 0];
       const next = sizes[(sizes.indexOf(this.stage.pixelSize) + 1) % sizes.length];
       this.stage.setPixelSize(next);
       $('btn-pixels').textContent = next ? `Pixels ${next}×` : 'Pixels off';
@@ -478,12 +562,13 @@ export class Field {
 
 // Sparks off the anvil: little additive points that fly up and fall.
 class Sparks {
-  constructor(world) {
+  constructor(world, color = '#ffc46b', gravity = 7) {
+    this.gravity = gravity;
     this.max = 60;
     this.list = [];
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(this.max * 3), 3));
-    this.points = new THREE.Points(geo, new THREE.PointsMaterial({ color: '#ffc46b', size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.points = new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 0.05, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.points.frustumCulled = false;
     world.add(this.points);
   }
@@ -497,7 +582,7 @@ class Sparks {
     const arr = this.points.geometry.attributes.position.array;
     this.list = this.list.filter((s) => (s.life -= dt) > 0);
     for (const [i, s] of this.list.entries()) {
-      s.v.y -= 7 * dt;
+      s.v.y -= this.gravity * dt;
       s.p.addScaledVector(s.v, dt);
       arr.set([s.p.x, s.p.y, s.p.z], i * 3);
     }

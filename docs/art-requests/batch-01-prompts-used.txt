@@ -1,0 +1,205 @@
+WITCH WAY - ART BATCH 01
+Generated with the built-in image_gen tool.
+The original village-square reference was unavailable. Image 01 supplied the style reference for images 02-12; image 13 also supplied the character reference for image 10.
+
+01-cottage-inside.png
+
+Use case: stylized-concept.
+Asset type: 01-cottage-inside.png, the opening gameplay background for Witch Way.
+Primary request: The inside of Grandmother Wren's old witch cottage at night. A round stone hearth with a big black iron cauldron in the middle of the back wall, a small altar with candles and a moon-phase cloth on the left, a very old patched armchair on the right, herbs drying from the rafters, shelves of jars, a round window with the full moon outside. Wooden floorboards with a round rug in the middle, left clear to walk on. Door at the bottom right.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Lighting: warm candle and fire light against deep violet shadows.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+Create one complete background image, edge to edge, no panels or frame.
+
+========================================================================
+
+02-cottage-outside.png
+
+Use case: stylized-concept.
+Asset type: 02-cottage-outside.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY, a cottage interior already made for this same art batch. Match its rich detailed pixel-art painting texture, violet shadows, amber illumination and craftsmanship. Create the completely new scene described below; do not recreate the cottage interior or copy its objects into this scene.
+Primary request: A crooked little witch's cottage at the edge of a village. Plum-colored roof tiles, a round window glowing amber, a crescent-moon sign over the door, a small fenced herb garden with raised beds and glass cloches, a stone path winding from the door to the bottom edge of the picture, the dark Gloamwood forest behind. Full moon, violet night, warm window light. Leave the path and a small yard clear to walk on.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+One complete background edge-to-edge, no panels or border.
+
+========================================================================
+
+03-cottage-square-lane.png
+
+Use case: stylized-concept.
+Asset type: 03-cottage-square-lane.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY, a cottage interior already made for this same art batch. Match its rich detailed pixel-art painting texture, violet shadows, amber illumination and craftsmanship. Create the completely new scene described below; do not recreate the cottage interior or copy its objects into this scene.
+Primary request: A narrow cobbled lane between leaning half-timbered houses at night. The lane runs from the bottom-left corner to the top-right corner. Lanterns on brackets, flower boxes with magenta flowers, a cat-sized gap under one gate but no cat, laundry lines between the upper windows, a glimpse of a chapel bell tower at the top. Violet night, amber lantern light. The full width of the traversable lane is open and readable.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+One complete background edge-to-edge, no panels or border.
+
+========================================================================
+
+04-st-vespers-graveyard.png
+
+Use case: stylized-concept.
+Asset type: 04-st-vespers-graveyard.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY, a cottage interior already made for this same art batch. Match its rich detailed pixel-art painting texture, violet shadows, amber illumination and craftsmanship. Create the completely new scene described below; do not recreate the cottage interior or copy its objects into this scene.
+Primary request: A small, gentle village graveyard behind a stone chapel at night. Crooked headstones without readable writing, a weeping angel statue on a plinth, an iron fence with a gate at the bottom, a sexton's tool shed with a lit window on the right, a yew tree, low mist, small green wisp LIGHTS floating by the trees, not creatures. It feels peaceful and kind, not scary. A gravel path loops between the graves and is clear to walk on. Include only a carved stone angel statue, no live character or ghost.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+One complete background edge-to-edge, no panels or border.
+
+========================================================================
+
+05-st-vespers-chapel-inside.png
+
+Use case: stylized-concept.
+Asset type: 05-st-vespers-chapel-inside.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY, a cottage interior already made for this same art batch. Match its rich detailed pixel-art painting texture, violet shadows, amber illumination and craftsmanship. Create the completely new scene described below; do not recreate the cottage interior or copy its objects into this scene.
+Primary request: The inside of a small stone village chapel at night. Wooden pews on both sides of a central aisle, a round rose window of stained glass glowing with moonlight at the back, rows of candles, a bell rope hanging on the left, a worn red runner down the aisle. The aisle and the space in front of the altar are clear to walk on. Cool blue moonlight and warm candle light.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+One complete background edge-to-edge, no panels or border.
+
+========================================================================
+
+06-hildes-smithy-inside.png
+
+Use case: stylized-concept.
+Asset type: 06-hildes-smithy-inside.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY. Match this cottage image's rich pixel-art painting texture, deep violet shadows, warm amber highlights and handcrafted atmosphere. Create the completely new scene below, not another cottage interior.
+Primary request: The inside of a village blacksmith's forge at night. A glowing brick forge with bellows at the back, an anvil on a tree stump in the middle, racks of tongs and hammers, horseshoes hanging on nails, a water barrel, a sign displaying crossed hammers as an icon without words. Deep orange forge glow against violet shadows, sparks in the air. The floor around the anvil is clear to walk on.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+No text, logos, UI, watermark, panels or decorative border. No people, animals or ghosts.
+
+========================================================================
+
+07-sable-bridge-close.png
+
+Use case: stylized-concept.
+Asset type: 07-sable-bridge-close.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY. Match this cottage image's rich pixel-art painting texture, deep violet shadows, warm amber highlights and handcrafted atmosphere. Create the completely new scene below, not another cottage interior.
+Primary request: An old arched stone bridge over a wide dark river at night. The bridge runs from the bottom-left to the top-right, with a low stone parapet, exactly two lamp posts and a little shrine with dried roses in the middle beside the walkway. The full moon reflects in the water, and willow trees hang over the far bank. The bridge deck is clear to walk on continuously from foreground to far bank.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+No text, logos, UI, watermark, panels or decorative border. No people, animals or ghosts.
+
+========================================================================
+
+08-mister-quills-stall.png
+
+Use case: stylized-concept.
+Asset type: 08-mister-quills-stall.png, fixed gameplay background for Witch Way.
+Input image: style reference ONLY. Match this cottage image's rich pixel-art painting texture, deep violet shadows, warm amber highlights and handcrafted atmosphere. Create the completely new scene below, not another cottage interior.
+Primary request: A peddler's market stall with a striped plum and cream awning at night. Cluttered with curios: jars, bottles, brass trinkets, an EMPTY birdcage with the door open, an EMPTY crow perch, candles, a battered top hat on a hook, handwritten price tags with only illegible little marks and no readable words or numbers. Cobbles in front of the stall are clear to walk on. Warm lantern light. No peddler, crow, bird, people or animals.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Landscape 1536x1024 pixels or larger, 3:2 aspect ratio. Fixed high three-quarter game-background view looking down approximately 30 degrees, directly facing the scene with no rotation, no Dutch angle and no fisheye. Keep the walkable central floor/path clearly visible and open. No people, animals, ghosts, or characters anywhere.
+No text, logos, UI, watermark, panels or decorative border. No people, animals or ghosts.
+
+========================================================================
+
+09-moonrise-over-wickhollow.png
+
+Use case: stylized-concept.
+Asset type: 09-moonrise-over-wickhollow.png, cinematic game cutscene still for Witch Way.
+Input image: style reference ONLY. Match this cottage image's rich pixel-art painting texture, deep violet shadows, warm amber highlights and handcrafted atmosphere. Create the completely new scene below, not another cottage interior.
+Primary request: A wide establishing shot of a lantern-lit village at the edge of a dark forest, a huge full moon rising behind a castle on a far hill, a chapel bell tower, a river winding past with a stone bridge, mist in the valleys. Cinematic, painterly, detailed pixel-art style, violet and indigo night with warm amber windows.
+Style: Detailed pixel-art-style painting for Witch Way: cozy nocturnal fantasy, plum/violet and indigo shadows, amber candle/fire/lantern highlights, richly textured but crisply readable pixel clusters, coherent handcrafted architecture and objects. No logos, watermarks, UI, labels, titles, or readable text.
+Camera and constraints: Wide cinematic establishing composition, 16:9 landscape. Requested output 1920x1080 pixels or larger. Fill the full canvas, no letterboxing.
+No text, logos, UI, watermark, panels or decorative border. No people, animals or ghosts.
+
+========================================================================
+
+10-witch-at-her-door.png
+
+Use case: illustration-story. Asset type: Witch Way cinematic cutscene still, landscape 16:9 widescreen, requested resolution 1920x1080 or larger. One continuous scene, edge-to-edge, no panels, collage, letterbox bars or border.
+Input image 1 is ONLY a character-design reference for the same young witch. Input image 2 is ONLY an art-style, cottage materials and lighting reference. Do not recreate the portrait grid.
+Primary request: A young witch seen from BEHIND, standing in the open doorway of a cottage and looking out at a moonlit forest path. She wears a tall plum witch hat with cream horns and a chain of silver charms, a flowing magenta shawl stitched with gold, a black dress and buckled boots, with long wavy brown hair. Show her full figure including boots. Warm firelight from inside the cottage, cold moonlight outside. The camera is inside the cottage looking past her through the open door toward the winding forest path.
+Cinematic, detailed pixel-art-style painting. Deep violet and indigo night, warm amber interior light. Match the character's established hat, hair and shawl from the first reference as seen from the back. No text, logo, watermark, UI or additional characters.
+
+========================================================================
+
+11-witchfire-in-cauldron.png
+
+Use case: illustration-story. Asset type: Witch Way cinematic cutscene still. Landscape 16:9 widescreen, requested output 1920x1080 or larger. One continuous shot, edge-to-edge, no panels, border or letterbox bars.
+Input image: use ONLY as art-style and cauldron material reference, not as the composition.
+Primary request: Close-up of a witch's hand in a fingerless lace glove holding a small violet flame over a black iron cauldron. The flame's light shows swirling violet steam and herbs floating in the brew. Dark background, detailed pixel-art-style painting, cozy and magical.
+A single anatomically coherent hand enters the composition at a natural angle, its cupped palm supporting the hovering flame, with elegant black fingerless lace and visible fingertips. Frame the glowing flame, hand, iron cauldron rim, swirling violet steam and herbs closely. Deep violet shadows, pink-violet flame highlights and subtly warm reflected firelight. No face, extra hands, text, symbols, UI, labels or watermark.
+
+========================================================================
+
+12-square-from-the-well.png
+
+Use case: illustration-story. Asset type: Witch Way cinematic cutscene still. Landscape 16:9 widescreen, requested output 1920x1080 or larger. One complete continuous image, no panels, border or letterboxing.
+Input image: use ONLY as a style reference for detailed pixel-art painting texture and the violet/amber nighttime palette. Make a completely new exterior scene.
+Primary request: A LOW, CLOSE camera beside an old stone well in a village square at night. The well's iron arch and a hanging lantern are in the foreground, and cobbles lead off to a blacksmith's glowing forge and a chapel with lit windows. Small moths around the lantern. Cinematic, painterly, detailed pixel-art style.
+Emphasize the weathered stone well rim and curved iron arch at close range, warm lantern-lit moths, layered depth across open cobbles toward the orange forge and softly lit stone chapel. Indigo-violet night. No people, readable words, lettering, labels, logo, watermark or UI.
+
+========================================================================
+
+13-moonlight-witch-portraits.png
+
+Use case: stylized-concept. Asset type: dialogue portrait sheet, 1024x1024 square.
+Create a 2x2 grid of four matching bust portraits of the SAME young Moonlight Witch in pixel-art style, each in its own precisely aligned equal square on a flat dark slate-blue background. She has round gold-rimmed glasses, long wavy brown hair, a tall plum witch hat with cream horns and silver charms, and a magenta shawl.
+Top left: calm, soft smile. Top right: big delighted smile, eyes closed. Bottom left: surprised, eyebrows up. Bottom right: sly, one eyebrow raised.
+Chunky readable pixel art, like a 128-pixel game portrait enlarged cleanly. Same face, glasses, outfit, framing and scale in all four cells; hat tips and horns fully within each cell. Portraits centered in exact 512x512 quadrants. No decorative frames, borders, labels, words, watermark, or UI.
+
+========================================================================
+
+14-mister-quill-portraits.png
+
+Use case: stylized-concept. Asset type: dialogue portrait sheet, 1024x1024 square.
+Two matching bust portraits side by side in exactly two equal-width cells, in pixel-art style on a flat dark slate-blue background. Same tall thin older peddler Mister Quill in both: neat silver goatee, a battered top hat hung with trinkets, plum frock coat with many pockets, a quill behind one ear, fingerless gloves.
+Left: sly half-smile. Right: laughing.
+Chunky readable pixel art, like a 128-pixel game portrait enlarged cleanly. Identical identity, costume, palette, lighting and portrait scale across both cells. Show complete hats and avoid clipping. No dividing lines, decorative frames, labels, readable text, watermark, or UI.
+
+========================================================================
+
+15-witch-face-sheet.png
+
+Use case: stylized-concept. Asset type: flat front-facing texture atlas for a chunky low-poly game character; 1024x1024 square.
+A precisely aligned 2x2 grid of four cartoon FACE TEXTURES ONLY, no head silhouette or head outline, no neck, ears, hair, hat, body, background objects, lighting, gradient, or shading. Entire canvas is uniform flat skin color #f1c9a5. Each cell is exactly the same size, face centered, consistently scaled. Only simple facial features drawn on the solid skin-color sheet.
+Each face has big dark eyes behind round thin gold glasses, small soft eyebrows, a tiny mouth and light pink cheeks.
+Top left: eyes open, small smile. Top right: eyes closed, a blink, small smile. Bottom left: eyes wide, little o mouth. Bottom right: happy closed eyes, open smile.
+Clean flat shapes in game texture style. No visible cell boundaries, grid lines, border, text, labels, watermark or 3D rendering. Do not draw portraits or heads; render solely eyes/glasses, eyebrows, noses if minimal, mouths and cheeks on the uninterrupted flat skin-color base.
+
+========================================================================
+
+16-hilde-agnes-face-sheet.png
+
+Use case: stylized-concept. Asset type: flat front-facing face texture atlas for chunky low-poly game characters; 1024x1024 square.
+A precisely aligned 2x2 grid of cartoon FACE TEXTURES ONLY, no head silhouette, head outline, ears, hair, neck, body, lighting or shading. Two top cells have identical perfectly flat ruddy skin background #e2a07c; two bottom cells have identical perfectly flat pale ghostly blue-white background #cfeff0. Divide color rows exactly at the midpoint. Each face centered with matched placement in its equal square cell.
+Top row is Hilde: broad cheerful woman in her forties with a soot smudge on her nose. Top left eyes open and grinning. Top right laughing with eyes shut.
+Bottom row is Agnes: sweet old woman with small round spectacles. Bottom left eyes open and smiling. Bottom right eyes closed with gentle smile.
+Clean flat shapes, game texture style. No drawn cell boundaries, grid lines, outlines of heads, frames, labels, text or watermark. This is a flat UV texture sheet, not four character portraits.
+
+========================================================================
+
+17-violet-witchfire-strip.png
+
+Use case: stylized-concept. Asset type: game animation sprite strip.
+Create EXACTLY EIGHT separate frames in ONE horizontal row on a perfectly uniform pure black #000000 background. Wide landscape canvas 1536x512 pixels; eight equal-width cells of 192x512 pixels, no visible cell boundaries. All eight flames centered at identical cell coordinates and at the same vertical baseline, fully isolated with black empty space between. A small magical violet and pink flame flickers subtly from frame to frame, continuous looping animation from frame 8 back to 1. Each flame occupies about 70% of its cell width, with ample blank margins and no overlapping glows. Soft glowing pixel-art style; violet core and pink highlights. All eight frames roughly same flame height, progressively shifting curls. Exactly 8, count left to right. No labels, numbers, text, border, grid lines, props or anything besides the eight flame frames and pure black backdrop. Opaque black background, not transparent.
+
+========================================================================
+
+18-forge-sparks-embers.png
+
+Use case: stylized-concept. Asset type: VFX sprite atlas, 1024x1024 square.
+A sprite sheet on perfectly uniform pure black #000000: EXACTLY 4 columns by 4 rows, sixteen equal 256x256 cells. One small glowing orange or yellow forge spark, short streak or ember of a different shape in each cell, centered precisely in its cell. Isolated sprites, generous pure black margins between, no glow bleeding into neighboring cells. Pixel-art style. Mix tiny angular glowing ember chunks, single sparks, brief tapered streaks and a few sparse paired sparks. Consistent warm forge palette and glow. Nothing else. No labels, numbers, text, frames, visible grid lines, or background texture. Opaque black background, not transparent.
+
+========================================================================
+
+19-moths-fireflies.png
+
+Use case: stylized-concept. Asset type: game animation sprite sheet, landscape 1536x768.
+A sprite sheet on perfectly uniform pure black #000000, EXACTLY 4 columns by 2 rows, eight equal square cells. Top row: exactly 4 successive frames of the SAME small pale moth flapping its wings, matching body position, size and center in every cell; wings progress open, halfway closed, closed, halfway open for a loop. Bottom row: exactly 4 frames of the same soft green firefly glow pulsing gently, positioned at identical cell coordinates. Firefly is a tiny bright yellow-green center with soft green halo. Pixel-art style, each sprite centered with generous empty black margin and no overlapping glows. Nothing else in the picture. No labels, numbers, text, dividing lines, borders or background texture. Opaque black background, not transparent.
+
+========================================================================
+
+20-wickhollow-gloamwood-map.png
+
+Use case: stylized-concept. Asset type: illustrated fantasy map for a game menu, landscape 1536x1024.
+An illustrated fantasy map on old parchment of a small village at the edge of a forest. It shows a village square with a well, a chapel and its graveyard, a blacksmith's forge, a witch's cottage at the edge of the woods, a river with a stone bridge, a winding forest path marked with small diamond-shaped runestones, a waterfall, a moonlit pond and a hollow with twisted trees. Hand-drawn ink and watercolor with plum and gold accents. Arrange the named features as distinct readable little map vignettes connected by paths, with the village on one side and the forest on the other. Weathered parchment surface, fine illustrated fantasy cartography, clear spatial relationships, charming and gently mysterious. Leave ALL place names off; the game will add them. Absolutely no letters, words, numbers, labels, title, legend, watermark or decorative fake writing anywhere. One complete map filling the canvas.
+
+========================================================================
+
