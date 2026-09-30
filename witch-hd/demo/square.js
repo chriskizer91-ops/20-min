@@ -1,9 +1,10 @@
-// Wickhollow Square with the HD witch. This is the game's src/main.js, adapted: it loads witch-hd.glb first and
-// uses it in place of the code-built witch; she walks (or runs, with Shift) and has a row of buttons for her
-// animations. Everything else (the painting, the walkmesh, the cut-outs, Hilde, Agnes, Inkblot, the herbs) is
-// the game's own code, imported unchanged from ../../src.
+// Wickhollow Square with the HD witch. This is the game's src/main.js, adapted: it takes the bytes of
+// witch-hd.glb and uses the model in place of the code-built witch; she walks (or runs, with Shift) and has a
+// panel of buttons for her animations. Everything else (the painting, the walkmesh, the cut-outs, Hilde, Agnes,
+// Inkblot, the herbs) is the game's own code, imported unchanged from ../../src.
+// startSquare(bytes) returns { pause, resume } so a page can hold it alongside other views.
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { parseGLB } from './loader.js';
 import sceneData from '../../scenes/wickhollow-square.json';
 import { images, fonts } from '../../src/assets.js';
 import { PaintCamera } from '../../src/paint.js';
@@ -19,63 +20,9 @@ const WALK_SPEED = 1.15; // meters per second
 const RUN_SPEED = 2.3; // the game's own pace; hold Shift
 const $ = (id) => document.getElementById(id);
 
-// ---------------------------------------------------------------- getting the model
-// Served over http: fetch it (whole, or in parts where a host limits file size). Opened from disk, browsers
-// won't let a page read files next to it, so we ask for the file instead.
-async function loadModelBytes() {
-  const status = (t) => { $('load-text').textContent = t; };
-  try {
-    const res = await fetch('witch-hd.glb');
-    if (res.ok) return await readWithProgress(res, status);
-  } catch {}
-  try {
-    const parts = [];
-    for (let i = 1; i < 10; i++) {
-      const res = await fetch(`witch-hd.glb.part${i}`);
-      if (!res.ok) break;
-      status(`Loading the witch, part ${i}…`);
-      parts.push(new Uint8Array(await res.arrayBuffer()));
-    }
-    if (parts.length) {
-      const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
-      let o = 0;
-      for (const p of parts) { out.set(p, o); o += p.length; }
-      return out.buffer;
-    }
-  } catch {}
-  // Ask for the file
-  $('load-pick').hidden = false;
-  status('Opened from your disk, so the page can’t fetch the model by itself.');
-  return new Promise((resolve) => {
-    const take = (file) => { status('Reading the witch…'); file.arrayBuffer().then(resolve); };
-    $('load-file').addEventListener('change', (e) => e.target.files[0] && take(e.target.files[0]));
-    addEventListener('dragover', (e) => e.preventDefault());
-    addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) take(f); });
-  });
-}
-async function readWithProgress(res, status) {
-  const total = Number(res.headers.get('content-length')) || 0;
-  if (!res.body || !total) return res.arrayBuffer();
-  const reader = res.body.getReader();
-  const buf = new Uint8Array(total);
-  let got = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf.set(value, got);
-    got += value.length;
-    status(`Loading the witch… ${Math.round((got / total) * 100)}%`);
-  }
-  return buf.buffer;
-}
-
-async function boot() {
+export async function startSquare(bytes) {
   loadFonts();
-  const bytes = await loadModelBytes();
-  $('load-pick').hidden = true;
-  $('load-text').textContent = 'Dressing her…';
-  const gltf = await new GLTFLoader().parseAsync(bytes, '');
-  $('loading').classList.add('done');
+  const gltf = await parseGLB(bytes);
 
   const canvas = $('stage');
   const painting = await loadTexture(images[sceneData.image]);
@@ -124,7 +71,9 @@ async function boot() {
 
   let last = performance.now();
   let time = 0;
+  let paused = false;
   function frame(now) {
+    if (paused) return;
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     time += dt;
@@ -183,6 +132,23 @@ async function boot() {
   });
 
   window.__game = { THREE, paint, walk, stage, player, field, world, witch };
+  let soundWasOn = false;
+  return {
+    witch, field, stage,
+    pause() {
+      if (paused) return;
+      paused = true;
+      soundWasOn = field.audio.enabled;
+      if (soundWasOn) { field.audio.setMusicEnabled(false); field.audio.setEnabled(false); }
+    },
+    resume() {
+      if (!paused) return;
+      paused = false;
+      stage.resize();
+      if (soundWasOn) { field.audio.setEnabled(true); field.audio.setMusicEnabled(true); }
+      requestAnimationFrame((now) => { last = now; frame(now); });
+    },
+  };
 }
 
 // The animation buttons (and number keys 1-9)
@@ -192,6 +158,7 @@ function setupMoves(witch, field) {
     ['Moonlight', 'moonlight'], ['Athame dash', 'dash'], ['Twirl', 'twirl'], ['Gather', 'harvest'], ['Hurt', 'hurt'],
   ];
   const box = $('moves');
+  if (matchMedia('(max-width: 560px)').matches) { box.hidden = true; $('btn-moves').setAttribute('aria-expanded', 'false'); }
   moves.forEach(([label, move], i) => {
     const b = document.createElement('button');
     b.textContent = label;
@@ -349,9 +316,3 @@ function addLights(world, scene, paint) {
   world.add(lights);
   return lamps;
 }
-
-boot().catch((err) => {
-  console.error(err);
-  const box = $('error');
-  if (box) { box.hidden = false; box.textContent = `The scene couldn't start: ${err.message}`; }
-});

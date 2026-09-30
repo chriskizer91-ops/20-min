@@ -1,8 +1,11 @@
-// Build the town-square demo: node tools/build-demo.mjs  ->  square.html (next to witch-hd.glb)
-// It takes the game's own page (../index.html), adds a loading screen and a panel of her moves, and bundles
-// demo/square.js with the game's engine into one file. The model itself stays in witch-hd.glb beside it.
+// Build the demo pages: node tools/build-demo.mjs
+//   square.html            Wickhollow Square with the HD witch (the game's own page and engine)
+//   viewer.html            the witch up close
+//   build/artifact/        one page holding both views, for hosting where files are capped at 15 MB: index.html
+//                          (a page body, for a host that adds its own <html>/<head>) and the model in two parts
+// The pages load witch-hd.glb from beside them; it is never inlined.
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -21,139 +24,171 @@ const bundle = async (entry) => (await esbuild.build({
   loader: { '.webp': 'dataurl', '.png': 'dataurl', '.ttf': 'dataurl' },
   logLevel: 'warning',
 })).outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-const js = await bundle('demo/square.js');
 
-const index = readFileSync(resolve(repo, 'index.html'), 'utf8');
-let body = index.slice(index.indexOf('<!-- PAGE -->') + 13, index.indexOf('<!-- /PAGE -->')).trim();
-const put = (before, text) => {
-  if (!body.includes(before)) throw new Error(`page changed: can't find ${before}`);
-  body = body.replace(before, text + before);
-};
-body = body.replace('<title>Wickhollow Square</title>', '<title>Wickhollow Square, HD Witch</title>');
-put('</style>', `
-  /* The HD witch: a loading screen, and a panel of her moves */
-  #loading { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--night); transition: opacity 0.8s; }
+const doc = (body) => `<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+${body}
+</html>
+`;
+
+// ---------------------------------------------------------------- shared pieces
+const LOADING_CSS = `
+  /* Loading the model */
+  #loading { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding-inline: 16px; background: var(--night); transition: opacity 0.8s; }
   #loading.done { opacity: 0; pointer-events: none; }
-  #loading .box { width: min(460px, calc(100% - 32px)); text-align: center; }
-  #loading h1 { margin: 0 0 8px; font: 400 clamp(40px, 8vw, 60px)/0.95 var(--display); color: var(--cream); }
-  #loading p { margin: 0 0 14px; color: var(--dim); }
+  #loading .box { width: min(460px, 100%); text-align: center; }
+  #loading h1 { margin: 0 0 8px; font: 400 clamp(40px, 9vw, 60px)/0.95 var(--display); color: var(--cream); text-wrap: balance; }
+  #loading p { margin: 0 0 14px; color: var(--dim); font-variant-numeric: tabular-nums; }
   #load-pick { display: grid; gap: 10px; justify-items: center; padding: 16px; border: 2px dashed rgba(236, 220, 184, 0.5); border-radius: 8px; }
   #load-pick label { padding: 8px 14px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; cursor: pointer; }
   #load-pick input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { #loading { transition: none; } }
+`;
+const LOADING_HTML = `<div id="loading"><div class="box">
+  <h1>The Moonlight Witch</h1>
+  <p id="load-text">Loading the witch…</p>
+  <div id="load-pick" hidden>
+    <p>Choose <b>witch-hd.glb</b> (it’s in the same folder as this page), or drop it here.</p>
+    <label>Choose the model<input id="load-file" type="file" accept=".glb,model/gltf-binary"></label>
+  </div>
+</div></div>`;
+
+// The square: the game's own page (../index.html) with a panel of her moves added
+const index = readFileSync(resolve(repo, 'index.html'), 'utf8');
+function squarePage({ closeButton = false } = {}) {
+  const page = index.slice(index.indexOf('<!-- PAGE -->') + 13, index.indexOf('<!-- /PAGE -->')).trim();
+  const css = page.slice(page.indexOf('<style>') + 7, page.indexOf('</style>'));
+  let markup = page.slice(page.indexOf('</style>') + 8).trim();
+  const put = (before, text) => {
+    if (!markup.includes(before)) throw new Error(`the game's page changed: can't find ${before}`);
+    markup = markup.replace(before, text + before);
+  };
+  put('<button id="btn-backstage"', `${closeButton ? '<button id="btn-close" title="See her up close">Up close</button>\n  ' : ''}<button id="btn-moves" aria-expanded="true" title="Her animations (keys 1-9)">Moves</button>
+  <button id="btn-zoom" aria-pressed="false" title="Move the camera in close to her">Zoom</button>
+  <button id="btn-run" aria-pressed="false" title="Run (or hold Shift)">Run</button>
+  <button id="btn-look" aria-pressed="false" title="Her materials: HD (as authored) or toon (like the game)">HD</button>
+  `);
+  put('<p id="error" hidden></p>', `<section id="moves" aria-label="Her moves"><p class="small">Shift to run. Keys 1-9 play moves.</p></section>\n`);
+  const extraCss = `
+  /* The HD witch's panel of moves */
   #moves { position: fixed; right: var(--gutter); top: calc(62px + env(safe-area-inset-top, 0px)); display: grid; gap: 6px; width: 168px; padding: 10px;
     background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
   #moves button { padding: 6px 10px; font-size: 14px; text-align: left; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.4); border-radius: 6px; }
   #moves button:hover { border-color: var(--cream); }
   #moves .small { margin: 2px 0 0; font-size: 12px; color: var(--dim); }
+  #btn-close { color: var(--gold); }
   body.backstage #moves { display: none; }
-  @media (max-width: 560px) { #moves { top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 32px); grid-template-columns: repeat(2, 1fr); } #moves .small { grid-column: 1 / -1; } }
-`);
-put('<button id="btn-backstage"', `<button id="btn-moves" aria-expanded="true" title="Her animations (1-9)">Moves</button>
-  <button id="btn-zoom" aria-pressed="false" title="Move the camera in close to her">Zoom</button>
-  <button id="btn-run" aria-pressed="false" title="Run (or hold Shift)">Run</button>
-  <button id="btn-look" aria-pressed="false" title="Her materials: HD (as authored) or toon (like the game)">HD</button>
-  `);
-put('<p id="error" hidden></p>', `<section id="moves" aria-label="Her moves"><p class="small">Shift to run. Keys 1-9 play moves.</p></section>
-<div id="loading"><div class="box">
-  <h1>The Moonlight Witch</h1>
-  <p id="load-text">Loading the witch…</p>
-  <div id="load-pick" hidden>
-    <p>Choose <b>witch-hd.glb</b> (it’s in the same folder as this page), or drop it here.</p>
-    <label>Choose the model<input id="load-file" type="file" accept=".glb,model/gltf-binary"></label>
-  </div>
-</div></div>
-`);
-const full = `<!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-${body}
-<script>${js}</script>
-</html>
-`;
-const out = resolve(here, 'square.html');
-writeFileSync(out, full);
-console.log(`${out}  ${(full.length / 1e6).toFixed(2)} MB`);
-
-// ---------------------------------------------------------------- the close-up viewer
-const viewerJs = await bundle('demo/viewer.js');
-const viewer = `<!doctype html>
-<html lang="en">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Moonlight Witch, HD</title>
-<style>
-  /* One dark look, like the game: plum, cream, magenta and gold, and Witch Way's pixel fonts */
-  :root {
-    color-scheme: dark;
-    --night: #171020;
-    --panel: rgba(24, 12, 30, 0.88);
-    --plum: #3a1631;
-    --cream: #ecdcb8;
-    --ink: #f3ead8;
-    --dim: #b9a9c4;
-    --magenta: #c63d83;
-    --gold: #e2bd67;
-    --display: 'Jacquard 12', 'Georgia', serif;
-    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
-    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  @media (max-width: 560px) {
+    #moves { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: var(--gutter); width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); z-index: 2; }
+    #moves .small { grid-column: 1 / -1; }
   }
+`;
+  return { css: css + extraCss, markup };
+}
+
+// The viewer: all of its rules live under #viewer, so it can share a page with the square
+const VIEWER_CSS = `
+  /* The witch up close */
+  #viewer { --night: #171020; --panel: rgba(24, 12, 30, 0.88); }
+  #v-view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; background: var(--night); }
+  #viewer header { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: var(--gutter); right: calc(var(--gutter) + 250px); pointer-events: none; text-shadow: 0 2px 0 #000; }
+  #viewer h1 { margin: 0; font: 400 clamp(36px, 6vw, 56px)/0.95 var(--display); color: var(--cream); text-wrap: balance; }
+  #viewer header p { margin: 6px 0 0; color: var(--dim); font-size: 14px; font-variant-numeric: tabular-nums; }
+  #v-panel { position: fixed; right: var(--gutter); top: calc(14px + env(safe-area-inset-top, 0px)); width: 234px; max-height: calc(100% - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: auto;
+    display: grid; gap: 10px; padding: 12px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; font: 15px/1.4 var(--body); color: var(--ink); }
+  #v-panel h2 { margin: 0; font: 400 13px var(--body); color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; }
+  #viewer .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  #viewer button { font: 13px var(--body); color: var(--ink); cursor: pointer; padding: 5px 9px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
+  #viewer button:hover { border-color: var(--cream); }
+  #viewer button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
+  #viewer button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  #viewer #go-square { width: 100%; padding: 9px 12px; font-size: 15px; background: var(--magenta); border-color: var(--cream); color: #fff; }
+  #viewer label.check { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--dim); }
+  @media (max-width: 620px) {
+    #viewer header { right: var(--gutter); }
+    #v-panel { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: var(--gutter); width: auto; max-height: 40%; }
+  }
+`;
+const viewerMarkup = ({ squareButton = false } = {}) => `<div id="viewer">
+<canvas id="v-view" aria-label="The Moonlight Witch in 3D; drag to turn around her, scroll or pinch to zoom"></canvas>
+<header>
+  <h1>The Moonlight Witch</h1>
+  <p id="v-stats">Drag to look around her. Scroll or pinch to zoom.</p>
+</header>
+<section id="v-panel" aria-label="Try her out">
+  ${squareButton ? '<button id="go-square" type="button">Walk her around the square</button>\n  ' : ''}<h2>Animations</h2>
+  <div class="row" id="v-clips"></div>
+  <label class="check"><input id="v-repeat" type="checkbox"> Repeat</label>
+  <h2>Face</h2>
+  <div class="row" id="v-faces"></div>
+  <h2>Look</h2>
+  <div class="row"><button id="v-look" type="button" aria-pressed="false">HD</button><button id="v-spin" type="button" aria-pressed="false">Turn</button></div>
+  <h2>Look at</h2>
+  <div class="row" id="v-focus"></div>
+</section>
+</div>`;
+
+// ---------------------------------------------------------------- square.html
+{
+  const sq = squarePage();
+  const js = await bundle('demo/square-page.js');
+  const html = doc(`<title>Wickhollow Square, HD Witch</title>
+<style>${sq.css}${LOADING_CSS}</style>
+${sq.markup}
+${LOADING_HTML}
+<script>${js}</script>`);
+  writeFileSync(resolve(here, 'square.html'), html);
+  console.log(`square.html  ${(html.length / 1e6).toFixed(2)} MB`);
+}
+
+// ---------------------------------------------------------------- viewer.html
+{
+  const sq = squarePage(); // for the game's color and font tokens
+  const tokens = sq.css.slice(sq.css.indexOf(':root'), sq.css.indexOf('}', sq.css.indexOf(':root')) + 1);
+  const js = await bundle('demo/viewer-page.js');
+  const html = doc(`<title>Moonlight Witch HD</title>
+<style>
+  ${tokens}
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; overflow: hidden; background: var(--night); color: var(--ink); }
   body { font: 15px/1.4 var(--body); -webkit-user-select: none; user-select: none; }
-  #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  header { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none; text-shadow: 0 2px 0 #000; }
-  h1 { margin: 0; font: 400 clamp(36px, 6vw, 56px)/0.95 var(--display); color: var(--cream); }
-  header p { margin: 6px 0 0; color: var(--dim); font-size: 14px; }
-  #panel { position: fixed; right: var(--gutter); top: calc(14px + env(safe-area-inset-top, 0px)); width: 230px; max-height: calc(100% - 28px); overflow: auto;
-    display: grid; gap: 10px; padding: 12px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
-  #panel h2 { margin: 0; font: 400 13px var(--body); color: var(--gold); letter-spacing: 0.06em; text-transform: uppercase; }
-  .row { display: flex; flex-wrap: wrap; gap: 6px; }
-  button { font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; padding: 5px 9px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
-  button:hover { border-color: var(--cream); }
-  button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
-  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  label.check { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--dim); }
-  #loading { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--night); transition: opacity 0.8s; }
-  #loading.done { opacity: 0; pointer-events: none; }
-  #loading .box { width: min(460px, calc(100% - 32px)); text-align: center; }
-  #loading h1 { margin-bottom: 8px; }
-  #loading p { margin: 0 0 14px; color: var(--dim); }
-  #load-pick { display: grid; gap: 10px; justify-items: center; padding: 16px; border: 2px dashed rgba(236, 220, 184, 0.5); border-radius: 8px; }
-  #load-pick label { padding: 8px 14px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; cursor: pointer; }
-  #load-pick input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-  @media (max-width: 620px) {
-    #panel { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: var(--gutter); width: auto; max-height: 42vh; }
-    header p { display: none; }
+${VIEWER_CSS}${LOADING_CSS}</style>
+${viewerMarkup()}
+${LOADING_HTML}
+<script>${js}</script>`);
+  writeFileSync(resolve(here, 'viewer.html'), html);
+  console.log(`viewer.html  ${(html.length / 1e6).toFixed(2)} MB`);
+}
+
+// ---------------------------------------------------------------- the one-page app, and the model in parts
+{
+  const out = resolve(here, 'build/artifact');
+  mkdirSync(out, { recursive: true });
+  const glb = readFileSync(resolve(here, 'witch-hd.glb'));
+  const PART = 12 * 1024 * 1024;
+  const parts = [];
+  for (let i = 0, o = 0; o < glb.length; i++, o += PART) {
+    const name = `witch-hd.part${i + 1}.bin`;
+    const chunk = glb.subarray(o, Math.min(glb.length, o + PART));
+    writeFileSync(resolve(out, name), chunk);
+    parts.push({ name, size: chunk.length });
   }
-</style>
-<canvas id="view" aria-label="The Moonlight Witch in 3D; drag to turn around her, scroll or pinch to zoom"></canvas>
-<header>
-  <h1>The Moonlight Witch</h1>
-  <p id="stats">Drag to look around her. Scroll or pinch to zoom.</p>
-</header>
-<section id="panel" aria-label="Try her out">
-  <h2>Animations</h2>
-  <div class="row" id="clips"></div>
-  <label class="check"><input id="repeat" type="checkbox"> Repeat</label>
-  <h2>Face</h2>
-  <div class="row" id="faces"></div>
-  <h2>Look</h2>
-  <div class="row"><button id="look" aria-pressed="false">HD</button><button id="spin" aria-pressed="false">Turn</button></div>
-  <h2>Look at</h2>
-  <div class="row" id="focus"></div>
-</section>
-<div id="loading"><div class="box">
-  <h1>The Moonlight Witch</h1>
-  <p id="load-text">Loading the witch…</p>
-  <div id="load-pick" hidden>
-    <p>Choose <b>witch-hd.glb</b> (it’s in the same folder as this page), or drop it here.</p>
-    <label>Choose the model<input id="load-file" type="file" accept=".glb,model/gltf-binary"></label>
-  </div>
-</div></div>
-<script>${viewerJs}</script>
-</html>
+  const sq = squarePage({ closeButton: true });
+  const js = await bundle('demo/app.js');
+  // A page body: the host adds <!doctype>, <html>, <head> and <body>. Title and style come first.
+  const page = `<title>Moonlight Witch HD</title>
+<style>${sq.css}${VIEWER_CSS}${LOADING_CSS}</style>
+<div id="square" hidden>
+${sq.markup}
+</div>
+${viewerMarkup({ squareButton: true })}
+${LOADING_HTML}
+<script>window.WITCH_PARTS = ${JSON.stringify(parts)};</script>
+<script>${js}</script>
 `;
-writeFileSync(resolve(here, 'viewer.html'), viewer);
-console.log(`${resolve(here, 'viewer.html')}  ${(viewer.length / 1e6).toFixed(2)} MB`);
+  writeFileSync(resolve(out, 'index.html'), page);
+  console.log(`build/artifact/index.html  ${(page.length / 1e6).toFixed(2)} MB, model in ${parts.length} parts: ${parts.map((p) => `${(p.size / 1e6).toFixed(1)} MB`).join(', ')}`);
+}

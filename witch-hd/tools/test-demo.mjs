@@ -91,7 +91,7 @@ errors.length = 0;
 await page.goto(`http://localhost:${server.address().port}/viewer.html`);
 await page.waitForFunction(() => document.getElementById('loading').classList.contains('done'), null, { timeout: 180000 });
 check(true, 'the viewer opens');
-const buttons = await page.locator('#clips button').count();
+const buttons = await page.locator('#v-clips button').count();
 check(buttons >= 10, `the viewer lists ${buttons} animations`);
 await page.getByRole('button', { name: 'Walk', exact: true }).click();
 await wait(1200);
