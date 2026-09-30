@@ -59,7 +59,7 @@ WW's rule, "dark in look, kind at heart," comes first. A's "warm epic with an ed
 **The map.** One painted map at night shows the whole game. Wickhollow sits in the upper left, where the Gloamwood meets the Sable. The river winds down across heath and fields, getting wider and darker, into the Gloomfen in the lower right, where Bogmire stands on stilts. She walks in and around each town and flies between them. By road it's days; by skiff, a moonlit minute. The river running downhill between them is "Follow me down" drawn as a map.
 
 **Wickhollow (WW):**
-- **The town:** her cottage and garden; the square (well, chapel, Hilde's smithy, Quill's stall); the riverbank, with Quill's skiff at the old jetty.
+- **The town:** her cottage and garden; the square (well, chapel, Hilde's smithy, Quill's stall); the riverbank, with Quill's skiff, the Magpie, at the old jetty.
 - **Its wild places, the Gloamwood:** the lantern path, out of the bottom of the square; and the Hollow, over the stone bridge and through the twisted grove (WW's own map).
 
 **Bogmire (A):**
@@ -82,7 +82,9 @@ WW's rule, "dark in look, kind at heart," comes first. A's "warm epic with an ed
 
 **Why it fits a witch.** Witches fly, but a broom won't carry a basket, a crow and a friend. Sunstones lift when they're warm, and nothing in Wickhollow burns warmer than witchfire. In her brazier the amber crystals glow with a violet heart.
 
-**Its look** is Thareia's first skiff (`thareia/art-in/airship/airship-skiff-turnaround.png`), modeled in 3D in code, with violet-hearted crystals and Silas's lamp at the bow.
+**Her name** is *the Magpie*. Quill named her for the shiny things she carried home, and a magpie is Inkblot's cousin. It's painted on both bows.
+
+**Her look** is Thareia's skiff (`thareia/art-in/airship/ship-2-refitted-skiff.webp`), modeled in 3D in code and wearing the turnaround's own paint: a plank hull banded in brass, a copper brazier amidships, five amber crystals with violet hearts, and two sun-painted sails spread like wings.
 
 **The new idea about herbs.** Every WW region brings one. Here it is that herbs remember. The rot makes a patch forget what it is. Clean it with moonlight and witchfire and it blooms at once, whatever the moon says. Big patches get up and walk, and those become fights.
 

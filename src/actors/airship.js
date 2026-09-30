@@ -1,227 +1,311 @@
 import * as THREE from 'three';
-import { toon, toonMap, part, joint, cyl, sphere, taperedTube, glowSprite, onLayer, Spring } from './kit.js';
+import atlasUrl from '../../art/airship/skiff-atlas.webp';
+import ATLAS from './skiff-atlas.json';
+import { toon, part, joint, cyl, sphere, taperedTube, glowSprite, onLayer, Spring } from './kit.js';
 
-// The skiff, from Thareia's turnaround sheet (New-game repo, thareia/art-in/airship/airship-skiff-turnaround.png):
-// "a wooden hull with small sails under a cluster of glowing amber crystals", their hearts violet with witchfire. A plank hull with brass bands and
-// portholes, a keel and rudder, brass-edged side fins, two sail-wings with a sun on each, a stern cabin with a
-// lit window, lanterns, a ship's wheel for the witch, and five sunstone crystals on brass stalks that pulse and
-// shed golden motes. Built in code like the characters. Local space: deck at y = 0, bow toward +z, 1 unit = 1 m.
+// The Magpie: Quill's sunstone skiff, from Thareia's turnaround sheet (art/airship/skiff-sheet.webp, from the
+// New-game repo's thareia/art-in/airship/ship-2-refitted-skiff.webp), wearing the sheet's own paint.
+//
+// The hull is built to the sheet's silhouettes: its length, rim and keel lines from the side view, its width from
+// the top view. So the painted side can be projected straight onto the hull's triangles, and the painted top view
+// onto the deck (tools/bake-skiff.py cuts the pieces into one atlas). The crystals and the brazier take the
+// painting the same way; the sails, fins, rudder and lanterns are cut-out cards. Five sunstones stand in a row
+// across the ship, with violet witchfire hearts (docs/LORE.md, "The skiff").
+//
+// Local space: the rim amidships at y = 0, bow toward +z, 1 unit = 1 m.
 
-const WOOD = '#7a4a2a', WOOD_DARK = '#4e2d19', WOOD_DECK = '#a8764a', BRASS = '#c9a24d', CANVAS = '#efe3c4', AMBER = '#ffb22e';
-const STERN = -2.4, BOW = 2.7;
+const STERN = -2.4, BOW = 2.7, LENGTH = BOW - STERN;
+const S = ATLAS.side, T = ATLAS.top, [AW, AH] = ATLAS.size;
+const SIDE_PPM = (S.bowX - S.sternX) / LENGTH; // sheet pixels per meter in the side view
+const TOP_PPM = (T.stern - T.bow) / LENGTH; // and in the top view
+const BRASS = '#c9a24d', WOOD_DARK = '#4e2d19', COPPER = '#b8683a';
+const DECK_Y = -0.06;
 
-// Hull shape along its length (t = 0 at the stern, 1 at the bow)
-const halfWidth = (t) => (t < 0.45 ? 0.62 + 0.33 * Math.sin((t / 0.45) * Math.PI / 2) : 0.95 * Math.pow(Math.cos(((t - 0.45) / 0.55) * Math.PI / 2), 0.75)) + 0.02;
-const depth = (t) => 0.55 + 0.35 * Math.sin(Math.min(1, t * 1.25) * Math.PI) * (t < 0.85 ? 1 : 1 - (t - 0.85) * 3);
-const sheer = (t) => 0.06 * Math.pow(t, 3) * 4 + (t < 0.1 ? (0.1 - t) * 0.8 : 0);
+const lerpTable = (table, x) => {
+  if (x <= table[0][0]) return table[0][1];
+  for (let i = 1; i < table.length; i++) {
+    const [x1, y1] = table[i];
+    if (x <= x1) { const [x0, y0] = table[i - 1]; return y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
+  }
+  return table[table.length - 1][1];
+};
+const sideX = (z) => S.sternX + (z - STERN) * SIDE_PPM;
+const rimY = (z) => (S.midRim - lerpTable(S.rim, sideX(z))) / SIDE_PPM;
+const keelY = (z) => (S.midRim - lerpTable(S.keel, sideX(z))) / SIDE_PPM;
+const topY = (z) => T.stern - (z - STERN) * TOP_PPM;
+const halfWidth = (z) => lerpTable(T.half, topY(z)) / TOP_PPM;
+
+// A hull section: th = 0 at the rim, pi/2 at the keel. Near-vertical at the rim, round underneath.
+const section = (z, th) => {
+  const top = rimY(z), d = top - keelY(z);
+  return [halfWidth(z) * Math.cos(th), top - d * Math.pow(Math.sin(th), 0.75)];
+};
+
+// Sheet pixels to atlas UVs, through one piece of the atlas
+function uvOf(piece, sx, sy) {
+  const p = ATLAS.pieces[piece];
+  const ax = p.mirror ? p.at[0] + (p.src[2] - sx) : p.at[0] + (sx - p.src[0]);
+  const ay = p.at[1] + (sy - p.src[1]);
+  return [ax / AW, 1 - ay / AH];
+}
+// The whole of a piece's rectangle, for a card: [u0, v0, u1, v1], left to right and bottom to top as painted
+function rectOf(piece) {
+  const p = ATLAS.pieces[piece];
+  const [u0, v1] = uvOf(piece, p.src[0], p.src[1]);
+  const [u1, v0] = uvOf(piece, p.src[2], p.src[3]);
+  return [u0, v0, u1, v1];
+}
+
+let atlasTexture = null;
+function atlas() {
+  if (!atlasTexture) {
+    atlasTexture = new THREE.TextureLoader().load(atlasUrl);
+    atlasTexture.colorSpace = THREE.SRGBColorSpace;
+    atlasTexture.anisotropy = 4;
+  }
+  return atlasTexture;
+}
+// Painted surfaces: toon-lit, with a little of the paint showing through in the dark
+const painted = (opts = {}) => new THREE.MeshToonMaterial({ map: atlas(), emissive: 0xffffff, emissiveMap: atlas(), emissiveIntensity: 0.12, ...opts });
+const cardMat = (opts = {}) => painted({ alphaTest: 0.5, side: THREE.DoubleSide, ...opts });
 
 export function createAirship() {
   const root = new THREE.Group();
-  root.name = 'airship';
+  root.name = 'the-magpie';
   const ship = joint(root, [0, 0, 0], 'ship'); // banks and bobs
-  const planks = plankTexture();
-  const deckTex = deckTexture();
 
-  // ---------------------------------------------------------------- hull
-  const rows = 22, cols = 18;
-  const pos = [], uv = [], idx = [];
-  const at = (t, s) => {
-    const z = STERN + (BOW - STERN) * t;
-    const w = halfWidth(t), d = depth(t), top = sheer(t);
-    const th = Math.PI * s;
-    return [-w * Math.cos(th), top - d * Math.pow(Math.sin(th), 0.75), z];
-  };
-  for (let r = 0; r <= rows; r++) for (let c = 0; c <= cols; c++) {
-    const t = r / rows, s = c / cols;
-    pos.push(...at(t, s));
-    uv.push(s, t);
+  // ---------------------------------------------------------------- hull: two halves, each wearing the side view
+  // Seen from -x the bow is on the right, as painted; from +x it's on the left, so that half uses the mirrored copy.
+  const ROWS = 44, COLS = 12;
+  const zAt = (r) => STERN + LENGTH * (1 - Math.pow(1 - r / ROWS, 1.25)); // closer rows toward the bow, where it curves
+  for (const side of [-1, 1]) {
+    const pos = [], uv = [], idx = [];
+    for (let r = 0; r <= ROWS; r++) for (let c = 0; c <= COLS; c++) {
+      const z = zAt(r), th = (c / COLS) * Math.PI / 2;
+      const [x, y] = section(z, th);
+      pos.push(side * x, y, z);
+      uv.push(...uvOf(side < 0 ? 'side' : 'sideMirror', sideX(z), S.midRim - y * SIDE_PPM));
+    }
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const a = r * (COLS + 1) + c, b = a + 1, d = a + COLS + 1, e = d + 1;
+      if (side < 0) idx.push(a, d, b, b, d, e); else idx.push(a, b, d, b, e, d);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    part(ship, geo, painted({ side: THREE.DoubleSide }));
   }
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const a = r * (cols + 1) + c, b = a + 1, d = a + cols + 1, e = d + 1;
-    idx.push(a, b, d, b, e, d);
-  }
-  const hullGeo = new THREE.BufferGeometry();
-  hullGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  hullGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  hullGeo.setIndex(idx);
-  hullGeo.computeVertexNormals();
-  part(ship, hullGeo, toonMap(planks, { side: THREE.DoubleSide }));
-
-  // Transom: the flat stern, with a brass frame
+  // The transom: the flat stern, dark wood
   const transom = new THREE.Shape();
-  for (let c = 0; c <= cols; c++) {
-    const [x, y] = at(0, c / cols);
-    c ? transom.lineTo(x, y) : transom.moveTo(x, y);
+  for (let c = 0; c <= COLS * 2; c++) {
+    const th = (c / (COLS * 2)) * Math.PI;
+    const [x, y] = section(STERN, th < Math.PI / 2 ? th : Math.PI - th);
+    const sx = th < Math.PI / 2 ? -x : x;
+    c ? transom.lineTo(sx, y) : transom.moveTo(sx, y);
   }
-  part(ship, new THREE.ShapeGeometry(transom), toon(WOOD_DARK, { side: THREE.DoubleSide }), { pos: [0, 0, STERN + 0.005], ink: false });
+  part(ship, new THREE.ShapeGeometry(transom), toon(WOOD_DARK, { side: THREE.DoubleSide }), { pos: [0, 0, STERN + 0.004], ink: false });
 
-  // Deck
-  const deck = new THREE.Shape();
-  const n = 20;
-  for (let i = 0; i <= n; i++) { const t = i / n; deck.lineTo(-halfWidth(t) * 0.97, STERN + (BOW - STERN) * t); }
-  for (let i = n; i >= 0; i--) { const t = i / n; deck.lineTo(halfWidth(t) * 0.97, STERN + (BOW - STERN) * t); }
-  const deckGeo = new THREE.ShapeGeometry(deck, 2);
-  deckGeo.rotateX(Math.PI / 2);
-  const deckUv = deckGeo.attributes.uv;
-  for (let i = 0; i < deckUv.count; i++) deckUv.setXY(i, deckGeo.attributes.position.getX(i) * 0.6 + 0.5, deckGeo.attributes.position.getZ(i) * 0.3);
-  part(ship, deckGeo, toonMap(deckTex, { side: THREE.DoubleSide }), { pos: [0, 0.02, 0], ink: false });
+  // ---------------------------------------------------------------- deck: the top view, projected from above
+  // The deck sits a little under the rim; its edge is where the hull's side crosses that height.
+  const deckHalf = (z) => {
+    const top = rimY(z), d = top - keelY(z);
+    if (top <= DECK_Y) return halfWidth(z);
+    const s = Math.min(1, Math.pow((top - DECK_Y) / d, 1 / 0.75));
+    return halfWidth(z) * Math.cos(Math.asin(s)) * 0.99;
+  };
+  const deckShape = new THREE.Shape();
+  const N = 40;
+  const zs = Array.from({ length: N + 1 }, (_, i) => STERN + 0.01 + (LENGTH - 0.25) * (i / N));
+  zs.forEach((z, i) => (i ? deckShape.lineTo(-deckHalf(z), z) : deckShape.moveTo(-deckHalf(z), z)));
+  for (const z of [...zs].reverse()) deckShape.lineTo(deckHalf(z), z);
+  const deckGeo = new THREE.ShapeGeometry(deckShape, 1);
+  deckGeo.rotateX(Math.PI / 2); // shape (x, y) -> (x, 0, y): its y becomes z
+  const dp = deckGeo.attributes.position, duv = deckGeo.attributes.uv;
+  for (let i = 0; i < dp.count; i++) {
+    const x = dp.getX(i), z = dp.getZ(i);
+    dp.setY(i, DECK_Y);
+    // In the top view the bow is up and the ship's +x side is on the left
+    duv.setXY(i, ...uvOf('deck', T.cx - x * TOP_PPM, topY(z)));
+  }
+  deckGeo.computeVertexNormals();
+  part(ship, deckGeo, painted({ side: THREE.DoubleSide }), { ink: false });
 
-  // Brass gunwale rails and posts
+  // Brass rails along the rim, on posts
   for (const side of [-1, 1]) {
     const pts = [];
-    for (let i = 0; i <= 12; i++) { const t = 0.02 + (i / 12) * 0.9; pts.push([side * halfWidth(t) * 0.97, sheer(t) + 0.2, STERN + (BOW - STERN) * t]); }
-    part(ship, taperedTube(pts, 0.028, 0.02, 24, 6), toon(BRASS));
-    for (let i = 0; i <= 8; i++) {
-      const t = 0.04 + (i / 8) * 0.84;
-      part(ship, cyl(0.016, 0.018, 0.2, 5), toon(BRASS), { pos: [side * halfWidth(t) * 0.97, sheer(t) + 0.1, STERN + (BOW - STERN) * t], ink: false });
-    }
-    // Portholes: brass rings with warm light inside
-    for (const t of [0.3, 0.45, 0.6]) {
-      const [x, y, z] = at(t, side < 0 ? 0.13 : 0.87);
-      const ring = part(ship, new THREE.TorusGeometry(0.07, 0.018, 6, 14), toon(BRASS), { pos: [x * 1.01, y - 0.05, z], ink: false });
-      ring.rotation.y = Math.PI / 2;
-      const glass = part(ship, new THREE.CircleGeometry(0.06, 12), new THREE.MeshBasicMaterial({ color: '#ffcf7a', side: THREE.DoubleSide }), { pos: [x * 1.005, y - 0.05, z], ink: false });
-      glass.rotation.y = Math.PI / 2;
+    for (let i = 0; i <= 16; i++) { const z = STERN + 0.1 + (LENGTH - 0.75) * (i / 16); pts.push([side * halfWidth(z) * 0.96, rimY(z) + 0.17, z]); }
+    part(ship, taperedTube(pts, 0.026, 0.02, 32, 6), toon(BRASS));
+    for (let i = 0; i <= 10; i++) {
+      const z = STERN + 0.12 + (LENGTH - 0.8) * (i / 10);
+      part(ship, cyl(0.016, 0.018, 0.18, 5), toon(BRASS), { pos: [side * halfWidth(z) * 0.96, rimY(z) + 0.08, z], ink: false });
     }
   }
 
-  // Keel, with a brass stem curving up at the bow
-  const keelPts = [];
-  for (let i = 0; i <= 12; i++) { const t = i / 12; const [, y, z] = at(t, 0.5); keelPts.push([0, y - 0.05, z]); }
-  keelPts.push([0, 0.1, BOW + 0.15], [0, 0.45, BOW + 0.2]);
-  part(ship, taperedTube(keelPts, 0.05, 0.03, 30, 6), toon(WOOD_DARK));
-  part(ship, taperedTube(keelPts.slice(-4), 0.035, 0.02, 10, 6), toon(BRASS), { ink: false });
+  // ---------------------------------------------------------------- the brazier and the sunstones
+  const array = joint(ship, [0, 0, 0.05], 'sunstones'); // the crystal row, a little forward of amidships (top view)
+  // The brazier: a copper stove with a lit grate, wearing the painted one (projected from the side)
+  const stove = [[0.001, DECK_Y], [0.3, DECK_Y], [0.33, 0.0], [0.33, 0.33], [0.31, 0.42], [0.26, 0.55], [0.17, 0.66], [0.12, 0.73], [0.11, 0.76], [0.11, 1.08], [0.001, 1.08]];
+  const stoveGeo = new THREE.LatheGeometry(stove.map(([r, y]) => new THREE.Vector2(r, y)), 20);
+  planarUV(stoveGeo, 'furnace', (x, y) => [1133 + x * SIDE_PPM, 340 - (y - DECK_Y) * SIDE_PPM]);
+  part(array, stoveGeo, painted({ emissiveIntensity: 0.3 }));
+  const grate = new THREE.PointLight('#ff9a3a', 2, 3, 2);
+  grate.position.set(0, 0.2, 0.4);
+  array.add(grate);
+  // The copper flue beside it
+  part(array, taperedTube([[-0.45, DECK_Y, -0.35], [-0.45, 0.85, -0.35], [-0.42, 1.0, -0.2], [-0.2, 1.02, -0.08]], 0.06, 0.06, 12, 8), toon(COPPER));
 
-  // Rudder, hinged at the stern
-  const rudder = joint(ship, [0, -0.2, STERN - 0.05], 'rudder');
-  const rShape = new THREE.Shape();
-  rShape.moveTo(0, 0.2); rShape.lineTo(-0.5, 0.1); rShape.quadraticCurveTo(-0.6, -0.4, -0.2, -0.7); rShape.lineTo(0, -0.55);
-  const rGeo = new THREE.ExtrudeGeometry(rShape, { depth: 0.05, bevelEnabled: false });
-  rGeo.translate(0, 0, -0.025);
-  const rud = part(rudder, rGeo, toon(WOOD));
-  rud.rotation.y = Math.PI / 2;
-
-  // Side fins, brass-edged, angled down and out
-  const fins = [-1, 1].map((side) => {
-    const f = joint(ship, [side * 0.78, -0.42, 0.35]);
-    f.rotation.z = side * 0.55;
-    const s = new THREE.Shape();
-    s.moveTo(0, -0.35); s.lineTo(0.75, -0.2); s.lineTo(0.85, 0.05); s.lineTo(0, 0.35);
-    const g = new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: false });
-    g.rotateX(Math.PI / 2);
-    g.translate(0, 0.02, 0);
-    const fin = part(f, g, toon(WOOD));
-    fin.scale.x = side;
-    part(f, taperedTube([[0, 0, -0.35], [side * 0.75, 0, -0.2], [side * 0.85, 0, 0.05]], 0.02, 0.018, 10, 5), toon(BRASS), { ink: false });
-    return f;
-  });
+  // Five crystals, the middle one biggest, each in a brass cup on a curved arm. The sheet's top and front views put
+  // them in a row across the ship and its side view in a row along it; seen from the side (as she mostly is on the
+  // map) a row across stacks into one column, so they stand in a diamond, which shows both.
+  const unit = [[0.001, -0.05], [0.6, 0], [0.8, 0.06], [0.96, 0.2], [1, 0.42], [1, 0.57], [0.72, 0.71], [0.36, 0.86], [0.001, 1]];
+  const crystalGeo = new THREE.LatheGeometry(unit.map(([r, y]) => new THREE.Vector2(r, y)), 6).toNonIndexed();
+  crystalGeo.computeVertexNormals(); // faceted: each facet catches the light on its own
+  planarUV(crystalGeo, 'crystal', (x, y) => [1122 + x * 50, 158 - y * 138]);
+  const crystalMat = painted({ emissiveIntensity: 0.75 });
+  const cupGeo = new THREE.LatheGeometry([[0.05, -0.1], [0.12, -0.04], [0.2, 0.02], [0.26, 0.1], [0.28, 0.16]].map(([r, y]) => new THREE.Vector2(r, y)), 12);
+  const crystals = [];
+  const ROW = [[0, -0.8, 1.3, 0.72], [-0.78, 0, 1.2, 0.66], [0, 0, 1.55, 1.25], [0.78, 0, 1.2, 0.66], [0, 0.8, 1.3, 0.72]];
+  for (const [x, z, h, s] of ROW) {
+    const w = 0.36 * s; // half-width: the painted crystal is about 0.72 as wide as it is tall
+    if (x || z) part(array, taperedTube([[0, 1.02, 0], [x * 0.35, 1.0 + (h - 1) * 0.2, z * 0.35], [x * 0.85, h - 0.35 * s, z * 0.85], [x, h - 0.18 * s, z]], 0.035, 0.028, 14, 6), toon(BRASS), { ink: false });
+    const cup = part(array, cupGeo, toon(BRASS, { side: THREE.DoubleSide }), { pos: [x, h - 0.12 * s, z], ink: false });
+    cup.scale.set(w * 3.2, s, w * 3.2);
+    const c = new THREE.Mesh(crystalGeo, crystalMat);
+    c.position.set(x, h, z);
+    c.scale.set(w, s, w);
+    c.rotation.y = Math.PI / 6;
+    array.add(c);
+    const glow = glowSprite('#ffc45a', 1.3 * s, 0.5);
+    glow.position.set(x, h + 0.45 * s, z);
+    array.add(glow);
+    // Lit with witchfire, each has a violet heart
+    const heart = glowSprite('#b25cff', 0.5 * s, 0.9);
+    heart.position.set(x, h + 0.4 * s, z);
+    array.add(heart);
+    crystals.push({ c, glow, heart, s, phase: Math.random() * 6, top: [x, h + 0.5 * s, z] });
+  }
+  const sunLight = new THREE.PointLight('#ffb44a', 6, 10, 2);
+  sunLight.position.set(0, 1.9, 0);
+  array.add(sunLight);
 
   // ---------------------------------------------------------------- sail-wings
-  const sailTex = sailTexture();
+  // As in the sheet's top view, each sail hangs off a spar along the ship's side and reaches out to a tip. The tips
+  // are raised, like a bird's wings in a V, so the sails face the camera whether she's seen from the side or above.
+  const sailMat = cardMat();
   const sails = [-1, 1].map((side) => {
-    const mast = joint(ship, [side * 0.55, 0.15, 0.55]);
-    mast.rotation.z = -side * 0.62;
-    part(mast, cyl(0.035, 0.045, 2.0, 6), toon(WOOD_DARK), { pos: [0, 1.0, 0] });
-    part(mast, sphere(0.05, 6, 5), toon(BRASS), { pos: [0, 2.02, 0], ink: false });
-    // A triangular sail from the masthead down to a boom
-    const geo = new THREE.BufferGeometry();
-    const N = 8, verts = [], uvs = [], ind = [];
-    for (let i = 0; i <= N; i++) for (let j = 0; j <= N - i; j++) {
-      const u = i / N, v = j / N; // barycentric over (mast top, mast foot, boom end)
-      const A = [0, 1.9, 0], B = [0, 0.25, 0], Cc = [0, 0.3, -1.25];
-      const w = 1 - u - v;
-      verts.push(A[0] * w + B[0] * u + Cc[0] * v, A[1] * w + B[1] * u + Cc[1] * v, A[2] * w + B[2] * u + Cc[2] * v);
-      uvs.push(0.5 + (v - u) * 0.45, 1 - u * 0.9);
+    const A = new THREE.Vector3(side * 1.3, 1.05, 1.05); // the spar's forward end
+    const B = new THREE.Vector3(side * 1.3, 0.45, -0.85); // the spar's aft end
+    const C = new THREE.Vector3(side * 2.6, 1.2, -0.3); // the tip
+    // The painted sail's corners in the top view
+    const uvA = uvOf('sail', 265, 150), uvB = uvOf('sail', 270, 293), uvC = uvOf('sail', 146, 247);
+    // A touch larger than the painted sail, so its own edge (cut out by the alpha) is the edge you see
+    const grow = 1.05, mid = A.clone().add(B).add(C).divideScalar(3);
+    const [gA, gB, gC] = [A, B, C].map((p) => p.clone().sub(mid).multiplyScalar(grow).add(mid));
+    const uvMid = [0, 1].map((k) => (uvA[k] + uvB[k] + uvC[k]) / 3);
+    const [tA, tB, tC] = [uvA, uvB, uvC].map((u) => [0, 1].map((k) => uvMid[k] + (u[k] - uvMid[k]) * grow));
+    const n = 10, verts = [], uvs = [], ind = [], bary = [];
+    for (let i = 0; i <= n; i++) for (let j = 0; j <= n - i; j++) {
+      const b = i / n, c = j / n, a = 1 - b - c;
+      verts.push(gA.x * a + gB.x * b + gC.x * c, gA.y * a + gB.y * b + gC.y * c, gA.z * a + gB.z * b + gC.z * c);
+      uvs.push(tA[0] * a + tB[0] * b + tC[0] * c, tA[1] * a + tB[1] * b + tC[1] * c);
+      bary.push(a * b * c * 27);
     }
-    const id = (i, j) => { let k = 0; for (let a = 0; a < i; a++) k += N - a + 1; return k + j; };
-    for (let i = 0; i < N; i++) for (let j = 0; j < N - i; j++) {
+    const id = (i, j) => { let k = 0; for (let q = 0; q < i; q++) k += n - q + 1; return k + j; };
+    for (let i = 0; i < n; i++) for (let j = 0; j < n - i; j++) {
       ind.push(id(i, j), id(i + 1, j), id(i, j + 1));
-      if (j < N - i - 1) ind.push(id(i + 1, j), id(i + 1, j + 1), id(i, j + 1));
+      if (j < n - i - 1) ind.push(id(i + 1, j), id(i + 1, j + 1), id(i, j + 1));
     }
+    const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
     geo.setIndex(ind);
     geo.computeVertexNormals();
-    geo.userData.rest = Float32Array.from(verts);
-    const sail = part(mast, geo, toonMap(sailTex, { side: THREE.DoubleSide }));
-    sail.rotation.y = side * 0.25;
-    part(mast, cyl(0.02, 0.02, 1.3, 5), toon(WOOD_DARK), { pos: [0, 0.3, -0.62], rot: [Math.PI / 2, 0, 0], ink: false });
-    return { mast, geo };
+    // Which way the sail bellies: outward and a little back, away from the wind of her flight
+    const belly = new THREE.Vector3().subVectors(B, A).cross(new THREE.Vector3().subVectors(C, A)).normalize();
+    if (belly.y > 0) belly.negate(); // it fills downward, like a wing
+    geo.userData = { rest: Float32Array.from(verts), bary, belly };
+    part(ship, geo, sailMat, { ink: false });
+    // The spar, with brass knobs, on brackets from the rim; the boom along the sail's foot; a line to the tip
+    const foot = B.clone().add(new THREE.Vector3(0, -0.04, -0.2)), head = A.clone().add(new THREE.Vector3(0, 0.05, 0.2));
+    part(ship, taperedTube([foot.toArray(), head.toArray()], 0.045, 0.035, 4, 6), toon(WOOD_DARK));
+    for (const p of [foot, head]) part(ship, sphere(0.06, 8, 6), toon(BRASS), { pos: p.toArray(), ink: false });
+    for (const z of [-0.6, 0.1, 0.8]) {
+      const k = (z - B.z) / (A.z - B.z), y = B.y + (A.y - B.y) * k;
+      part(ship, taperedTube([[side * halfWidth(z) * 0.95, rimY(z) + 0.05, z], [side * 1.3, y, z]], 0.028, 0.028, 4, 5), toon(BRASS), { ink: false });
+    }
+    part(ship, taperedTube([B.toArray(), C.toArray()], 0.03, 0.022, 4, 5), toon(WOOD_DARK), { ink: false });
+    part(ship, sphere(0.045, 6, 5), toon(BRASS), { pos: C.toArray(), ink: false });
+    part(ship, taperedTube([C.toArray(), head.toArray()], 0.008, 0.008, 4, 3), new THREE.MeshBasicMaterial({ color: '#3a2a1c' }), { ink: false });
+    return { geo };
   });
 
-  // ---------------------------------------------------------------- the sunstone array
-  const array = joint(ship, [0, 0, -0.35], 'sunstones');
-  part(array, cyl(0.22, 0.28, 0.4, 12), toon(BRASS), { pos: [0, 0.2, 0] });
-  part(array, cyl(0.16, 0.2, 0.25, 12), toon('#8a5a2a'), { pos: [0, 0.52, 0] });
-  part(array, new THREE.TorusGeometry(0.2, 0.025, 6, 16), toon(BRASS), { pos: [0, 0.42, 0], rot: [Math.PI / 2, 0, 0], ink: false });
-  // Faceted: one normal per face, so each facet catches the light on its own
-  const crystalGeo = new THREE.LatheGeometry([[0.001, -0.2], [0.13, -0.06], [0.13, 0.12], [0.001, 0.36]].map(([x, y]) => new THREE.Vector2(x, y)), 6).toNonIndexed();
-  crystalGeo.computeVertexNormals();
-  const crystalMat = new THREE.MeshToonMaterial({ color: AMBER, emissive: new THREE.Color('#ff8a1a'), emissiveIntensity: 0.9 });
-  const crystals = [];
-  const stalks = [[0, 0, 1.75, 1.2], [0.42, 0.25, 1.4, 0.9], [-0.42, 0.25, 1.4, 0.9], [0.4, -0.3, 1.35, 0.85], [-0.4, -0.3, 1.35, 0.85]];
-  for (const [x, z, h, s] of stalks) {
-    part(array, taperedTube([[0, 0.6, 0], [x * 0.4, h * 0.6, z * 0.4], [x, h - 0.22 * s, z]], 0.035, 0.025, 10, 5), toon(BRASS), { ink: false });
-    const cup = part(array, cyl(0.12 * s, 0.06 * s, 0.1 * s, 8, true), toon(BRASS, { side: THREE.DoubleSide }), { pos: [x, h - 0.18 * s, z], ink: false });
-    const c = new THREE.Mesh(crystalGeo, crystalMat);
-    c.position.set(x, h, z);
-    c.scale.setScalar(s);
-    array.add(c);
-    const glow = glowSprite('#ffc45a', 1.1 * s, 0.55);
-    glow.position.set(x, h + 0.05, z);
-    array.add(glow);
-    // Lit with witchfire, each amber crystal has a violet heart (docs/LORE.md, "The skiff")
-    const heart = glowSprite('#b25cff', 0.42 * s, 0.95);
-    heart.position.set(x, h + 0.04, z);
-    array.add(heart);
-    crystals.push({ c, glow, heart, s, phase: Math.random() * 6, cup });
-  }
-  const sunLight = new THREE.PointLight('#ffb44a', 6, 9, 2);
-  sunLight.position.set(0, 1.5, 0);
-  array.add(sunLight);
+  // ---------------------------------------------------------------- fins, rudder, lanterns: painted cards
+  const finSrc = ATLAS.pieces.fin.src;
+  const finW = (finSrc[2] - finSrc[0]) / TOP_PPM, finD = (finSrc[3] - finSrc[1]) / TOP_PPM;
+  const finZ = STERN + (T.stern - (finSrc[1] + finSrc[3]) / 2) / TOP_PPM; // where the painted fins sit
+  const fins = [-1, 1].map((side) => {
+    const geo = new THREE.PlaneGeometry(finW, finD);
+    geo.rotateX(Math.PI / 2); // the texture's up -> +z, the bow, as in the top view
+    setRectUV(geo, ...rectOf('fin'));
+    const pivot = joint(ship, [side * (halfWidth(finZ) - 0.08), -0.32, finZ]);
+    const fin = new THREE.Mesh(geo, cardMat());
+    // The painted fin is the ship's +x one (on the left in the top view), its tip at the texture's left
+    fin.scale.x = -side;
+    fin.position.x = side * finW / 2;
+    pivot.add(fin);
+    pivot.rotation.z = -side * 0.3; // angled down and out
+    return pivot;
+  });
 
-  // ---------------------------------------------------------------- stern cabin, wheel, lanterns
-  const cabin = joint(ship, [0, 0, -1.75]);
-  part(cabin, new THREE.BoxGeometry(1.0, 0.62, 0.7), toon('#8a5634'), { pos: [0, 0.31, 0] });
-  const roof = new THREE.Shape();
-  roof.moveTo(-0.6, 0); roof.lineTo(0, 0.32); roof.lineTo(0.6, 0); roof.lineTo(-0.6, 0);
-  const roofGeo = new THREE.ExtrudeGeometry(roof, { depth: 0.8, bevelEnabled: false });
-  roofGeo.translate(0, 0.62, -0.4);
-  part(cabin, roofGeo, toon('#6b2a3a'));
-  part(cabin, new THREE.BoxGeometry(0.26, 0.42, 0.02), toon(WOOD_DARK), { pos: [0, 0.23, 0.36], ink: false });
-  part(cabin, sphere(0.02, 5, 4), toon(BRASS), { pos: [0.08, 0.23, 0.38], ink: false });
-  for (const x of [-0.32, 0.32]) {
-    part(cabin, new THREE.TorusGeometry(0.075, 0.015, 5, 12), toon(BRASS), { pos: [x, 0.36, 0.355], ink: false });
-    part(cabin, new THREE.CircleGeometry(0.065, 12), new THREE.MeshBasicMaterial({ color: '#ffd28a' }), { pos: [x, 0.36, 0.352], ink: false });
+  const rudder = joint(ship, [0, 0, STERN - 0.02], 'rudder');
+  {
+    const src = ATLAS.pieces.rudder.src;
+    const w = (src[2] - src[0]) / SIDE_PPM, h = (src[3] - src[1]) / SIDE_PPM;
+    const geo = new THREE.PlaneGeometry(w, h);
+    geo.rotateY(-Math.PI / 2); // the texture's right -> +z, the bow, as in the side view
+    setRectUV(geo, ...rectOf('rudder'));
+    const card = new THREE.Mesh(geo, cardMat());
+    card.position.set(0, (S.midRim - (src[1] + src[3]) / 2) / SIDE_PPM, ((src[0] + src[2]) / 2 - S.sternX) / SIDE_PPM + 0.02);
+    rudder.add(card);
   }
-  // The helm: the wheel on a post, at the height of her hands, with the witch standing behind it (api.helm)
-  const wheel = joint(ship, [0, 0.95, -0.92], 'wheel');
-  part(ship, cyl(0.04, 0.06, 0.95, 6), toon(WOOD_DARK), { pos: [0, 0.47, -0.98], ink: false });
-  part(wheel, new THREE.TorusGeometry(0.2, 0.022, 6, 16), toon(WOOD_DARK), { ink: false });
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    part(wheel, cyl(0.01, 0.01, 0.5, 4), toon(BRASS), { rot: [0, 0, a], ink: false });
-  }
+
+  const lanternGeos = (() => {
+    const src = ATLAS.pieces.lantern.src;
+    const w = (src[2] - src[0]) / SIDE_PPM * 0.9, h = (src[3] - src[1]) / SIDE_PPM * 0.9;
+    const a = new THREE.PlaneGeometry(w, h), b = new THREE.PlaneGeometry(w, h);
+    b.rotateY(Math.PI / 2);
+    for (const g of [a, b]) setRectUV(g, ...rectOf('lantern'));
+    return [a, b];
+  })();
+  const lanternMat = cardMat({ emissiveIntensity: 0.6 });
   const lanterns = [];
-  for (const [x, y, z] of [[0, 0.7, BOW - 0.2], [-0.5, 0.95, -1.4], [0.5, 0.95, -1.4]]) {
+  const hang = [[0, keelY(2.2) + 0.12, 2.2], [0, rimY(STERN) + 0.55, STERN - 0.12]];
+  for (const side of [-1, 1]) hang.push([side * 1.3, 0.78, 1.2], [side * 1.3, 0.22, -1.05]);
+  for (const [x, y, z] of hang) {
     const l = joint(ship, [x, y, z]);
-    if (z > 0) part(ship, cyl(0.02, 0.025, 0.55, 5), toon(BRASS), { pos: [x, y - 0.3, z], ink: false });
-    part(l, cyl(0.06, 0.07, 0.14, 6), new THREE.MeshBasicMaterial({ color: '#ffd07a' }), { ink: false });
-    part(l, cyl(0.03, 0.08, 0.05, 6), toon(BRASS), { pos: [0, 0.09, 0], ink: false });
-    const g = glowSprite('#ffb45e', 0.7, 0.6);
+    for (const g of lanternGeos) l.add(new THREE.Mesh(g, lanternMat));
+    const g = glowSprite('#ffb45e', 0.8, 0.55);
     l.add(g);
     lanterns.push(g);
   }
+  part(ship, cyl(0.025, 0.03, 0.55, 5), toon(BRASS), { pos: [0, rimY(STERN) + 0.2, STERN - 0.12], ink: false });
 
+  // ---------------------------------------------------------------- the helm, at the stern
+  const wheel = joint(ship, [0, 0.95, -1.62], 'wheel');
+  part(ship, cyl(0.04, 0.06, 1.0, 6), toon(WOOD_DARK), { pos: [0, 0.45, -1.68], ink: false });
+  part(wheel, new THREE.TorusGeometry(0.22, 0.024, 6, 18), toon(WOOD_DARK), { ink: false });
+  for (let i = 0; i < 8; i++) part(wheel, cyl(0.011, 0.011, 0.56, 4), toon(BRASS), { rot: [0, 0, (i / 8) * Math.PI * 2], ink: false });
+  part(wheel, sphere(0.05, 8, 6), toon(BRASS), { ink: false });
+
+  // ---------------------------------------------------------------- shadow and motes (world space: add `fx`)
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.35, depthWrite: false }));
   shadow.rotation.x = -Math.PI / 2;
-  shadow.scale.set(1.3, 3.2, 1);
   shadow.renderOrder = -1;
-
-  // Golden motes shed by the crystals, left behind in the air (world space: the scene adds `fx`)
   const fx = new THREE.Group();
   fx.name = 'airship-fx';
-  const moteMax = 90;
+  const moteMax = 110;
   const moteGeo = new THREE.BufferGeometry();
   moteGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(moteMax * 3), 3));
   moteGeo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(moteMax * 3), 3));
@@ -236,52 +320,52 @@ export function createAirship() {
   const bank = new Spring(8, 4), pitch = new Spring(10, 5);
   let t = 0, emit = 0;
   const tmp = new THREE.Vector3();
-  const api = {
-    root, fx, shadow, name: 'Skiff', length: BOW - STERN,
+  return {
+    root, fx, shadow, name: 'the Magpie', length: LENGTH,
     deck: ship, // add crew here so they bank and bob with her
-    helm: new THREE.Vector3(0, 0.02, -1.3), // where the witch stands to steer
-    perch: new THREE.Vector3(-0.5, 0.37, 1.93), // a spot on the port rail near the bow, for Inkblot
+    helm: new THREE.Vector3(0, DECK_Y, -2.0), // where the witch stands to steer
+    perch: new THREE.Vector3(-halfWidth(1.9) * 0.96, rimY(1.9) + 0.19, 1.9), // the port rail near the bow, for Inkblot
     // speed in m/s, turn in rad/s, climb in m/s, ground: the height of the ground under her
     update(dt, speed = 0, turn = 0, climb = 0, ground = 0) {
       t += dt;
-      const cruise = Math.min(1, speed / 8);
+      const cruise = Math.min(1, speed / 6);
       ship.position.y = Math.sin(t * 1.3) * 0.12 + Math.sin(t * 0.7) * 0.06;
       ship.rotation.z = bank.update(-turn * 0.35 + Math.sin(t * 0.9) * 0.02, dt);
       ship.rotation.x = pitch.update(-climb * 0.05 + Math.sin(t * 1.1) * 0.015 - cruise * 0.02, dt);
       rudder.rotation.y = -turn * 0.6;
       wheel.rotation.z = turn * 1.4;
       for (const [i, f] of fins.entries()) f.rotation.x = Math.sin(t * 1.5 + i) * 0.04;
-      // Sails fill with the wind of her speed
+      // The sails belly out with the wind of her speed
       for (const [i, s] of sails.entries()) {
-        const rest = s.geo.userData.rest, p = s.geo.attributes.position;
+        const { rest, bary, belly } = s.geo.userData, p = s.geo.attributes.position;
+        const fill = 0.1 + cruise * 0.22;
         for (let k = 0; k < p.count; k++) {
-          const y = rest[k * 3 + 1], z = rest[k * 3 + 2];
-          const inner = Math.sin(Math.min(1, (y - 0.25) / 1.65) * Math.PI) * Math.sin(Math.min(1, -z / 1.25 + 0.001) * Math.PI);
-          const fill = (0.12 + cruise * 0.22) * inner + Math.sin(t * 3 + y * 2 + i) * 0.02 * inner;
-          p.setX(k, rest[k * 3] + (i ? 1 : -1) * fill);
+          const b = bary[k] * (fill + Math.sin(t * 3 + k * 0.3 + i) * 0.015);
+          p.setXYZ(k, rest[k * 3] + belly.x * b, rest[k * 3 + 1] + belly.y * b, rest[k * 3 + 2] + belly.z * b);
         }
         p.needsUpdate = true;
         s.geo.computeVertexNormals();
       }
-      // Sunstones pulse and turn slowly
+      // The sunstones pulse and turn slowly
       for (const c of crystals) {
         const pulse = 0.85 + Math.sin(t * 2.4 + c.phase) * 0.15;
-        c.c.rotation.y += dt * 0.4;
-        c.glow.material.opacity = 0.45 * pulse;
-        c.glow.scale.setScalar(1.1 * c.s * pulse);
+        c.c.rotation.y += dt * 0.3;
+        c.glow.material.opacity = 0.42 * pulse;
+        c.glow.scale.setScalar(1.3 * c.s * pulse);
         c.heart.material.opacity = 0.75 + Math.sin(t * 3.1 + c.phase) * 0.2;
       }
-      crystalMat.emissiveIntensity = 0.8 + Math.sin(t * 2.4) * 0.15;
+      crystalMat.emissiveIntensity = 0.7 + Math.sin(t * 2.4) * 0.12;
       sunLight.intensity = 6 * (0.9 + Math.sin(t * 2.4) * 0.1);
+      grate.intensity = 2 * (0.85 + Math.sin(t * 9) * 0.08 + Math.sin(t * 13.7) * 0.07);
       for (const [i, g] of lanterns.entries()) g.material.opacity = 0.55 + Math.sin(t * 7 + i * 2) * 0.06;
 
       // Motes: a few a second from the crystals, more when she's moving
       root.updateMatrixWorld();
-      emit += dt * (10 + cruise * 30);
+      emit += dt * (12 + cruise * 34);
       while (emit > 1 && motes.length < moteMax) {
         emit--;
-        const s = stalks[Math.floor(Math.random() * stalks.length)];
-        array.localToWorld(tmp.set(s[0], s[2], s[1]));
+        const c = crystals[Math.floor(Math.random() * crystals.length)];
+        array.localToWorld(tmp.set(...c.top));
         motes.push({ p: tmp.clone(), v: new THREE.Vector3((Math.random() - 0.5) * 0.4, -0.2 - Math.random() * 0.3, (Math.random() - 0.5) * 0.4), life: 1.6 + Math.random() });
       }
       emit = Math.min(emit, 2);
@@ -295,80 +379,36 @@ export function createAirship() {
       motes.forEach((m, i) => {
         const k = Math.min(1, m.life / 1.2);
         mp.setXYZ(i, m.p.x, m.p.y, m.p.z);
-        mc.setXYZ(i, 1 * k, 0.75 * k, 0.3 * k);
+        mc.setXYZ(i, k, 0.75 * k, 0.3 * k);
       });
       mp.needsUpdate = mc.needsUpdate = true;
       moteGeo.setDrawRange(0, motes.length);
 
-      // Her shadow on the ground below, softer and smaller the higher she flies
+      // Her shadow on the ground below, softer and larger the higher she flies
       root.getWorldPosition(tmp);
       shadow.position.set(tmp.x, ground + 0.05, tmp.z);
       shadow.rotation.z = root.rotation.y;
       const alt = Math.max(0, tmp.y - ground), size = root.scale.x;
       shadow.material.opacity = 0.4 / (1 + alt * 0.08);
-      shadow.scale.set((0.9 + alt * 0.02) * size, (2.5 + alt * 0.04) * size, 1);
+      shadow.scale.set((1.5 + alt * 0.02) * size, (2.6 + alt * 0.04) * size, 1);
     },
   };
-  return api;
 }
 
-// ---------------------------------------------------------------- textures painted in code
-
-function plankTexture() {
-  const c = document.createElement('canvas');
-  c.width = 256; c.height = 64;
-  const g = c.getContext('2d');
-  g.fillStyle = WOOD; g.fillRect(0, 0, 256, 64);
-  for (let x = 0; x < 256; x += 16) {
-    g.fillStyle = (x / 16) % 2 ? '#84522e' : '#704326';
-    g.fillRect(x, 0, 15, 64);
-    g.fillStyle = 'rgba(40,20,10,0.8)';
-    g.fillRect(x + 15, 0, 1, 64);
-    for (let k = 0; k < 3; k++) { g.fillStyle = 'rgba(30,15,5,0.35)'; g.fillRect(x + 3 + k * 4, (x * 7 + k * 23) % 64, 1, 6); }
+// Project a piece of the sheet onto a geometry from the side (along z): sheetXY(x, y) gives the sheet pixel.
+function planarUV(geo, piece, sheetXY) {
+  const p = geo.attributes.position;
+  const uv = new Float32Array(p.count * 2);
+  for (let i = 0; i < p.count; i++) {
+    const [u, v] = uvOf(piece, ...sheetXY(p.getX(i), p.getY(i)));
+    uv[i * 2] = u;
+    uv[i * 2 + 1] = v;
   }
-  // Brass bands under the rail on both sides
-  g.fillStyle = BRASS;
-  g.fillRect(4, 0, 8, 64); g.fillRect(244, 0, 8, 64);
-  g.fillStyle = '#e8c97a';
-  for (let y = 4; y < 64; y += 16) { g.fillRect(7, y, 2, 2); g.fillRect(247, y, 2, 2); }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(1, 3);
-  return t;
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
 }
 
-function deckTexture() {
-  const c = document.createElement('canvas');
-  c.width = 64; c.height = 256;
-  const g = c.getContext('2d');
-  g.fillStyle = WOOD_DECK; g.fillRect(0, 0, 64, 256);
-  for (let y = 0; y < 256; y += 12) { g.fillStyle = 'rgba(60,35,20,0.6)'; g.fillRect(0, y, 64, 1); }
-  for (let x = 0; x < 64; x += 21) { g.fillStyle = 'rgba(60,35,20,0.35)'; g.fillRect(x, 0, 1, 256); }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  return t;
-}
-
-function sailTexture() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 256;
-  const g = c.getContext('2d');
-  g.fillStyle = CANVAS; g.fillRect(0, 0, 256, 256);
-  g.strokeStyle = 'rgba(150,120,80,0.35)';
-  g.lineWidth = 2;
-  for (let y = 30; y < 256; y += 38) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); }
-  // A golden sun, as on the refitted skiff's sails
-  g.fillStyle = '#e2a93a';
-  g.beginPath(); g.arc(128, 140, 26, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = '#e2a93a';
-  g.lineWidth = 6;
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    g.beginPath(); g.moveTo(128 + Math.cos(a) * 34, 140 + Math.sin(a) * 34); g.lineTo(128 + Math.cos(a) * 48, 140 + Math.sin(a) * 48); g.stroke();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+// Map a plane's 0..1 UVs onto one rectangle of the atlas
+function setRectUV(geo, u0, v0, u1, v1) {
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + (u1 - u0) * uv.getX(i), v0 + (v1 - v0) * uv.getY(i));
 }

@@ -165,14 +165,16 @@ Build and polish these in order. Each is a small page of its own.
 7. **The opening cut-scene and title** (B2 #10 and #15). *Looks good when:* the pans feel like camera moves, and no line stays up longer than it takes to read.
 
 **Build as you go.** These are modeled in code, the same way as the witch:
-- The skiff, from `TH: thareia/art-in/airship/airship-skiff-turnaround.png`.
+- The skiff (done: the Magpie, `src/actors/airship.js`), wearing the paint of `TH: thareia/art-in/airship/ship-2-refitted-skiff.webp`.
 - Quill, Silas, Rosalind, Mayor Gretch, Nettie and the Lantern Mother.
 - All 10 foe families.
 
-## 6. Open questions
+## 6. Decisions
 
-1. **Does the skiff have a name?** Recommended: no. Everyone calls it Quill's skiff, and a naming screen isn't worth the time in a slice.
-2. **Free flight, or pick a destination and watch?** Recommended: free flight over the map, about 45 seconds between towns, with the drifting lights showing the way and a landing ring at each dock.
-3. **Can she fly back to Wickhollow before the end?** Recommended: yes, to rest in her armchair or fetch chapel moss. The fen fights wait for her.
-4. **Standalone, or after WW Chapter 1?** (Still open.) Recommended: standalone, like WW's own side stories. She knows the ghosts, but nothing depends on Chapter 1's plot.
-5. **Can the party lose?** (Still open.) Recommended: yes, at no cost. She wakes at her last rest with everything she had, and the fight waits.
+These were open questions; they're settled now.
+
+1. **The skiff's name:** she's *the Magpie*. Quill named her for the shiny things she carried home, and a magpie is Inkblot's cousin. The name is painted on both bows.
+2. **Flying:** free flight over the map, with the drifting lights showing the way. She lands at a town's dock when she's near it. A trip between the towns takes about 20 seconds in the demo; it can be slowed toward the minute suggested above.
+3. **Flying back:** yes, she can fly back and forth between Wickhollow and Bogmire whenever she likes, to rest in her armchair or fetch chapel moss. The fen fights wait for her.
+4. **Standalone:** yes. This is its own game, reusing Witch Way's and Aethermoor's art and characters. She knows the ghosts, but nothing depends on Witch Way's plot.
+5. **Losing:** yes, the party can lose, at no cost. She wakes at her last rest with everything she had, and the fight waits.

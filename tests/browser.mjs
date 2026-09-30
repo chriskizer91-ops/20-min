@@ -77,7 +77,7 @@ for (let i = 0; i < 40 && (await air()).alt < 3; i++) await wait(250);
 check((await air()).mode === 'flying', `"Fly to Bogmire" takes off (${(await air()).alt.toFixed(1)} m up)`);
 // Skip most of the trip: put her a little way short of Bogmire's dock, still heading there
 await game(() => { const a = window.__airship; a.state.pos.lerp(a.places.bogmire.dockAt, 0.97); });
-for (let i = 0; i < 120 && (await air()).mode !== 'docked'; i++) await wait(250);
+for (let i = 0; i < 280 && (await air()).mode !== 'docked'; i++) await wait(250); // slow in software rendering
 const landed = await air();
 check(landed.mode === 'docked' && landed.at === 'bogmire' && landed.card === 'Bogmire', `she lands at Bogmire's dock (${landed.mode} at ${landed.at})`);
 

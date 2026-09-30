@@ -13,7 +13,7 @@ right before the full build.
 |---|---|
 | `dist/wickhollow-square.html` | FF9's field trick: the 3D witch walking over the painted square, behind the well and lamps, up the chapel steps. Talk to Hilde, Agnes and Inkblot; gather 11 herbs into her basket. "Behind the scenes" flies the camera out to show how it's built. |
 | `dist/witch-up-close.html` | The witch model on a turntable: her walk, gathering with the athame, witchfire (raise and throw), Moonlight, tracing a rune, the athame dash, her veil, drinking a brew, and her faces. |
-| `dist/airship.html` | The skiff: Quill's sunstone skiff, in 3D, with the witch at the wheel and Inkblot on the rail, flying over Thareia's painted Gloomfen between Wickhollow and Bogmire. Tap the map to fly, steer with the keys, or pick a town and she flies there and sets down at its dock. Town cards list the herbs in town and the wild places on foot from it (their foes and herbs). Night, dusk or day; stolen violet lights drift down the fen to show the way. |
+| `dist/airship.html` | The skiff: the Magpie, Quill's sunstone skiff, in 3D and wearing the paint of Thareia's turnaround sheet, with the witch at the wheel and Inkblot on the rail, flying over Thareia's painted Gloomfen between Wickhollow and Bogmire. Tap the map to fly, steer with the keys, or pick a town and she flies there and sets down at its dock. Town cards list the herbs in town and the wild places on foot from it (their foes and herbs). Night, dusk or day; stolen violet lights drift down the fen to show the way. |
 | `dist/bestiary.html` | Every 3D model on a turntable next to the witch, with their moves: the party, the foes and the bosses. |
 | `dist/hollow-battle.html` | A first battle (the outline's B2): the witch against two Sour Wisps and a Lamp-Moth on Thareia's graveyard backdrop, using Aethermoor's battle rules: the turn ribbon, intent dice, d20 rolls with grazes, statuses, and loot. Her commands follow the lore: Witchfire, Moonlight, Gather, Brew, Be Still, Full Moon, Slip Away. |
 
@@ -58,7 +58,10 @@ characters between 2× pixels (to match the painting), 1× and smooth.
 4. **The stage** (`src/stage.js`). It draws the painting, then the 3D characters (small, then scaled up so their
    pixels match), then any cut-out that is nearer the camera than her.
 
-The characters (`src/actors/`) are built in code from simple shapes: no model files. Her face is painted
+The characters (`src/actors/`) are built in code from simple shapes: no model files. The skiff is built the same way, but to the
+silhouettes of Thareia's painted turnaround sheet (`art/airship/skiff-sheet.webp`), so the painting can be projected
+onto its triangles: the side view onto the hull, the top view onto the deck, and cut-outs for the sails, fins and
+rudder. `python3 tools/bake-skiff.py` cuts those pieces into `art/airship/skiff-atlas.webp`. Her face is painted
 (`art/faces/witch.webp`). Battles run on Aethermoor's own rules (`vendor/aethermoor/`, with its tests), with
 the witch added as a hero (`vendor/aethermoor/src/data/witch.js`). Music and sound are made in code: effects
 from Thareia's sound studio (`vendor/thareia-sfx/`) and music from Aethermoor's synth (`src/audio/synth.js`),

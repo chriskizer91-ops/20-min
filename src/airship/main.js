@@ -418,7 +418,8 @@ async function boot() {
     else {
       focus.set(S.pos.x + Math.sin(S.heading) * S.speed * 0.6, S.alt * 0.6, S.pos.z + Math.cos(S.heading) * S.speed * 0.6);
       // Centre her in the space above the panel at the bottom, not the whole screen
-      const free = $('dock').getBoundingClientRect().top - 8;
+      const panel = $('dock').getBoundingClientRect();
+      const free = panel.height ? panel.top - 8 : stage.cssSize.h;
       const fp = paint.toPixel(focus);
       fp.y += Math.max(0, stage.cssSize.h / 2 - free / 2) / stage.scale;
       stage.setFocus(fp);

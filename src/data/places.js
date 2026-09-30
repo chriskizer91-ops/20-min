@@ -13,7 +13,7 @@ export const MAP = {
 export const PLACES = [
   {
     id: 'wickhollow', kind: 'town', name: 'Wickhollow', pixel: [1196, 640], dock: [1352, 712], heading: -Math.PI / 2,
-    blurb: "The witch's village, where the Gloamwood meets the Sable: her cottage and garden, the square with its well and chapel, Hilde's smithy, Quill's stall, and the old jetty where the skiff is tied.",
+    blurb: "The witch's village, where the Gloamwood meets the Sable: her cottage and garden, the square with its well and chapel, Hilde's smithy, Quill's stall, and the old jetty where the Magpie is tied.",
     herbs: ['lavender', 'moonpetal', "witch's bells", 'chapel moss', 'nightrose'],
     near: ['the-lantern-path', 'the-twisted-grove', 'the-hollow'],
     music: 'wickhollow',
