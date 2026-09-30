@@ -1,0 +1,228 @@
+{
+  "_about": "B5's battle backdrop: the Long Boardwalk, lamp-posts burning stolen violet flames (art batch 2, #08). Check with: python3 tools/overlay.py scenes/battle-long-boardwalk.json out.png",
+  "id": "battle-long-boardwalk",
+  "title": "The Long Boardwalk",
+  "image": "art/battle/long-boardwalk-night.webp",
+  "size": [
+    1448,
+    1086
+  ],
+  "camera": {
+    "fov": 34,
+    "pitch": 8.7,
+    "ppm": 85
+  },
+  "walk": [
+    {
+      "name": "the clearing",
+      "points": [
+        [
+          100,
+          610
+        ],
+        [
+          500,
+          590
+        ],
+        [
+          1000,
+          590
+        ],
+        [
+          1350,
+          610
+        ],
+        [
+          1420,
+          740
+        ],
+        [
+          1340,
+          880
+        ],
+        [
+          1050,
+          930
+        ],
+        [
+          650,
+          940
+        ],
+        [
+          300,
+          910
+        ],
+        [
+          140,
+          830
+        ],
+        [
+          60,
+          700
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "cattails, front left",
+      "base": [
+        80,
+        1070
+      ],
+      "outline": [
+        [
+          [
+            0,
+            740
+          ],
+          [
+            80,
+            720
+          ],
+          [
+            150,
+            800
+          ],
+          [
+            170,
+            950
+          ],
+          [
+            260,
+            1030
+          ],
+          [
+            280,
+            1086
+          ],
+          [
+            0,
+            1086
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "cattails, front right",
+      "base": [
+        1330,
+        1070
+      ],
+      "outline": [
+        [
+          [
+            1170,
+            900
+          ],
+          [
+            1300,
+            800
+          ],
+          [
+            1400,
+            820
+          ],
+          [
+            1448,
+            900
+          ],
+          [
+            1448,
+            1086
+          ],
+          [
+            1160,
+            1086
+          ]
+        ]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "violet lamp, left",
+      "pixel": [
+        232,
+        358
+      ],
+      "base": [
+        175,
+        560
+      ],
+      "color": "#d27dff",
+      "intensity": 7,
+      "distance": 10,
+      "glow": 1.0
+    },
+    {
+      "_what": "violet lamp, right",
+      "pixel": [
+        1255,
+        370
+      ],
+      "base": [
+        1330,
+        560
+      ],
+      "color": "#d27dff",
+      "intensity": 7,
+      "distance": 10,
+      "glow": 1.0
+    },
+    {
+      "_what": "violet lamps down the boardwalk",
+      "pixel": [
+        1215,
+        280
+      ],
+      "base": [
+        1215,
+        320
+      ],
+      "color": "#d27dff",
+      "intensity": 2,
+      "distance": 6,
+      "glow": 0.5
+    }
+  ],
+  "spots": {
+    "_about": "Where the fighters stand, in painting pixels: the party on the right (front first), the foes on the left",
+    "heroes": [
+      [
+        1060,
+        760
+      ],
+      [
+        1170,
+        660
+      ],
+      [
+        1150,
+        870
+      ]
+    ],
+    "foes": [
+      [
+        420,
+        720
+      ],
+      [
+        580,
+        650
+      ],
+      [
+        470,
+        860
+      ]
+    ]
+  },
+  "spawn": {
+    "pixel": [
+      1060,
+      760
+    ],
+    "facing": "left"
+  },
+  "exits": []
+}

@@ -1,0 +1,227 @@
+{
+  "_about": "B4's battle backdrop: the open fen, planks over black pools (art batch 2, #07). Check with: python3 tools/overlay.py scenes/battle-open-fen.json out.png",
+  "id": "battle-open-fen",
+  "title": "The Murkway",
+  "image": "art/battle/open-fen-night.webp",
+  "size": [
+    1448,
+    1086
+  ],
+  "camera": {
+    "fov": 34,
+    "pitch": 8.7,
+    "ppm": 85
+  },
+  "walk": [
+    {
+      "name": "the clearing",
+      "points": [
+        [
+          120,
+          620
+        ],
+        [
+          500,
+          600
+        ],
+        [
+          1000,
+          600
+        ],
+        [
+          1330,
+          625
+        ],
+        [
+          1420,
+          760
+        ],
+        [
+          1350,
+          900
+        ],
+        [
+          1050,
+          950
+        ],
+        [
+          650,
+          960
+        ],
+        [
+          300,
+          930
+        ],
+        [
+          140,
+          850
+        ],
+        [
+          60,
+          720
+        ]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "reeds, front left",
+      "base": [
+        70,
+        1060
+      ],
+      "outline": [
+        [
+          [
+            0,
+            840
+          ],
+          [
+            90,
+            850
+          ],
+          [
+            170,
+            950
+          ],
+          [
+            190,
+            1086
+          ],
+          [
+            0,
+            1086
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "flowers, front right",
+      "base": [
+        1360,
+        1070
+      ],
+      "outline": [
+        [
+          [
+            1250,
+            1010
+          ],
+          [
+            1448,
+            990
+          ],
+          [
+            1448,
+            1086
+          ],
+          [
+            1240,
+            1086
+          ]
+        ]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "lantern by the grave",
+      "pixel": [
+        106,
+        360
+      ],
+      "base": [
+        106,
+        420
+      ],
+      "color": "#ffb45e",
+      "intensity": 5,
+      "distance": 8,
+      "glow": 0.8
+    },
+    {
+      "_what": "lantern in the grass",
+      "pixel": [
+        345,
+        465
+      ],
+      "base": [
+        345,
+        500
+      ],
+      "color": "#ffb45e",
+      "intensity": 5,
+      "distance": 8,
+      "glow": 0.8
+    },
+    {
+      "_what": "lantern on the right",
+      "pixel": [
+        1370,
+        525
+      ],
+      "base": [
+        1370,
+        560
+      ],
+      "color": "#ffb45e",
+      "intensity": 5,
+      "distance": 8,
+      "glow": 0.8
+    },
+    {
+      "_what": "marsh-lights far off",
+      "pixel": [
+        890,
+        300
+      ],
+      "base": [
+        890,
+        320
+      ],
+      "color": "#8fffa0",
+      "intensity": 2,
+      "distance": 6,
+      "glow": 0.5
+    }
+  ],
+  "spots": {
+    "_about": "Where the fighters stand, in painting pixels: the party on the right (front first), the foes on the left",
+    "heroes": [
+      [
+        1060,
+        760
+      ],
+      [
+        1170,
+        660
+      ],
+      [
+        1150,
+        870
+      ]
+    ],
+    "foes": [
+      [
+        420,
+        720
+      ],
+      [
+        580,
+        650
+      ],
+      [
+        470,
+        860
+      ]
+    ]
+  },
+  "spawn": {
+    "pixel": [
+      1060,
+      760
+    ],
+    "facing": "left"
+  },
+  "exits": []
+}
