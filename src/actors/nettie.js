@@ -6,7 +6,8 @@ import {
 import {
   bladeGeometry, PROFILE, merge, paintedFace, Particles, sparkSprite, twinkleTexture, worldPos, holdOrientation, ss, win, arch, lerp, clamp,
 } from './party-kit.js';
-import { NC as C, drawNettieFace, shawlTextures, robeTexture, bodiceTexture, feltTexture, waterTexture } from './party-nettie-art.js';
+import { NC as C, drawNettieFace, drawNettieFromSheet, shawlTextures, robeTexture, bodiceTexture, feltTexture, waterTexture } from './party-nettie-art.js';
+import { faces as faceArt } from '../assets.js';
 
 // Nettie the Swamp Witch, of Bogmire in Aethermoor's Gloomfen. "Healer, herbalist, witch. Two of those you can buy.
 // The third you don't cross. Mind the jars; some bite." The look is Aethermoor's own (map-sprites.js): a crooked
@@ -153,6 +154,10 @@ export function createNettie() {
   const head = joint(neck, [0, 0.15, 0.005], 'head');
   const skull = part(head, new THREE.SphereGeometry(0.19, 28, 20), toon(C.skin), { scale: [0.98, 1.0, 0.95] });
   const face = paintedFace(skull, ['calm', 'blink', 'surprised', 'happy', 'cross', 'hurt'], drawNettieFace);
+  // Then her painted face from art batch 2, once it has loaded (the code-painted one shows until then)
+  const sheet = new Image();
+  sheet.onload = () => face.repaint(drawNettieFromSheet(sheet));
+  sheet.src = faceArt.nettieLanternMother;
   // the nose: a proper witch's nose, long and a little hooked, with a bump on the bridge
   const noseMat = toon(C.skin, { rim: 0.6 });
   part(head, taperedTube([[0, -0.01, 0.17], [0, -0.026, 0.188], [0, -0.044, 0.196], [0, -0.058, 0.194], [0, -0.064, 0.184]], 0.016, 0.012, 10, 7), noseMat, { ink: false });
@@ -250,7 +255,7 @@ export function createNettie() {
 
   const api = {
     // fire: where her spells leave from (the lantern), as the witch's witchfire is for her
-    root, head, hat, staff: staff.group, fire: staff.lantern, fx,
+    root, head, hat, face, staff: staff.group, fire: staff.lantern, fx,
     name: 'Nettie the Swamp Witch',
     height: 1.52,
     radius: 0.24,

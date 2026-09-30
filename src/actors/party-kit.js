@@ -103,6 +103,14 @@ export function paintedFace(skull, moods, draw, { size = 512, rim = 0.35 } = {})
       mat.map = textures[name];
     },
     get mood() { return current; },
+    // Repaint every mood (e.g. once a painted face sheet has loaded): draw(g, mood, size) on each mood's canvas
+    repaint(draw) {
+      for (const m of moods) {
+        const tex = textures[m];
+        draw(tex.image.getContext('2d'), m, size);
+        tex.needsUpdate = true;
+      }
+    },
   };
 }
 

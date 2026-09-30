@@ -2,7 +2,7 @@
 //   dist/<name>.html           the page, everything inlined (art, fonts, code)
 //   dist/<name>.fragment.html  the same page without <html>/<head>/<body>, for hosts that add their own
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 
 export const PAGES = [
   { html: 'index.html', entry: 'src/main.js', name: 'wickhollow-square' },
@@ -10,12 +10,15 @@ export const PAGES = [
   { html: 'battle.html', entry: 'src/battle/main.js', name: 'hollow-battle' },
   { html: 'bestiary.html', entry: 'src/bestiary.js', name: 'bestiary' },
   { html: 'airship.html', entry: 'src/airship/main.js', name: 'airship' },
+  { html: 'bogmire.html', entry: 'src/bogmire.js', name: 'bogmire' },
+  { html: 'title.html', entry: 'src/title/main.js', name: 'title' },
 ];
 
 const only = process.argv[2];
 mkdirSync('dist', { recursive: true });
 for (const page of PAGES) {
   if (only && page.name !== only) continue;
+  if (!existsSync(page.html) || !existsSync(page.entry)) { if (only) console.log(`${page.name}: ${page.html} or ${page.entry} doesn't exist yet`); continue; }
   const result = await esbuild.build({
     entryPoints: [page.entry],
     bundle: true,

@@ -256,7 +256,7 @@ export function createLanternMother() {
   const handPos = (A, out) => { A.wrist.localToWorld(out.set(0, -0.06, 0.01)); return root.worldToLocal(out); };
 
   const api = {
-    root, head, name: 'The Lantern Mother', height: 2.5, radius: 0.65, center: 1.45,
+    root, head, face, name: 'The Lantern Mother', height: 2.5, radius: 0.65, center: 1.45,
     // Moves: attack/lamp-pole (her hooked pole, swung like a scythe), hush-now ("hush now, hush": all Hexed),
     // lead-them-down (charging: she takes your hand to lead you down under the water, where it's safe: Led Away),
     // mourning (she lifts her veil and you see her grief), snuff (she pinches out the lamps), moths (a lamp-moth comes

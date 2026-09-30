@@ -10,6 +10,7 @@ import witchSurprised from '../art/portraits/witch-surprised.webp';
 import witchSly from '../art/portraits/witch-sly.webp';
 import witchFace from '../art/faces/witch.webp';
 import hildeAgnesFaces from '../art/faces/hilde-agnes.webp';
+import nettieLanternMotherFaces from '../art/faces/nettie-lantern-mother.webp';
 import witchfire from '../art/fx/witchfire.webp';
 import sparks from '../art/fx/sparks.webp';
 import mothsFireflies from '../art/fx/moths-fireflies.webp';
@@ -23,7 +24,7 @@ import pixelify from '../art/fonts/PixelifySans[wght].ttf';
 
 export const images = { 'art/backgrounds/wickhollow-square.webp': wickhollowSquare, 'art/backgrounds/cottage-inside.webp': cottageInside };
 export const portraits = { hilde, agnes, inkblot, witch: witchCalm, 'witch-calm': witchCalm, 'witch-delighted': witchDelighted, 'witch-surprised': witchSurprised, 'witch-sly': witchSly };
-export const faces = { witch: witchFace, hildeAgnes: hildeAgnesFaces };
+export const faces = { witch: witchFace, hildeAgnes: hildeAgnesFaces, nettieLanternMother: nettieLanternMotherFaces };
 export const fx = { witchfire, sparks, mothsFireflies };
 export const herbs = { moonpetal, lavender, nightrose, chapel_moss: chapelMoss };
 export const battleArt = { 'art/battle/graveyard-night.webp': graveyardNight };

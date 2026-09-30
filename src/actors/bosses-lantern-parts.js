@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { cyl, taperedTube } from './kit.js';
 import { mat, glow, paint, mergeParts, rng, TAU } from './bosses-kit.js';
-import { fx as fxArt } from '../assets.js';
+import { fx as fxArt, faces as faceArt } from '../assets.js';
+import { faceTools, sampleSkin, reskin, rgb } from './face-sheet.js';
 
 // The Lantern Mother's things: the lamplighter's lantern full of Wickhollow's borrowed violet flames, her hooked
 // lamp-pole, the lace of her veil, her faces, and the lamp-moths that come to her light. The model is in
@@ -337,15 +338,106 @@ export function makeFaces() {
       g.beginPath(); g.ellipse(cx, my + 4, 6, 2, 0, 0, TAU); g.fill();
     }
   };
+  // Her painted faces from art batch 2 (#18), once the sheet has loaded; the code-painted face shows until then.
+  let painted = null;
+  const sheet = new Image();
+  sheet.onload = () => {
+    painted = paintedLanternFaces(sheet);
+    const m = current;
+    current = null;
+    if (m) show(m);
+  };
+  sheet.src = faceArt.nettieLanternMother;
   let current = null;
-  return {
-    texture,
-    show(mood) {
-      if (mood === current) return;
-      current = mood;
-      draw(mood);
-      texture.needsUpdate = true;
-    },
+  const show = (mood) => {
+    if (mood === current) return;
+    current = mood;
+    if (painted) painted(g, mood, W, H, cx, cy);
+    else draw(mood);
+    texture.needsUpdate = true;
+  };
+  return { texture, show };
+}
+
+// The sheet's bottom row paints her twice: eyes open with old tear stains (left) and eyes closed in a smile (right).
+// Her eight moods are built from those (see face-sheet.js), re-skinned from the sheet's pale blue to her own
+// lavender so the face matches her hands. Cell coordinates (512 px): eyes at (150, 190) and (365, 190), brows y 66-138,
+// mouth y 330-380.
+function paintedLanternFaces(sheet) {
+  const CELL = 512;
+  const from = sampleSkin(sheet, 8, CELL + 8);
+  const skin = [parseInt(LM.skin.slice(1, 3), 16), parseInt(LM.skin.slice(3, 5), 16), parseInt(LM.skin.slice(5, 7), 16)];
+  const open = reskin(sheet, [0, CELL, CELL, CELL], from, skin);
+  const smile = reskin(sheet, [CELL, CELL, CELL, CELL], from, skin);
+  const EYES = [[150, 190], [365, 190]];
+  const BROWS = [[60, 64, 224, 138], [284, 64, 452, 138]];
+  const cells = {};
+  const compose = (mood) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = CELL;
+    const g = c.getContext('2d');
+    const closedSmile = mood === 'hush' || mood === 'rest';
+    g.drawImage(closedSmile ? smile : open, 0, 0);
+    const f = faceTools(g, skin);
+    // The re-skinned nose comes out pinker than her portraits'; soften it
+    g.globalAlpha = 0.45;
+    f.erase(258, 290, 50, 42);
+    g.globalAlpha = 1;
+    const brow = { grief: [-0.22, 0], ask: [0, -14], stern: [0.3, 10], hurt: [-0.2, 4] }[mood];
+    if (brow) BROWS.forEach((box, i) => f.moveBrow(open, box, i === 0 ? 1 : -1, ...brow));
+    // A blink borrows the closed lids from the smiling face
+    if (mood === 'blink') for (const [x, y] of EYES) f.transplant(smile, [x - 110, y - 62, 220, 110]);
+    if (mood === 'hurt') {
+      for (const [i, [x, y]] of EYES.entries()) {
+        f.erase(x, y, 100, 58);
+        f.closedEye(x, y, i === 0 ? -1 : 1, { lash: '#1c1230', sag: 12, crease: 'rgba(110,90,150,0.5)' });
+      }
+    }
+    // Stern (her last phase): the irises burn violet
+    if (mood === 'stern') {
+      g.globalCompositeOperation = 'lighter';
+      for (const [x, y] of EYES) {
+        const glowG = g.createRadialGradient(x, y + 4, 2, x, y + 4, 34);
+        glowG.addColorStop(0, 'rgba(240,210,255,0.95)');
+        glowG.addColorStop(0.5, 'rgba(176,124,255,0.6)');
+        glowG.addColorStop(1, 'rgba(176,124,255,0)');
+        g.fillStyle = glowG;
+        g.beginPath();
+        g.arc(x, y + 4, 34, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
+    const mouth = { ask: 'o', stern: 'flat', hurt: 'down', grief: 'down' }[mood];
+    if (mouth) {
+      f.erase(258, 355, 96, 34);
+      f.mouth(mouth, 258, 352, { lip: '#c47a9e', dark: '#6a3a60', half: 48 });
+    }
+    // Fade the cell's edges out, so it melts into the skin round it
+    g.globalCompositeOperation = 'destination-in';
+    const edge = g.createRadialGradient(256, 236, 150, 256, 236, 256);
+    edge.addColorStop(0, '#000');
+    edge.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = edge;
+    g.fillRect(0, 0, CELL, CELL);
+    g.globalCompositeOperation = 'source-over';
+    return c;
+  };
+  return (g, mood, W, H, cx, cy) => {
+    cells[mood] ??= compose(mood);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = rgb(skin);
+    g.fillRect(0, 0, W, H);
+    // The cell drawn so its eyes land where the code-painted eyes were (cx +-59, cy - 5), a little squashed so the
+    // mouth isn't too low on the round head
+    const sx = 0.53, sy = 0.46;
+    g.drawImage(cells[mood], cx - 257.5 * sx, cy - 5 - 190 * sy, CELL * sx, CELL * sy);
+    // A cool shadow round the face, as the code-painted one had
+    const sh = g.createRadialGradient(cx, cy + 10, 80, cx, cy + 10, 190);
+    sh.addColorStop(0, 'rgba(120,100,170,0)');
+    sh.addColorStop(1, 'rgba(120,100,170,0.35)');
+    g.fillStyle = sh;
+    g.fillRect(cx - 240, cy - 240, 480, 480);
   };
 }
 

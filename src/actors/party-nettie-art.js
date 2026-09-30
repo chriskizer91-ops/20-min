@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { canvasTexture, ellipse, mixColor } from './party-kit.js';
+import { faceTools, sampleSkin, rgb } from './face-sheet.js';
 
 // Nettie's painted pieces: her face (six moods), the knotted Hexbane Shawl, her robe, the hat's felt and the fen
 // water her Tide spell throws. All painted in code on canvases.
@@ -375,4 +376,60 @@ export function waterTexture() {
     g.lineWidth = 2;
     for (let y = 10; y < H; y += 14) { g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(20, y - 6, 40, y + 6, 64, y); g.stroke(); }
   });
+}
+
+// ---------------------------------------------------------------- the painted face (art batch 2, #18)
+// The face sheet (art/faces/nettie-lantern-mother.webp, 1024 px, four 512 px cells) paints Nettie twice: calm (top
+// left) and sly (top right). Her six moods are built from those two (see face-sheet.js): the brows cut out and
+// tilted, the eyes closed with painted lids, the mouth redrawn. Her nose is modelled, so the painted one is smoothed
+// away. Cell coordinates (512 px): eyes at (150, 195) and (370, 195), brows y 80-148, nose y 250-350, mouth y 350-405.
+const CELL = 512;
+const EYES = [[150, 195], [370, 195]];
+const BROWS = [[48, 80, 230, 148], [288, 80, 470, 148]]; // x0, y0, x1, y1
+
+function composeNettieCell(sheet, mood, skin) {
+  const c = document.createElement('canvas');
+  c.width = c.height = CELL;
+  const g = c.getContext('2d');
+  g.drawImage(sheet, mood === 'happy' ? CELL : 0, 0, CELL, CELL, 0, 0, CELL, CELL);
+  const src = document.createElement('canvas');
+  src.width = src.height = CELL;
+  src.getContext('2d').drawImage(c, 0, 0);
+  const f = faceTools(g, skin);
+  f.erase(258, 300, 78, 60); // the painted nose (the modelled one casts its own shadow)
+  // Brows: lifted (surprised) or tilted (cross: inner ends down; hurt: inner ends up)
+  const brow = { surprised: [0, -14], cross: [0.34, 12], hurt: [-0.26, 2] }[mood];
+  if (brow) BROWS.forEach((box, i) => f.moveBrow(src, box, i === 0 ? 1 : -1, ...brow));
+  if (mood === 'blink' || mood === 'hurt') {
+    for (const [i, [x, y]] of EYES.entries()) {
+      f.erase(x, y - 2, 96, 62);
+      f.closedEye(x, y, i === 0 ? -1 : 1, { sag: mood === 'hurt' ? 14 : 26 });
+    }
+  }
+  const mouth = { surprised: 'o', cross: 'flat', hurt: 'down' }[mood];
+  if (mouth) {
+    f.erase(258, 380, 92, 34);
+    f.mouth(mouth, 258, 378);
+  }
+  return c;
+}
+
+// Paint a mood onto the head's face canvas (see paintedFace: x 256 is the middle of her face, y 262 her eye line).
+// The 512 cell is drawn at 0.43 scale, so its eyes land where the code-painted face had them.
+export function drawNettieFromSheet(sheet) {
+  const skin = sampleSkin(sheet);
+  const cells = {};
+  return (g, mood, S) => {
+    cells[mood] ??= composeNettieCell(sheet, mood, skin);
+    const k = S / 512, scale = 0.43;
+    g.save();
+    g.scale(k, k);
+    g.fillStyle = rgb(skin);
+    g.fillRect(0, 0, 512, 512);
+    g.drawImage(cells[mood], 256 - 258 * scale, 262 - 195 * scale, CELL * scale, CELL * scale);
+    g.fillStyle = 'rgba(150,80,60,0.3)'; // the shadow under her modelled nose
+    ellipse(g, 256, 316, 13, 4.5);
+    g.fill();
+    g.restore();
+  };
 }
