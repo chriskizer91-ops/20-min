@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Hollow Battle</title>
+<style>
+  /* A battle screen in the witch's colours: plum panels with a cream edge, gold for names and numbers.
+     Layout after FF9: turn order across the top, the move's name in a banner, commands bottom left, the
+     party bottom right, and each foe's name and intent die floating over it. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --hp: #7ed98c;
+    --mp: #8fb0ff;
+    --surge: #e2bd67;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.35 var(--body); -webkit-user-select: none; user-select: none; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.6s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .panel { background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), 0 8px 24px rgba(0, 0, 0, 0.5); }
+
+  #ribbon { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; }
+  .chip { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; font-size: 13px; font-weight: 700;
+    background: #2a1a2e; border: 2px solid rgba(236, 220, 184, 0.4); color: var(--ink); }
+  .chip.foe { background: #1f3326; color: #bff5c8; }
+  .chip.hero img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+  .chip.now { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); transform: scale(1.12); }
+
+  #banner { position: fixed; top: calc(62px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 22px;
+    font: 400 30px/1 var(--display); color: var(--cream); opacity: 0; pointer-events: none; white-space: nowrap; }
+  #banner.show { animation: banner 1.6s ease-out; }
+  @keyframes banner { 0% { opacity: 0; transform: translate(-50%, -6px); } 12%, 70% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+  #caption { position: fixed; top: calc(108px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(620px, calc(100% - 32px));
+    margin: 0; text-align: center; font-size: 15px; color: #e9e0f2; text-shadow: 0 1px 0 #000, 0 0 12px #000; opacity: 0; pointer-events: none; }
+  #caption.show { animation: fade 3.2s ease-out; }
+  @keyframes fade { 0% { opacity: 0; } 8%, 75% { opacity: 1; } 100% { opacity: 0; } }
+  #roll { position: fixed; top: calc(140px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 4px 12px;
+    font-size: 13px; font-variant-numeric: tabular-nums; background: rgba(12, 6, 16, 0.85); border-radius: 999px; opacity: 0; pointer-events: none; white-space: nowrap; }
+  #roll.show { animation: fade 2s ease-out; }
+  #roll[data-result='crit'] { color: var(--gold); }
+  #roll[data-result='miss'], #roll[data-result='fumble'], #roll[data-result='save'] { color: var(--dim); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .foe-label { position: absolute; left: 0; top: 0; width: 150px; margin: -54px 0 0 -75px; text-align: center; transition: opacity 0.6s; }
+  .foe-label b { display: block; font: 400 20px/1 var(--display); color: var(--cream); text-shadow: 0 2px 0 #000; }
+  .foe-label i { display: block; height: 5px; margin: 4px 24px; background: rgba(0, 0, 0, 0.6); border-radius: 3px; overflow: hidden; }
+  .foe-label i span { display: block; height: 100%; background: #e2586f; transition: width 0.4s; }
+  .foe-label small { display: inline-block; margin-top: 2px; padding: 1px 8px; font-size: 12px; background: rgba(12, 6, 16, 0.85); border-radius: 999px; color: #d7f5dc; }
+  .foe-label.acting b { color: var(--gold); }
+  .foe-label.gone { opacity: 0; }
+  .pop { position: absolute; left: 0; top: 0; transform: translate(-50%, 0); font: 700 26px/1 var(--body); color: #fff; text-shadow: 0 2px 0 #000, 0 0 10px #000;
+    animation: pop 1.2s ease-out forwards; white-space: nowrap; }
+  .pop.weak { color: #ffb45e; font-size: 32px; }
+  .pop.crit { color: var(--gold); font-size: 34px; }
+  .pop.resist, .pop.miss { color: #c7c0d6; font-size: 20px; }
+  .pop.heal { color: var(--hp); }
+  .pop.status, .pop.tag { font-size: 16px; color: #ffd7f0; }
+  @keyframes pop { 0% { transform: translate(-50%, 8px) scale(0.6); opacity: 0; } 15% { transform: translate(-50%, -8px) scale(1.1); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -40px); opacity: 0; } }
+  #cursor { position: fixed; left: 0; top: 0; margin: -12px 0 0 -58px; font-size: 30px; color: var(--cream); text-shadow: 0 2px 0 #000; animation: point 0.6s ease-in-out infinite; pointer-events: none; }
+  @keyframes point { 50% { margin-left: -50px; } }
+
+  #menu { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(250px, calc(50% - 24px)); padding: 10px 12px 12px; }
+  #menu-title { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--gold); }
+  #menu-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  #menu-list button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; background: none; border: 0; border-radius: 4px; text-align: left; font-size: 16px; }
+  #menu-list button:hover, #menu-list button:focus-visible { background: rgba(198, 61, 131, 0.35); outline: none; }
+  #menu-list button:hover::before, #menu-list button:focus-visible::before { content: '▶'; position: absolute; margin-left: -18px; color: var(--cream); }
+  #menu-list button[disabled] { opacity: 0.4; cursor: default; }
+  #menu-list em { font-style: normal; color: var(--mp); font-size: 13px; font-variant-numeric: tabular-nums; }
+  /* Fixed height, so the menu never shifts under the pointer as the description changes */
+  #hint { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid rgba(236, 220, 184, 0.2); height: calc(3 * 1.35em + 8px); overflow: hidden; font-size: 12.5px; line-height: 1.35; color: var(--dim); }
+
+  #party { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(330px, calc(50% - 24px)); padding: 10px 12px; display: grid; gap: 8px; }
+  .hero { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; }
+  .hero img { width: 52px; height: 52px; border-radius: 6px; border: 2px solid var(--cream); }
+  .hero b { display: block; font: 400 22px/1 var(--display); color: var(--cream); margin-bottom: 3px; }
+  .meter { display: grid; grid-template-columns: 42px 1fr 56px; gap: 6px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meter span { color: var(--dim); }
+  .meter i { height: 6px; background: rgba(0, 0, 0, 0.6); border-radius: 3px; overflow: hidden; }
+  .meter u { display: block; height: 100%; transition: width 0.4s; }
+  .meter.hp u { background: var(--hp); }
+  .meter.mp u { background: var(--mp); }
+  .meter.surge u { background: var(--surge); }
+  .meter em { font-style: normal; text-align: right; }
+
+  #result { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100% - 32px)); padding: 18px 20px; text-align: center; }
+  #result h2 { margin: 0 0 6px; font: 400 44px/1 var(--display); color: var(--cream); }
+  #result p { margin: 0 0 10px; color: #e9e0f2; }
+  #result ul { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 6px; }
+  #result li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border: 1px solid var(--rarity); border-radius: 6px; background: rgba(0, 0, 0, 0.35); }
+  #result li b { color: var(--rarity); font-weight: 600; }
+  #result li span { color: var(--dim); font-size: 13px; }
+  #again { padding: 8px 16px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+
+  @media (max-width: 560px) {
+    #menu, #party { width: calc(50% - 22px); }
+    #party { padding: 8px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero img { display: none; }
+    .meter { grid-template-columns: 30px 1fr; }
+    .meter em { display: none; }
+    #banner { font-size: 24px; }
+    .foe-label { width: 110px; margin-left: -55px; }
+    .foe-label b { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #cursor, .pop { animation-duration: 0.01s; } }
+</style>
+<canvas id="stage" aria-label="A moonlit graveyard: the Moonlight Witch faces two marsh-lights and a lamp-moth"></canvas>
+<div id="labels"></div>
+<div id="ribbon" class="panel" aria-label="Turn order"></div>
+<p id="banner" class="panel"></p>
+<p id="caption"></p>
+<p id="roll"></p>
+<span id="cursor" hidden>▶</span>
+<section id="menu" class="panel" hidden><h2 id="menu-title"></h2><ul id="menu-list"></ul><p id="hint"></p></section>
+<section id="party" class="panel" aria-label="The party"></section>
+<section id="result" class="panel" hidden aria-live="polite">
+  <h2 id="result-title"></h2>
+  <p id="result-text"></p>
+  <ul id="result-loot"></ul>
+  <button id="again">Fight again</button>
+</section>
+<!-- /PAGE -->
+<script type="module" src="dev/battle.js"></script>
+</html>

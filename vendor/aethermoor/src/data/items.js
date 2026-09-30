@@ -7,6 +7,7 @@
 // `stats` are flat bonuses (same keys as affix stats). `minIlvl` gates random generation.
 
 import { deepFreeze } from '../core/freeze.js';
+import { WITCH_ITEMS, WITCH_CONSUMABLES } from './witch.js'; // ADDED for the 20-min game
 
 const W = (id, name, kind, dice, dmg, o = {}) => ({
   id, name, kind, slot: 'weapon', dice, dmg, hands: 1, weight: 0, ability: ['STR'], minIlvl: 1, stats: {}, ...o,
@@ -64,6 +65,7 @@ export const ITEMS = deepFreeze({
   'ironshod-boots': A('ironshod-boots', 'Ironshod Boots', 'boots', 'feet', { minIlvl: 4, stats: { guard: 1 }, text: '+1 Guard' }),
   'amulet': A('amulet', 'Copper Amulet', 'amulet', 'amulet', { stats: { hp: 4 }, text: '+4 HP' }),
   'ring': A('ring', 'Iron Band', 'ring', 'ring', { stats: { mp: 2 }, text: '+2 MP' }),
+  ...WITCH_ITEMS, // ADDED for the 20-min game
 });
 
 export const SLOTS = Object.freeze(['weapon', 'offhand', 'head', 'body', 'hands', 'feet', 'amulet', 'ring']);
@@ -101,4 +103,5 @@ export const CONSUMABLES = deepFreeze({
     effects: [{ type: 'cleanse', statuses: ['poisoned', 'bleeding'] }, { type: 'heal', dice: '1d6' }],
     text: 'Tastes like regret. Cures Poisoned and Bleeding, heals 1d6.',
   },
+  ...WITCH_CONSUMABLES, // ADDED for the 20-min game
 });

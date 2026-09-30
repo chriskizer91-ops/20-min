@@ -1,9 +1,20 @@
-# 20 min: an FF9-style slice in the browser
+# Moonlight & Mire: an FF9-style slice in the browser
 
-The goal is a 20-minute playable slice built the way Final Fantasy IX is built: painted backgrounds, 3D
-characters walking over them, and battles that cut to a separate scene.
+A 20-40 minute game built the way Final Fantasy IX is built: painted backgrounds, 3D characters walking over
+them, and battles that cut to a separate scene. It merges two of your games: the Moonlight Witch and Wickhollow
+from *Follow Me Down Witch Way*, and Aethermoor's Gloomfen, battle rules and loot. The story is in
+`docs/LORE.md`, the route in `docs/SLICE.md`. We're building it as small demos first, to get each piece looking
+right before the full build.
 
-**Demo 1, Wickhollow Square**, shows FF9's main trick. The Moonlight Witch from *Follow Me Down Witch Way* is a
+## The demos
+
+| Page | What it shows |
+|---|---|
+| `dist/wickhollow-square.html` | FF9's field trick: the 3D witch walking over the painted square, behind the well and lamps, up the chapel steps. Talk to Hilde, Agnes and Inkblot; gather 11 herbs into her basket. "Behind the scenes" flies the camera out to show how it's built. |
+| `dist/witch-up-close.html` | The witch model on a turntable: her walk, gathering with the athame, witchfire (raise and throw), Moonlight, tracing a rune, the athame dash, her veil, drinking a brew, and her faces. |
+| `dist/hollow-battle.html` | A first battle (the outline's B2): the witch against two Sour Wisps and a Lamp-Moth on Thareia's graveyard backdrop, using Aethermoor's battle rules: the turn ribbon, intent dice, d20 rolls with grazes, statuses, and loot. Her commands follow the lore: Witchfire, Moonlight, Gather, Brew, Be Still, Full Moon, Slip Away. |
+
+**The square demo** shows FF9's main trick. The Moonlight Witch from *Follow Me Down Witch Way* is a
 chunky 3D model walking around a flat painting of the village square. She climbs the chapel steps, slides around
 the well, and walks behind the lamp posts, the well and the roof in front, which cover her the way the real
 objects would. Hilde hammers at her anvil, Agnes knits by the chapel, and Inkblot hops about and flies off if you
@@ -38,9 +49,11 @@ characters between 2× pixels (to match the painting), 1× and smooth.
 4. **The stage** (`src/stage.js`). It draws the painting, then the 3D characters (small, then scaled up so their
    pixels match), then any cut-out that is nearer the camera than her.
 
-The characters (`src/actors/`) are built in code from simple shapes: no model files, no textures. Music and sound
-are made in code too, using Aethermoor's synth (`src/audio/synth.js`), in line with the "no recorded songs"
-decision in Aethermoor's design notes.
+The characters (`src/actors/`) are built in code from simple shapes: no model files. Her face is painted
+(`art/faces/witch.webp`). Battles run on Aethermoor's own rules (`vendor/aethermoor/`, with its tests), with
+the witch added as a hero (`vendor/aethermoor/src/data/witch.js`). Music and sound are made in code: effects
+from Thareia's sound studio (`vendor/thareia-sfx/`) and music from Aethermoor's synth (`src/audio/synth.js`),
+following the "no recorded songs" decision in Thareia's notes.
 
 ## Folders
 
@@ -52,7 +65,8 @@ decision in Aethermoor's design notes.
 | `art/` | the painting, dialogue portraits and pixel fonts, copied from *Follow Me Down Witch Way* |
 | `tools/` | build, dev server, screenshots, and `overlay.py`, which draws a scene file over its painting |
 | `tests/` | rule tests (Node) and a browser test that plays the built game |
-| `docs/` | `PLAN.md` for the 20-minute slice; `art-requests/` for image prompts |
+| `docs/` | `LORE.md` (the story), `SLICE.md` (the route and battles), `PLAN.md`, `art-requests/`, and `lore-sources/` (digests of both games' lore) |
+| `vendor/` | Aethermoor's battle and loot rules, and Thareia's sound studio, copied from the New-game repo |
 | `reference/` | `aethermoor-m7.zip`, the Aethermoor build, kept for its battle and loot systems |
 
 ## Commands
@@ -62,7 +76,8 @@ npm install            # three.js and esbuild
 npm run serve          # play from source at http://localhost:8000, rebuilding as you edit
 npm run build          # build dist/wickhollow-square.html
 npm test               # rule tests for the camera and the walkmesh
-npm run test:browser   # build, then play it in headless Chromium
+node --test vendor/aethermoor/test/*.test.mjs   # Aethermoor's battle and loot tests
+npm run test:browser   # build, then play the demos in headless Chromium
 python3 tools/overlay.py scenes/wickhollow-square.json out.png   # check a scene by eye (needs Pillow)
 ```
 

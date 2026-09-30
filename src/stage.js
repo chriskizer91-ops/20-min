@@ -26,6 +26,7 @@ export class Stage {
     this.showGuides = false;
 
     this.focus = new THREE.Vector2(paint.width / 2, paint.height / 2);
+    this.shake = 0;
     this.zoom = 1; // 1 fills the screen with the painting; more moves the camera in (battle sweeps)
     this.zoomTarget = 1;
     this.window = { x: 0, y: 0, w: paint.width, h: paint.height };
@@ -150,6 +151,12 @@ export class Stage {
     }
     this.scrollTo(this.focus, 1 - Math.exp(-dt * 4));
     const W = this.window, P = this.paint;
+    // A hit shakes the camera for a moment.
+    if (this.shake > 0) {
+      W.x += (Math.random() - 0.5) * this.shake * 18;
+      W.y += (Math.random() - 0.5) * this.shake * 12;
+      this.shake = Math.max(0, this.shake - dt * 1.4);
+    }
     this.view.setViewOffset(P.width, P.height, W.x, W.y, W.w, W.h);
     this.view.updateProjectionMatrix();
     this.bgUniforms.rect.value.set(W.x / P.width, 1 - (W.y + W.h) / P.height, (W.x + W.w) / P.width, 1 - W.y / P.height);

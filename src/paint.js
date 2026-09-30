@@ -13,7 +13,7 @@ export class PaintCamera {
     const focal = height / 2 / Math.tan(THREE.MathUtils.degToRad(fov) / 2); // in painting pixels
     this.distance = focal / ppm;
     const tilt = THREE.MathUtils.degToRad(pitch);
-    const camera = new THREE.PerspectiveCamera(fov, width / height, this.distance * 0.6, this.distance * 1.6);
+    const camera = new THREE.PerspectiveCamera(fov, width / height, this.distance * 0.25, this.distance * 2.5);
     camera.position.set(0, this.distance * Math.sin(tilt), this.distance * Math.cos(tilt));
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();

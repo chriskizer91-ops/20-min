@@ -20,6 +20,7 @@
 // diceEvery: one more die every N levels (a L1 '1d8' with diceEvery 3 is 3d8 at L7).
 
 import { deepFreeze } from '../core/freeze.js';
+import { WITCH_SKILLS } from './witch.js'; // ADDED for the 20-min game
 
 export const SKILLS = deepFreeze({
   // ---- Hearthwarden: relic arts (granted by the starter) ----------------------------------
@@ -137,4 +138,5 @@ export const SKILLS = deepFreeze({
     text: 'One more notch on the spine: a quick weapon attack that leaves 2 stacks of Poisoned.',
     effects: [{ type: 'attack', weapon: true, riders: [{ type: 'status', status: 'poisoned', stacks: 2 }] }],
   },
+  ...WITCH_SKILLS, // ADDED for the 20-min game
 });

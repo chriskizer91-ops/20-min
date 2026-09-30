@@ -1,4 +1,4 @@
-// Plays the built game in headless Chromium: node tests/browser.mjs (run `npm run build` first).
+// Plays the built demos in headless Chromium: node tests/browser.mjs (run `npm run build` first).
 // Checks it starts without errors, walks with the keys, climbs the chapel steps by tapping, talks to
 // Hilde, and flies the camera out behind the scenes and back.
 import { createRequire } from 'node:module';
@@ -55,6 +55,17 @@ check(await game(() => window.__game.stage.reveal.t === 1), `Behind the scenes f
 await page.click('#btn-back');
 for (let i = 0; i < 20 && (await game(() => window.__game.stage.reveal.t > 0)); i++) await wait(250);
 check(await game(() => window.__game.stage.reveal.t === 0), 'Back to the game flies it home');
+
+// The battle demo: the witch's menu opens, and a Witchfire resolves against a foe.
+await page.goto(pathToFileURL(resolve('dist/hollow-battle.html')).href);
+await page.waitForFunction(() => !document.getElementById('menu').hidden, null, { timeout: 30000 });
+check(true, 'the battle opens on the witch\'s command menu');
+const hpBefore = await game(() => Object.values(window.__battle.director.state.units).filter((u) => u.side === 'foe').reduce((a, u) => a + u.hp, 0));
+await page.locator('#menu-list button', { hasText: 'Witchfire' }).click();
+if (await game(() => !!window.__battle.director.targeting)) await page.keyboard.press('Enter');
+for (let i = 0; i < 40 && (await game(() => document.getElementById('menu').hidden)); i++) await wait(250);
+const after = await game(() => ({ hp: Object.values(window.__battle.director.state.units).filter((u) => u.side === 'foe').reduce((a, u) => a + u.hp, 0), turns: window.__battle.director.state.turn ?? 0 }));
+check(after.hp <= hpBefore, `Witchfire is thrown and the fight goes on to her next turn (foes' HP ${hpBefore} -> ${after.hp})`);
 
 check(errors.length === 0, `no errors in the console${errors.length ? ': ' + errors.join(' | ') : ''}`);
 await browser.close();

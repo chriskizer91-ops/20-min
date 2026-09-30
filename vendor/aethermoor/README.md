@@ -9,4 +9,11 @@ Run their tests: `node --test vendor/aethermoor/test/*.test.mjs` (97 pass).
 
 ## Changes from the original
 
-None yet. Any change for this game goes in this list, so the two can be compared.
+Any change for this game goes in this list, so the two can be compared. Every changed line is marked
+`ADDED for the 20-min game`.
+
+- `src/data/witch.js` (new): the Moonlight Witch as a hero, her witchfire (a weapon item), her skills (Silver
+  Circle, Moonbeam, Bless, Gather) and her brews (Heartsease Tonic, Hush Tea, Moonwater, Remembrance Incense), in
+  Aethermoor's data formats, following docs/LORE.md.
+- `src/data/heroes.js`, `src/data/skills.js`, `src/data/items.js`: import `witch.js` and merge it in (one or two
+  lines each).

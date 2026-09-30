@@ -8,6 +8,7 @@
 // gear:  starting gear as base item ids + rarity ('starter' = the Warden's chosen relic)
 
 import { deepFreeze } from '../core/freeze.js';
+import { WITCH_HEROES } from './witch.js'; // ADDED for the 20-min game
 
 export const HEROES = deepFreeze({
   warden: {
@@ -92,6 +93,7 @@ export const HEROES = deepFreeze({
     refuses: { kinds: ['sword', 'dagger', 'axe'], text: 'Sister Alondra will not take up a blade.' },
     blurb: 'The blind priestess of Fawnrest. She dreams of four Sleepers, and she hears a lie before it is finished.',
   },
+  ...WITCH_HEROES, // ADDED for the 20-min game
 });
 
 export const HERO_IDS = Object.freeze(['warden', 'pip', 'bryn', 'alondra']);

@@ -17,6 +17,7 @@ import moonpetal from '../art/herbs/moonpetal.webp';
 import lavender from '../art/herbs/lavender.webp';
 import nightrose from '../art/herbs/nightrose.webp';
 import chapelMoss from '../art/herbs/chapel_moss.webp';
+import graveyardNight from '../art/battle/graveyard-night.webp';
 import jacquard from '../art/fonts/Jacquard12-Regular.ttf';
 import pixelify from '../art/fonts/PixelifySans[wght].ttf';
 
@@ -25,4 +26,5 @@ export const portraits = { hilde, agnes, inkblot, witch: witchCalm, 'witch-calm'
 export const faces = { witch: witchFace, hildeAgnes: hildeAgnesFaces };
 export const fx = { witchfire, sparks, mothsFireflies };
 export const herbs = { moonpetal, lavender, nightrose, chapel_moss: chapelMoss };
+export const battleArt = { 'art/battle/graveyard-night.webp': graveyardNight };
 export const fonts = { 'Jacquard 12': jacquard, 'Pixelify Sans': pixelify };

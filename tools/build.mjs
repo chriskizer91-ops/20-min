@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 export const PAGES = [
   { html: 'index.html', entry: 'src/main.js', name: 'wickhollow-square' },
   { html: 'witch.html', entry: 'src/viewer.js', name: 'witch-up-close' },
+  { html: 'battle.html', entry: 'src/battle/main.js', name: 'hollow-battle' },
 ];
 
 const only = process.argv[2];

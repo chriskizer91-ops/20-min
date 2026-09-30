@@ -33,7 +33,7 @@ async function boot() {
   stage.target.set(center.x, 0.5, center.z);
 
   const witch = createWitch();
-  world.add(witch.root);
+  world.add(witch.root, witch.fx);
   const player = {
     actor: witch,
     pos: paint.toWorld(...sceneData.spawn.pixel),

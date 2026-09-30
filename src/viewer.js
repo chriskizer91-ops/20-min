@@ -38,7 +38,7 @@ rim.position.y = 0.002;
 scene.add(rim);
 
 const witch = createWitch();
-scene.add(witch.root);
+scene.add(witch.root, witch.fx);
 witch.root.traverse((o) => o.layers.enableAll());
 
 const view = { yaw: 0.35, pitch: 0.1, dist: 4.4, spin: true, target: new THREE.Vector3(0, 0.84, 0), game: false };
@@ -79,7 +79,7 @@ function pick(group, id) {
   for (const b of document.querySelectorAll(`[data-group="${group}"]`)) b.setAttribute('aria-pressed', String(b.id === id));
 }
 for (const [id, m] of [['m-idle', 'idle'], ['m-walk', 'walk']]) $(id).addEventListener('click', () => { mode = m; pick('move', id); });
-for (const [id, a] of [['m-harvest', 'harvest'], ['m-cast', 'cast'], ['m-cheer', 'cheer']])
+for (const [id, a] of [['m-harvest', 'harvest'], ['m-cast', 'cast'], ['m-cheer', 'cheer'], ['m-throw', 'throw'], ['m-moonlight', 'moonlight'], ['m-rune', 'rune'], ['m-dash', 'dash'], ['m-brew', 'brew'], ['m-veil', 'veil']])
   $(id).addEventListener('click', () => { mode = 'idle'; pick('move', 'm-idle'); witch.play(a); });
 for (const [id, m] of [['f-calm', 'calm'], ['f-happy', 'happy'], ['f-surprised', 'surprised']])
   $(id).addEventListener('click', () => { witch.setMood(m); pick('face', id); });

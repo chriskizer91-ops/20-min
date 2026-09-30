@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createHilde, createAgnes, createCrow } from './actors/villagers.js';
 import { portraits } from './assets.js';
-import { createAudio } from './audio/synth.js';
+import { createSound } from './audio/sound.js';
 import { ring } from './paint.js';
 import { turnToward, glowSprite } from './actors/kit.js';
 import { HERBS, SQUARE_HERBS } from './data/herbs.js';
@@ -14,7 +14,7 @@ const $ = (id) => document.getElementById(id);
 export class Field {
   constructor({ world, walk, paint, stage, player, scene }) {
     Object.assign(this, { world, walk, paint, stage, player, scene });
-    this.audio = createAudio();
+    this.audio = createSound();
     this.audio.music('wickhollow');
     this.talking = null;
     this.moved = false;
@@ -65,9 +65,9 @@ export class Field {
       { name: 'Hilde', actor: hilde, pos: hilde.root.position, portrait: 'hilde', voice: 3, lines: DIALOGUE.hilde },
       { name: 'Agnes', actor: agnes, pos: agnes.root.position, portrait: 'agnes', voice: 4, lines: DIALOGUE.agnes },
       { name: 'Inkblot', crow: true, pos: crow.root.position, portrait: 'inkblot', voice: 6, lines: DIALOGUE.inkblot },
-      { name: null, pos: at(705, 792), lines: DIALOGUE.well },
-      { name: null, pos: at(786, 402, 0.55), lines: DIALOGUE.door },
-      { name: null, pos: at(300, 720), lines: DIALOGUE.stall },
+      { name: null, pos: at(705, 792), lines: DIALOGUE.well, sound: 'well-bucket' },
+      { name: null, pos: at(786, 402, 0.55), lines: DIALOGUE.door, sound: 'sealed-door' },
+      { name: null, pos: at(300, 720), lines: DIALOGUE.stall, sound: 'shop-bell' },
     ];
     for (const t of this.things) t.visits = 0;
 
@@ -251,7 +251,7 @@ export class Field {
     // Her own thoughts show her portrait with no name, the way a field message would.
     face.src = portraits[thing.portrait ?? 'witch-calm'];
     this.player.actor.setMood?.(thing.name ? 'happy' : 'calm');
-    this.audio.sfx(thing.name ? 'confirm' : 'page');
+    this.audio.sfx(thing.sound ?? (thing.name ? 'ui-confirm' : 'ui-page'));
     if (thing.crow) this.audio.sfx('kraa');
     this.advance();
   }
@@ -278,7 +278,7 @@ export class Field {
     player.path = null;
     player.heading = Math.atan2(thing.pos.x - player.pos.x, thing.pos.z - player.pos.z);
     this.things = this.things.filter((t) => t !== thing);
-    this.audio.sfx('page');
+    this.audio.sfx('leaves');
     player.actor.play('harvest', () => this.pick(thing));
   }
 
@@ -290,7 +290,7 @@ export class Field {
     const first = !this.basket[thing.herb];
     this.basket[thing.herb] = (this.basket[thing.herb] ?? 0) + 1;
     this.showBasket(thing.herb);
-    this.toast(first ? herb.note : `${herb.name} went into the basket.`, 'chime');
+    this.toast(first ? herb.note : `${herb.name} went into the basket.`, 'shard-pickup');
     this.player.actor.setMood?.('happy');
     setTimeout(() => !this.talking && this.player.actor.setMood?.('calm'), 1400);
   }
@@ -328,6 +328,11 @@ export class Field {
 
   update(dt, time) {
     this.time = time;
+    // Night sounds: crickets now and then, and once in a while an owl in the Gloamwood
+    this.nextCrickets = (this.nextCrickets ?? 3) - dt;
+    if (this.nextCrickets < 0) { this.audio.sfx('crickets'); this.nextCrickets = 6 + Math.random() * 6; }
+    this.nextOwl = (this.nextOwl ?? 20) - dt;
+    if (this.nextOwl < 0) { this.audio.sfx('owl'); this.nextOwl = 25 + Math.random() * 30; }
     const player = this.player;
     const [hilde, agnes] = this.villagers;
     hilde.update(dt, hilde.work);

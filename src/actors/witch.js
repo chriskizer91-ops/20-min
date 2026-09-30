@@ -3,7 +3,8 @@ import {
   toon, toonMap, part, joint, sphere, cyl, cone, lathe, skirt, swayCloth, taperedTube, badge, starShape, crescentShape,
   blobShadow, onLayer, Spring, RIM,
 } from './kit.js';
-import { faces, fx } from '../assets.js';
+import { faces, fx as fxArt } from '../assets.js';
+import { buildAthame, Trail, buildRune, buildMoonRing, buildVeil, buildBottle } from './witch-moves.js';
 
 // The Moonlight Witch, from Follow Me Down Witch Way's LORE.md: "a tall plum hat with cream horns and a
 // chain of silver charms, round glasses, long wavy hair, a sheer purple veil and shawl stitched with gold, a
@@ -45,13 +46,6 @@ export function createWitch() {
   const outerSkirt = part(hips, skirt({ top: 0.135, bottom: 0.265, height: 0.36, flare: 0.7, points: 12, zig: 0.045, rows: 5 }), toon(C.dress, { side: THREE.DoubleSide }), { pos: [0, 0.17, 0] });
   part(hips, cyl(0.135, 0.14, 0.05, 16), toon(C.belt), { pos: [0, 0.16, 0] });
   part(hips, new THREE.BoxGeometry(0.045, 0.04, 0.015), toon(C.gold), { pos: [0, 0.16, 0.14] });
-  // The athame, sheathed on her right hip ("it cuts herbs and nothing else")
-  const athame = joint(hips, [-0.13, 0.12, 0.05]);
-  athame.rotation.set(0.15, 0, 0.25);
-  part(athame, cyl(0.016, 0.01, 0.13, 6), toon(C.leather), { pos: [0, -0.07, 0] });
-  part(athame, cyl(0.009, 0.009, 0.05, 6), toon('#2a1c18'), { pos: [0, 0.02, 0] });
-  part(athame, sphere(0.014, 6, 5), toon(C.silver), { pos: [0, 0.05, 0] });
-  part(athame, new THREE.BoxGeometry(0.05, 0.008, 0.012), toon(C.silver), { pos: [0, 0.0, 0] });
   // A little pouch on the left
   part(hips, sphere(0.045, 8, 6), toon(C.leather), { pos: [0.13, 0.09, 0.05], scale: [0.8, 1, 0.6] });
 
@@ -99,11 +93,15 @@ export function createWitch() {
     herbs.push(sprig);
   }
 
+  // The athame, sheathed on her right hip; drawn into her right hand to cut herbs, trace runes and dash
+  const athame = buildAthame(hips, armR.wrist);
+  const bottle = buildBottle(armL.wrist);
+
   // Witchfire, the violet flame in her left hand (art/fx/witchfire.webp, eight frames)
   const fire = new THREE.Group();
   fire.position.set(0, -0.08, 0.035);
   armL.wrist.add(fire);
-  const fireTex = new THREE.TextureLoader().load(fx.witchfire);
+  const fireTex = new THREE.TextureLoader().load(fxArt.witchfire);
   fireTex.colorSpace = THREE.SRGBColorSpace;
   fireTex.repeat.set(1 / 8, 1);
   const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, depthWrite: false, transparent: true }));
@@ -187,9 +185,18 @@ export function createWitch() {
     charms.push({ pivot, sx: new Spring(40, 3.5), sz: new Spring(40, 3.5) });
   }
 
+  const veil = buildVeil(hat);
   const shadow = blobShadow(0.32, 0.5);
   root.add(shadow);
   onLayer(root);
+
+  // Spell effects that stay put in the world: the scene adds `fx` beside her.
+  const fx = new THREE.Group();
+  fx.name = 'witch-fx';
+  const trail = new Trail('#e2d4ff');
+  const rune = buildRune();
+  const moonRing = buildMoonRing();
+  fx.add(trail.mesh, rune.group, moonRing.group);
 
   // ---------------------------------------------------------------- animation
   const S = {
@@ -198,18 +205,35 @@ export function createWitch() {
   let phase = 0, time = 0, look = 0, lookTarget = 0, nextLook = 2, blinkT = 3, prevSpeed = 0, fidget = 0, nextFidget = 6;
   let action = null; // { name, t, dur, onHit, hit }
   let mood = 'calm';
-  const ACTIONS = { harvest: 1.6, cast: 1.3, cheer: 1.0 };
+  let downed = false;
+  const ACTIONS = {
+    harvest: 1.7, cast: 1.3, throw: 0.9, moonlight: 1.8, rune: 1.7, dash: 1.1, brew: 1.4, veil: 1.6,
+    cheer: 1.0, hurt: 0.5, ko: 1.2, rise: 0.8,
+  };
+  const ss = THREE.MathUtils.smoothstep;
+  const v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
 
   const api = {
-    root, head, fire, hat, basket,
+    root, head, fire, hat, basket, fx, athame,
     height: 1.68,
     radius: 0.2,
     get busy() { return !!action; },
     setMood(m) { mood = m; face.show(m); },
-    // play('harvest', onPick) kneels and picks; play('cast', onRelease) raises the witchfire.
-    play(name, onHit) {
+    // Moves: harvest (kneel, cut with the athame, pick), cast (raise the witchfire), throw (fling it), moonlight
+    // (a ring of silver light at her feet), rune (trace Witch Way's sign in the air with the athame), dash (the
+    // athame lunge from the showcase art), brew (drink one), veil (draw her veil and turn), cheer, hurt, ko, rise.
+    // onHit fires at the moment it lands.
+    moves: Object.keys(ACTIONS),
+    play(name, onHit, opts = {}) {
       if (!ACTIONS[name]) return;
-      action = { name, t: 0, dur: ACTIONS[name], onHit, hit: false };
+      if (name === 'rise') downed = false;
+      action = { name, t: 0, dur: ACTIONS[name] * (opts.slow ?? 1), onHit, hit: false, reach: opts.reach ?? 1.3 };
+      if (name === 'rune') {
+        root.updateMatrixWorld();
+        rune.group.position.copy(root.localToWorld(v1.set(0, 1.05, 0.62)));
+        rune.group.quaternion.copy(root.getWorldQuaternion(new THREE.Quaternion()));
+      }
+      if (name === 'moonlight') moonRing.group.position.copy(root.getWorldPosition(v1)).setY(v1.y + 0.02);
     },
     update(dt, speed, turn = 0) {
       time += dt;
@@ -255,33 +279,175 @@ export function createWitch() {
       }
 
       // Actions
+      trail.on = false;
       if (action) {
         action.t += dt;
         const k = Math.min(1, action.t / action.dur);
         const bell = Math.sin(k * Math.PI);
-        if (action.name === 'harvest') {
-          const down = THREE.MathUtils.smoothstep(k, 0, 0.35) * (1 - THREE.MathUtils.smoothstep(k, 0.7, 1));
+        const hitAt = (at) => { if (!action.hit && k >= at) { action.hit = true; action.onHit?.(); } };
+        const kneel = (down) => {
           hips.position.y -= down * 0.2;
           for (const L of legs) { L.hip.rotation.x = -down * 1.1; L.knee.rotation.x = down * 1.9; L.ankle.rotation.x = -down * 0.7; }
           legs[1].hip.rotation.x = -down * 0.5;
           torso.rotation.x = down * 0.45;
-          armL.shoulder.rotation.x = -down * 0.9;
-          armL.elbow.rotation.x = -0.3;
-          if (!action.hit && k > 0.5) { action.hit = true; action.onHit?.(); }
-        } else if (action.name === 'cast') {
-          armL.shoulder.rotation.x = -bell * 2.6;
-          armL.elbow.rotation.x = -0.2;
-          torso.rotation.x = -bell * 0.12;
-          flame.scale.set(0.13 * (1 + bell * 1.4), 0.13 * (341 / 128) * (1 + bell * 1.4), 1);
-          fireLight.intensity = 0.6 + bell * 4;
-          if (!action.hit && k > 0.55) { action.hit = true; action.onHit?.(); }
-        } else if (action.name === 'cheer') {
-          body.position.y = Math.max(0, Math.sin(k * Math.PI * 2)) * 0.08;
-          armL.shoulder.rotation.x = -bell * 2.4;
-          armR.shoulder.rotation.x = -bell * 1.2;
+        };
+        switch (action.name) {
+          case 'harvest': {
+            // Kneel, draw the athame, a few quick cuts at the stem, the left hand gathers, stand, sheathe.
+            const down = ss(k, 0, 0.3) * (1 - ss(k, 0.72, 1));
+            kneel(down);
+            if (k > 0.12 && k < 0.86) athame.draw(); else athame.sheathe();
+            armR.shoulder.rotation.x = -down * 1.15;
+            armR.elbow.rotation.x = -0.35 - down * 0.2;
+            const cutting = k > 0.35 && k < 0.6;
+            armR.shoulder.rotation.z = -0.18 + (cutting ? Math.sin(action.t * 38) * 0.14 : 0);
+            trail.on = cutting;
+            armL.shoulder.rotation.x = -down * 0.9;
+            armL.elbow.rotation.x = -0.3;
+            hitAt(0.55);
+            break;
+          }
+          case 'cast':
+            armL.shoulder.rotation.x = -bell * 2.6;
+            armL.elbow.rotation.x = -0.2;
+            torso.rotation.x = -bell * 0.12;
+            flame.scale.set(0.13 * (1 + bell * 1.4), 0.13 * (341 / 128) * (1 + bell * 1.4), 1);
+            fireLight.intensity = 0.6 + bell * 4;
+            hitAt(0.55);
+            break;
+          case 'throw': {
+            // Wind up behind, then fling the witchfire forward; it comes back to her palm a moment later.
+            const wind = ss(k, 0, 0.4) * (1 - ss(k, 0.4, 0.5));
+            const fling = ss(k, 0.4, 0.55) * (1 - ss(k, 0.75, 1));
+            armL.shoulder.rotation.x = wind * 0.9 - fling * 1.9 - 0.25 * (1 - wind - fling);
+            armL.elbow.rotation.x = -0.9 * wind - 0.1;
+            torso.rotation.y = wind * 0.45 - fling * 0.35;
+            const size = k < 0.45 ? 1 + wind * 1.2 : k < 0.8 ? 0.001 : ss(k, 0.8, 1);
+            flame.scale.set(0.13 * size, 0.13 * (341 / 128) * size, 1);
+            fireLight.intensity = 0.6 * size + wind * 2;
+            hitAt(0.45);
+            break;
+          }
+          case 'moonlight':
+            // Both arms rise, her face lifts to the moon, and a ring of silver light opens around her.
+            armL.shoulder.rotation.z = 0.42 + bell * 1.5;
+            armR.shoulder.rotation.z = -0.18 - bell * 1.3;
+            armL.shoulder.rotation.x = -bell * 0.6;
+            armR.shoulder.rotation.x = -bell * 0.5;
+            armL.elbow.rotation.x = armR.elbow.rotation.x = -0.25;
+            torso.rotation.x = -bell * 0.18;
+            body.position.y = bell * 0.05;
+            moonRing.set(k);
+            RIM.strength.value = 0.32 + bell * 0.9;
+            hitAt(0.5);
+            break;
+          case 'rune': {
+            // Draw the athame and trace a line through a diamond in the air; the rune flares when it's done.
+            if (k > 0.05 && k < 0.95) athame.draw(); else athame.sheathe();
+            const traceK = ss(k, 0.15, 0.7);
+            const p = rune.at(traceK);
+            const tracing = k > 0.15 && k < 0.72;
+            armR.shoulder.rotation.x = -1.35 - (tracing ? p.y * 1.7 : 0) * 1 + (1 - ss(k, 0, 0.15)) * 1.2 * (k < 0.15 ? 1 : 0);
+            armR.elbow.rotation.x = -0.15;
+            torso.rotation.y = tracing ? p.x * 1.4 : torso.rotation.y;
+            trail.on = tracing;
+            const flare = ss(k, 0.68, 0.78) * (1 - ss(k, 0.8, 1));
+            rune.set(traceK, flare, 1 - ss(k, 0.85, 1));
+            hitAt(0.72);
+            break;
+          }
+          case 'dash': {
+            // The athame lunge: crouch, spring forward with a sweeping cut, hop back.
+            if (k < 0.95) athame.draw(); else athame.sheathe();
+            const crouch = ss(k, 0, 0.18) * (1 - ss(k, 0.18, 0.3));
+            const out = ss(k, 0.18, 0.42) * (1 - ss(k, 0.58, 0.92));
+            body.position.z = out * action.reach;
+            body.position.y = Math.sin(ss(k, 0.58, 0.92) * Math.PI) * 0.18;
+            shadow.position.z = body.position.z;
+            hips.position.y -= crouch * 0.12 + out * 0.06;
+            for (const L of legs) L.knee.rotation.x = Math.max(L.knee.rotation.x, crouch * 0.9 + out * 0.5);
+            legs[0].hip.rotation.x = -out * 0.8;
+            legs[1].hip.rotation.x = out * 0.6;
+            torso.rotation.x = out * 0.35 + crouch * 0.2;
+            const sweep = ss(k, 0.3, 0.48);
+            armR.shoulder.rotation.x = -1.7 + sweep * 2.0;
+            armR.shoulder.rotation.z = -0.9 + sweep * 0.8;
+            armR.elbow.rotation.x = -0.2;
+            trail.on = k > 0.28 && k < 0.52;
+            armL.shoulder.rotation.x = out * 0.8;
+            hitAt(0.45);
+            break;
+          }
+          case 'brew': {
+            // A bottle from her pouch, a quick drink, and a sparkle.
+            const up = ss(k, 0.1, 0.35) * (1 - ss(k, 0.7, 0.9));
+            bottle.visible = k > 0.08 && k < 0.88;
+            flame.visible = !bottle.visible;
+            fireLight.intensity = bottle.visible ? 0 : fireLight.intensity;
+            armL.shoulder.rotation.x = -up * 1.45;
+            armL.shoulder.rotation.z = 0.25 - up * 0.15;
+            armL.elbow.rotation.x = -0.4 - up * 1.3;
+            head.rotation.x = -up * 0.35;
+            bottle.rotation.x = -up * 1.2;
+            hitAt(0.6);
+            break;
+          }
+          case 'veil': {
+            // Her sheer purple veil falls around her as she turns once.
+            veil.set(ss(k, 0, 0.25) * (1 - ss(k, 0.8, 1)));
+            body.rotation.y = ss(k, 0.1, 0.65) * Math.PI * 2;
+            armL.shoulder.rotation.z = 0.42 + bell * 0.5;
+            armR.shoulder.rotation.z = -0.18 - bell * 0.5;
+            hitAt(0.4);
+            break;
+          }
+          case 'cheer':
+            body.position.y = Math.max(0, Math.sin(k * Math.PI * 2)) * 0.08;
+            armL.shoulder.rotation.x = -bell * 2.4;
+            armR.shoulder.rotation.x = -bell * 1.2;
+            break;
+          case 'hurt':
+            torso.rotation.x = -bell * 0.35;
+            body.position.z = -bell * 0.12;
+            shadow.position.z = body.position.z;
+            face.show('surprised');
+            break;
+          case 'ko':
+          case 'rise': {
+            const d = action.name === 'ko' ? ss(k, 0, 0.7) : 1 - ss(k, 0, 1);
+            kneel(d);
+            torso.rotation.x = d * 0.7;
+            armL.shoulder.rotation.x = armR.shoulder.rotation.x = d * 0.3;
+            head.rotation.x = d * 0.5;
+            break;
+          }
         }
-        if (k >= 1) { action = null; flame.scale.set(0.13, 0.13 * (341 / 128), 1); body.position.y = 0; }
+        if (k >= 1) {
+          if (action.name === 'ko') downed = true;
+          action = null;
+          flame.scale.set(0.13, 0.13 * (341 / 128), 1);
+          flame.visible = true;
+          bottle.visible = false;
+          body.position.set(0, 0, 0);
+          body.rotation.y = 0;
+          shadow.position.z = 0;
+          veil.set(0);
+          rune.set(0, 0, 0);
+          moonRing.set(0);
+          RIM.strength.value = 0.32;
+          athame.sheathe();
+        }
+      } else if (downed) {
+        hips.position.y -= 0.2;
+        for (const L of legs) { L.hip.rotation.x = -1.1; L.knee.rotation.x = 1.9; L.ankle.rotation.x = -0.7; }
+        torso.rotation.x = 0.7;
+        head.rotation.x = 0.5;
       }
+      // The blade leaves a streak while it cuts, and glints when it's drawn.
+      if (athame.drawn) {
+        athame.glint.material.opacity = Math.max(0, athame.glint.material.opacity - dt * 3);
+        trail.update(dt, athame.base.getWorldPosition(v1), athame.tip.getWorldPosition(v2));
+      } else trail.update(dt, v1, v2);
 
       // The basket hangs straight down whatever the arm is doing.
       basketPivot.rotation.x = -(armR.shoulder.rotation.x + armR.elbow.rotation.x + torso.rotation.x);
@@ -291,9 +457,9 @@ export function createWitch() {
       if ((nextLook -= dt) < 0) { lookTarget = moving > 0.1 ? 0 : (Math.random() - 0.5) * 1.0; nextLook = 1.5 + Math.random() * 3; }
       look += (lookTarget * (1 - moving) - look) * (1 - Math.exp(-dt * 5));
       head.rotation.y = look - torso.rotation.y * 0.8;
-      head.rotation.x = -torso.rotation.x * 0.6 - 0.04;
+      if (!action || !['brew', 'ko', 'rise'].includes(action.name)) head.rotation.x = downed ? 0.5 : -torso.rotation.x * 0.6 - 0.04;
       if ((blinkT -= dt) < 0) blinkT = 2.2 + Math.random() * 3;
-      face.show(blinkT < 0.13 && mood !== 'happy' ? 'blink' : mood);
+      if (action?.name !== 'hurt') face.show(blinkT < 0.13 && mood !== 'happy' ? 'blink' : downed ? 'blink' : mood);
 
       // Secondary motion: the hat tip, hair, hem and charms lag behind
       const tip = S.hatBack.update(0.28 * moving + Math.sin(time * 1.3) * 0.03 - accel * 0.02, dt);
