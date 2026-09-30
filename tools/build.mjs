@@ -8,6 +8,7 @@ export const PAGES = [
   { html: 'index.html', entry: 'src/main.js', name: 'wickhollow-square' },
   { html: 'witch.html', entry: 'src/viewer.js', name: 'witch-up-close' },
   { html: 'battle.html', entry: 'src/battle/main.js', name: 'hollow-battle' },
+  { html: 'bestiary.html', entry: 'src/bestiary.js', name: 'bestiary' },
 ];
 
 const only = process.argv[2];

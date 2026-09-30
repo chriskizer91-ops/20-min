@@ -5,6 +5,7 @@ import { createSound } from './audio/sound.js';
 import { ring } from './paint.js';
 import { turnToward, glowSprite } from './actors/kit.js';
 import { HERBS, SQUARE_HERBS } from './data/herbs.js';
+import { createHerb } from './actors/herbs.js';
 
 const REACH = 1.15; // meters: how close she has to be to talk to someone
 const $ = (id) => document.getElementById(id);
@@ -73,25 +74,15 @@ export class Field {
 
     // Herbs to gather: the source game's patches on this painting, each one once a night.
     this.basket = {};
-    const icons = {};
     for (const [key, x, y] of SQUARE_HERBS) {
       const herb = HERBS[key];
-      if (!icons[key]) {
-        icons[key] = new THREE.TextureLoader().load(herb.icon);
-        icons[key].colorSpace = THREE.SRGBColorSpace;
-        icons[key].magFilter = THREE.NearestFilter;
-      }
       const pos = at(x, y);
-      const group = new THREE.Group();
-      group.position.copy(pos);
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: icons[key], color: '#d9d0f0', alphaTest: 0.4 }));
-      sprite.center.set(0.5, 0.08);
-      sprite.scale.set(0.5, 0.5, 1);
-      const glow = glowSprite(herb.glow, 0.95, 0.35);
-      glow.position.y = 0.16;
-      group.add(glow, sprite);
-      world.add(group);
-      this.things.push({ name: herb.name, herb: key, pos, group, sprite, glow, visits: 0, seed: Math.random() * 6 });
+      const plant = createHerb(key);
+      plant.root.position.copy(pos);
+      plant.root.rotation.y = Math.random() * Math.PI * 2;
+      plant.root.scale.setScalar(1.7); // a touch bigger than life, so they're easy to spot
+      world.add(plant.root);
+      this.things.push({ name: herb.name, herb: key, pos, group: plant.root, plant, visits: 0 });
     }
     this.exits = scene.exits.map((e) => ({ ...e, zone: ring(e.zone), inside: false }));
 
@@ -340,10 +331,7 @@ export class Field {
     this.updateCrow(dt);
     this.sparks.update(dt);
     this.glints.update(dt);
-    for (const t of this.things) if (t.herb) {
-      t.glow.material.opacity = 0.22 + Math.sin(time * 2.2 + t.seed) * 0.1;
-      t.sprite.position.y = Math.sin(time * 1.5 + t.seed) * 0.01;
-    }
+    for (const t of this.things) if (t.herb) t.plant.update(dt);
     for (const t of this.leaving ?? []) {
       t.leaving += dt / 0.5;
       const k = Math.min(1, t.leaving);
@@ -513,7 +501,7 @@ export class Field {
     });
     $('btn-layers').addEventListener('click', () => this.toggleLayers());
     $('btn-pixels').addEventListener('click', () => {
-      const sizes = [1, 2, 0];
+      const sizes = [0, 1, 2];
       const next = sizes[(sizes.indexOf(this.stage.pixelSize) + 1) % sizes.length];
       this.stage.setPixelSize(next);
       $('btn-pixels').textContent = next ? `Pixels ${next}×` : 'Pixels off';

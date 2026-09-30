@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Moonlight Bestiary</title>
+<style>
+  /* Every model on a turntable against the Hollow at night, next to the witch for scale. */
+  :root {
+    color-scheme: dark;
+    --night: #0b0710; --panel: rgba(24, 12, 30, 0.9); --cream: #ecdcb8; --ink: #f3ead8; --dim: #b9a9c4; --magenta: #c63d83; --gold: #e2bd67;
+    --display: 'Jacquard 12', 'Georgia', serif; --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; overflow: hidden; color: var(--ink); background: var(--night); }
+  body { font: 15px/1.4 var(--body); -webkit-user-select: none; user-select: none; }
+  #backdrop { position: fixed; inset: 0; background: var(--night) var(--room) center / cover no-repeat; filter: blur(3px) brightness(0.4); transform: scale(1.04); }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.6s; }
+  body.ready #stage { opacity: 1; }
+  header { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: var(--gutter); right: var(--gutter); pointer-events: none; text-shadow: 0 2px 0 #000; }
+  h1 { margin: 0; font: 400 clamp(36px, 6vw, 54px)/0.95 var(--display); color: var(--cream); }
+  header p { margin: 6px 0 0; max-width: 50ch; color: var(--dim); font-size: 14px; }
+  #panel { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 760px;
+    display: grid; gap: 10px; padding: 14px 16px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row b { width: 64px; font-weight: 400; color: var(--gold); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+  button { font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; padding: 6px 12px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.5); border-radius: 6px; }
+  button:hover { border-color: var(--cream); }
+  button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (max-width: 520px) { .row b { width: 100%; } button { padding: 6px 10px; font-size: 13px; } }
+</style>
+<div id="backdrop"></div>
+<canvas id="stage" aria-label="A 3D model turning slowly"></canvas>
+<header><h1 id="name"></h1><p id="note"></p></header>
+<section id="panel" aria-label="Models and moves">
+  <div class="row"><b>Model</b><span id="models" class="row"></span></div>
+  <div class="row"><b>Moves</b><span id="moves" class="row"></span></div>
+  <div class="row"><b>View</b><button id="spin" aria-pressed="true">Turn</button><button id="scale" aria-pressed="true">Witch for scale</button></div>
+</section>
+<!-- /PAGE -->
+<script type="module" src="dev/bestiary.js"></script>
+</html>
