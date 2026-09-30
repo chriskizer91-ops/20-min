@@ -247,13 +247,13 @@ export function createGretch() {
       torso.scale.set(1 + breath * 0.012, 1 + breath * 0.01, 1 + breath * 0.012);
 
       // Arms at rest: the right hand on her middle, the left holding the ledger against her side
-      armR.shoulder.rotation.set(-0.35 + s * 0.3 * moving, 0, -0.3 - 0.05 * breath);
-      armR.elbow.rotation.set(-1.2 + 0.5 * moving, -0.6 * (1 - moving), 0);
+      armR.shoulder.rotation.set(-0.3 + s * 0.3 * moving, 0, -0.16 - 0.05 * breath);
+      armR.elbow.rotation.set(-1.25 + 0.5 * moving, 0.75 * (1 - moving), 0);
       armR.wrist.rotation.set(0.2, 0, 0);
-      armL.shoulder.rotation.set(-0.1 - s * 0.25 * moving, 0, 0.42);
-      armL.elbow.rotation.set(-0.85, 0.55, 0);
-      armL.wrist.rotation.set(0, 0, -0.35);
-      ledgerPivot.rotation.set(0.1, 0.2, 0);
+      armL.shoulder.rotation.set(-0.12 - s * 0.25 * moving, 0, 0.3);
+      armL.elbow.rotation.set(-0.95, -0.35, 0);
+      armL.wrist.rotation.set(0, 0.4, -0.2);
+      ledgerPivot.rotation.set(0.1, -0.3, 0);
       ledgerPivot.position.set(0.01, -0.04, 0.02);
       finger.scale.setScalar(0.01);
       head.rotation.set(0, 0, 0);
@@ -271,7 +271,7 @@ export function createGretch() {
           const k = f / 1.3, p = win(k, 0, 1, 0.25);
           armR.shoulder.rotation.x = lerp(armR.shoulder.rotation.x, 0.05, p);
           armR.shoulder.rotation.z = lerp(armR.shoulder.rotation.z, -0.35, p);
-          armR.elbow.rotation.set(lerp(-1.2, -0.35, p), lerp(-0.6, 0, p), 0);
+          armR.elbow.rotation.set(lerp(-1.25, -0.35, p), lerp(0.75, 0, p), 0);
           if (p > 0.8) keyKick = Math.sin(time * 22) * 0.6;
           head.rotation.x = 0.15 * p;
           if (k >= 1) fidget = null;
@@ -280,7 +280,7 @@ export function createGretch() {
           for (const A of [armR, armL]) {
             A.shoulder.rotation.x = lerp(A.shoulder.rotation.x, -0.85 + tug * 0.25, p);
             A.shoulder.rotation.z = lerp(A.shoulder.rotation.z, A.side * 0.18, p);
-            A.elbow.rotation.set(lerp(A.elbow.rotation.x, -1.55, p), lerp(A.elbow.rotation.y, A.side * 0.7, p), 0);
+            A.elbow.rotation.set(lerp(A.elbow.rotation.x, -1.55, p), lerp(A.elbow.rotation.y, -A.side * 0.7, p), 0);
           }
           torso.rotation.x -= tug * 0.06;
           head.rotation.x = -0.1 * p;
@@ -288,10 +288,10 @@ export function createGretch() {
           if (k >= 1) fidget = null;
         } else if (fidget.name === 'ledger') {
           const k = f / 2.2, p = win(k, 0, 1, 0.22);
-          armL.shoulder.rotation.set(lerp(armL.shoulder.rotation.x, -0.95, p), 0, lerp(0.42, 0.12, p));
-          armL.elbow.rotation.set(lerp(-0.85, -1.2, p), lerp(0.55, 0.9, p), 0);
-          armL.wrist.rotation.z = lerp(-0.35, 0.3, p);
-          ledgerPivot.rotation.set(lerp(0.1, -0.2, p), lerp(0.2, -1.2, p), lerp(0, 0.2, p));
+          armL.shoulder.rotation.set(lerp(armL.shoulder.rotation.x, -0.95, p), 0, lerp(0.3, 0.12, p));
+          armL.elbow.rotation.set(lerp(-0.95, -1.2, p), lerp(-0.35, -0.9, p), 0);
+          armL.wrist.rotation.z = lerp(-0.2, 0.3, p);
+          ledgerPivot.rotation.set(lerp(0.1, -0.2, p), lerp(-0.3, 0.9, p), lerp(0, 0.2, p));
           head.rotation.set(0.28 * p, 0.35 * p, 0);
           specs.position.y = 0.012 - 0.012 * p; // she looks over the top of them
           faceNow = p > 0.5 ? 'fuss' : null;
@@ -318,7 +318,7 @@ export function createGretch() {
             const p = win(k, 0, 1, 0.2), beat = Math.sin(action.t * 7);
             armR.shoulder.rotation.x = lerp(armR.shoulder.rotation.x, -0.75 + beat * 0.08, p);
             armR.shoulder.rotation.z = lerp(armR.shoulder.rotation.z, -0.45, p);
-            armR.elbow.rotation.set(lerp(armR.elbow.rotation.x, -1.05 + beat * 0.12, p), lerp(armR.elbow.rotation.y, 0.3, p), 0);
+            armR.elbow.rotation.set(lerp(armR.elbow.rotation.x, -1.05 + beat * 0.12, p), lerp(armR.elbow.rotation.y, -0.2, p), 0);
             armR.wrist.rotation.set(lerp(0.2, -0.5, p), lerp(0, -1.2, p), 0);
             head.rotation.x = arch(k, 0.35, 0.6) * 0.12;
             faceNow = Math.sin(action.t * 16) > 0.1 && k < 0.85 ? 'talk' : null;
@@ -351,7 +351,7 @@ export function createGretch() {
             for (const A of [armR, armL]) {
               A.shoulder.rotation.x = lerp(A.shoulder.rotation.x, -0.9 + tug * 0.3, p);
               A.shoulder.rotation.z = lerp(A.shoulder.rotation.z, A.side * 0.15, p);
-              A.elbow.rotation.set(lerp(A.elbow.rotation.x, -1.5 + brush * 0.3 * (A.side > 0 ? 1 : 0), p), lerp(A.elbow.rotation.y, A.side * 0.75, p), 0);
+              A.elbow.rotation.set(lerp(A.elbow.rotation.x, -1.5 + brush * 0.3 * (A.side > 0 ? 1 : 0), p), lerp(A.elbow.rotation.y, -A.side * 0.75, p), 0);
             }
             torso.rotation.x -= tug * 0.08;
             body.position.y = tug * 0.012;
@@ -362,12 +362,12 @@ export function createGretch() {
           case 'count': {
             // "Counted twice": the ledger up, and two taps on it with a gloved finger
             const p = win(k, 0, 1, 0.18), taps = Math.max(arch(k, 0.35, 0.5), arch(k, 0.58, 0.73));
-            armL.shoulder.rotation.set(lerp(armL.shoulder.rotation.x, -1.0, p), 0, lerp(0.42, 0.1, p));
-            armL.elbow.rotation.set(lerp(-0.85, -1.15, p), lerp(0.55, 1.0, p), 0);
-            ledgerPivot.rotation.set(lerp(0.1, -0.1, p), lerp(0.2, -1.3, p), 0);
+            armL.shoulder.rotation.set(lerp(armL.shoulder.rotation.x, -1.0, p), 0, lerp(0.3, 0.1, p));
+            armL.elbow.rotation.set(lerp(-0.95, -1.15, p), lerp(-0.35, -1.0, p), 0);
+            ledgerPivot.rotation.set(lerp(0.1, -0.1, p), lerp(-0.3, 1.0, p), 0);
             finger.scale.setScalar(Math.max(0.01, p));
             armR.shoulder.rotation.set(lerp(armR.shoulder.rotation.x, -1.0 + taps * 0.15, p), 0, lerp(armR.shoulder.rotation.z, -0.05, p));
-            armR.elbow.rotation.set(lerp(armR.elbow.rotation.x, -1.2 + taps * 0.25, p), lerp(armR.elbow.rotation.y, -0.9, p), 0);
+            armR.elbow.rotation.set(lerp(armR.elbow.rotation.x, -1.2 + taps * 0.25, p), lerp(armR.elbow.rotation.y, 0.9, p), 0);
             head.rotation.set(0.22 * p, 0.2 * p, 0);
             specs.position.y = 0.012 - 0.01 * p;
             faceNow = 'fuss';
@@ -391,7 +391,7 @@ export function createGretch() {
             for (const A of [armR, armL]) {
               A.shoulder.rotation.x = lerp(A.shoulder.rotation.x, -1.05, p);
               A.shoulder.rotation.z = lerp(A.shoulder.rotation.z, A.side * (0.25 - clap * 0.1), p);
-              A.elbow.rotation.set(lerp(A.elbow.rotation.x, -0.9, p), lerp(A.elbow.rotation.y, A.side * (0.9 + clap * 0.35), p), 0);
+              A.elbow.rotation.set(lerp(A.elbow.rotation.x, -0.9, p), lerp(A.elbow.rotation.y, -A.side * (0.9 + clap * 0.35), p), 0);
             }
             body.position.y = arch(k, 0.2, 0.7) * 0.03;
             faceNow = 'happy';
