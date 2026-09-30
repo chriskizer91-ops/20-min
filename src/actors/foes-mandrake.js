@@ -185,11 +185,9 @@ export function createMandrake({ hollowed = false } = {}) {
   // A little root tail under it
   part(torso, taperedTube([[0, -0.02, 0], [0.01, -0.06, -0.02], [-0.01, -0.09, -0.03]], 0.02, 0.003, 6, 5), rootDark, { ink: false });
   // Hairy rootlets on its flanks
-  const hairs = [];
   for (const [x, y, z, s] of [[0.12, 0.06, 0.05, 1], [-0.125, 0.08, -0.02, -1], [0.1, 0.03, -0.07, 1], [-0.09, 0.02, 0.07, -1], [0.02, 0.0, -0.1, 1]]) {
     const j = joint(torso, [x, y, z]);
     part(j, taperedTube([[0, 0, 0], [s * 0.018, -0.006, 0], [s * 0.03, -0.004, 0.008]], 0.005, 0.0015, 5, 4), rootDark, { ink: false });
-    hairs.push(j);
   }
 
   const face = paintedFace(H, {

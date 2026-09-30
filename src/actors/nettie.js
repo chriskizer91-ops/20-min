@@ -249,7 +249,8 @@ export function createNettie() {
   const lanternLight = staff.light;
 
   const api = {
-    root, head, hat, staff: staff.group, fx,
+    // fire: where her spells leave from (the lantern), as the witch's witchfire is for her
+    root, head, hat, staff: staff.group, fire: staff.lantern, fx,
     name: 'Nettie the Swamp Witch',
     height: 1.52,
     radius: 0.24,
@@ -294,13 +295,13 @@ export function createNettie() {
       armR.elbow.rotation.set(-0.62 + s * 0.2 * moving, 0, 0);
       armR.wrist.rotation.set(0, 0, 0);
       const akimbo = 1 - moving;
-      armL.shoulder.rotation.set(lerp(s * 0.3, 0.12, akimbo), 0, lerp(0.2, 0.78, akimbo));
-      armL.elbow.rotation.set(lerp(-0.3, -1.45, akimbo), lerp(0, -1.5, akimbo), 0);
+      armL.shoulder.rotation.set(lerp(s * 0.3, 0.05, akimbo), 0, lerp(0.2, 0.95, akimbo));
+      armL.elbow.rotation.set(lerp(-0.3, -1.75, akimbo), lerp(0, -1.5, akimbo), 0);
       armL.wrist.rotation.set(0, 0, lerp(0, -0.3, akimbo));
       const leftFree = (amt) => { armL.elbow.rotation.y = lerp(armL.elbow.rotation.y, 0, amt); armL.wrist.rotation.z = lerp(armL.wrist.rotation.z, 0, amt); };
       finger.scale.setScalar(0.01);
       // the staff: upright at her side, swung forward and planted with each step as she walks
-      let staffTilt = { x: 0.05 + s * 0.3 * moving, z: -0.16 + 0.06 * moving }, staffDrop = 0;
+      let staffTilt = { x: 0.08 + s * 0.3 * moving, z: -0.2 + 0.08 * moving }, staffDrop = 0;
       head.rotation.set(0, 0, 0);
       hat.position.set(0, 0.14, -0.012);
       let hatTip = 0;
@@ -528,6 +529,7 @@ export function createNettie() {
           }
         }
         if (k >= 1) {
+          if (!action.hit) action.onHit?.(); // every move calls back by its end, so callers can await any of them
           if (action.name === 'ko') downed = true;
           action = null;
           shawlPivot.position.y = 0.235;
@@ -564,7 +566,7 @@ export function createNettie() {
       const swayX = S.lanternX.update(moving * 0.25 * Math.abs(s) + Math.sin(time * 1.1) * 0.04 - accel * 0.03, dt);
       const swayZ = S.lanternZ.update(-turn * 0.15 + Math.sin(time * 0.8) * 0.03, dt);
       holdOrientation(staff.lanternPivot, root, q1.setFromEuler(e1.set(swayX, 0, swayZ)));
-      lanternLight.intensity = (0.12 + Math.sin(time * 13) * 0.012 + Math.sin(time * 7.3) * 0.01) * (1 + lanternBoost);
+      lanternLight.intensity = (0.07 + Math.sin(time * 13) * 0.007 + Math.sin(time * 7.3) * 0.006) * (1 + lanternBoost);
       staff.glow.material.opacity = 0.55 + lanternBoost * 0.12 + Math.sin(time * 9) * 0.05;
       staff.glow.scale.setScalar(0.34 + lanternBoost * 0.06);
       shawlMat.emissiveIntensity = hexGlow * (0.85 + Math.sin(time * 3) * 0.15);
@@ -631,8 +633,8 @@ function buildStaff(pivot) {
   bead.add(beadGlow);
   // the lantern
   const lanternPivot = joint(group, [0, top, 0.14], 'lantern-pivot');
-  const lantern = joint(lanternPivot, [0, -0.07, 0], 'lantern');
-  part(lanternPivot, cyl(0.0025, 0.0025, 0.05, 3), toon(C.tin), { pos: [0, -0.025, 0], ink: false });
+  const lantern = joint(lanternPivot, [0, -0.11, 0], 'lantern');
+  part(lanternPivot, cyl(0.0025, 0.0025, 0.09, 3), toon(C.tin), { pos: [0, -0.045, 0], ink: false });
   part(lantern, new THREE.TorusGeometry(0.014, 0.003, 4, 10), toon(C.tin), { pos: [0, 0.055, 0], ink: false });
   part(lantern, cone(0.046, 0.04, 8), toon(C.tin), { pos: [0, 0.035, 0] });
   const glass = part(lantern, cyl(0.034, 0.034, 0.06, 8), new THREE.MeshBasicMaterial({ color: '#ffd889', transparent: true, opacity: 0.92 }), { pos: [0, -0.01, 0], ink: false });
@@ -642,7 +644,7 @@ function buildStaff(pivot) {
   const glow = glowSprite('#ffc060', 0.34, 0.55);
   glow.position.y = -0.01;
   lantern.add(glow);
-  const light = new THREE.PointLight('#ffc46a', 0.12, 1.0, 2);
+  const light = new THREE.PointLight('#ffc46a', 0.07, 1.0, 2);
   light.position.y = -0.01;
   lantern.add(light);
   group.userData.flame = flame;

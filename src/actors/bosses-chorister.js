@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { joint, sphere, cyl, lathe, skirt, swayCloth, taperedTube, onLayer, Spring } from './kit.js';
-import { mat, glowMat, inkMat, makePart, paint, glow, dotTexture, Strands, Particles, Pulses, movePlayer, window4, ss, lerp, rng, flash, TAU } from './bosses-kit.js';
+import { joint, sphere, cyl, lathe, skirt, swayCloth, onLayer, Spring } from './kit.js';
+import { mat, inkMat, makePart, paint, glow, Strands, Particles, Pulses, movePlayer, window4, ss, lerp, rng, flash, TAU } from './bosses-kit.js';
 
 // The Drowned Chorister (docs/LORE.md §7; Aethermoor's `drowned`, `choir` variant): one of drowned Misthollow's
 // choir, still singing in its sleep, drawn as one of Follow Me Down Witch Way's kind ghosts ("70-80% opacity with a

@@ -80,6 +80,8 @@ function patch(material, U, { rim = 0, crack = 1 } = {}) {
           diffuseColor.rgb = mix(diffuseColor.rgb, ash, hollow);
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.04, 0.07), hCrack * (1.0 - hollowHeal));
         }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        totalEmissiveRadiance = mix(totalEmissiveRadiance, vec3(dot(totalEmissiveRadiance, vec3(0.299, 0.587, 0.114))) * 0.4, hollow);`)
       .replace('#include <opaque_fragment>', `${lit ? RIM_BODY : ''}
         outgoingLight += vec3(0.8, 0.86, 1.0) * hCrack * hollowHeal * 1.6;
         #include <opaque_fragment>`);
@@ -96,7 +98,6 @@ export class Hollow {
     this.target = 0;
     this.k = 0;
     this.breakT = -1; // counts up while moonlight breaks the omen
-    this.listeners = [];
   }
   toon(color, opts = {}) {
     const key = 't' + color + JSON.stringify(opts);
@@ -550,9 +551,3 @@ export const bell = (k) => Math.sin(Math.PI * Math.min(1, Math.max(0, k)));
 // 0 -> 1 between a and b, then back to 0 between c and d
 export const hold = (k, a, b, c, d) => ss(k, a, b) * (1 - ss(k, c, d));
 
-// Count the meshes a model draws (for keeping them phone-friendly).
-export function countMeshes(root) {
-  let meshes = 0, ink = 0, sprites = 0;
-  root.traverse((o) => { if (o.isMesh) { meshes++; if (o.name === 'ink') ink++; } if (o.isSprite) sprites++; });
-  return { meshes, ink, sprites };
-}

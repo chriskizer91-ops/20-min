@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { joint, sphere, cyl, lathe, skirt, swayCloth, taperedTube, onLayer, Spring } from './kit.js';
-import { mat, glowMat, inkMat, makePart, glow, Strands, Particles, Pulses, movePlayer, window4, ss, lerp, clamp, rng, flash, mergeParts, drape, rippleDrape, paint, TAU } from './bosses-kit.js';
+import { joint, sphere, cyl, lathe, skirt, swayCloth, onLayer, Spring } from './kit.js';
+import { mat, inkMat, makePart, glow, Strands, Particles, Pulses, movePlayer, window4, ss, lerp, clamp, rng, flash, mergeParts, drape, rippleDrape, paint, TAU } from './bosses-kit.js';
 import { LM, buildLantern, buildPole, makeLace, makeFaces, makeGownTexture, makeCoatTexture, buildMoths, lilyGeometry, sheetSprites } from './bosses-lantern-parts.js';
 import { fx as fxArt } from '../assets.js';
 
@@ -42,7 +42,10 @@ export function createLanternMother() {
   const rw = rng(23);
   const root = new THREE.Group();
   root.name = 'lantern-mother';
+  // She is built at about 2.1 m and drawn a little larger: tall, about 2.4 m to the top of her wreath.
+  const SCALE = 1.12;
   const body = joint(root, [0, 0, 0], 'body');
+  body.scale.setScalar(SCALE);
 
   // ---------------------------------------------------------------- the gown, pooling on the ground, dripping
   const gownJ = joint(body, [0, 0, 0], 'gown');
@@ -152,9 +155,11 @@ export function createLanternMother() {
 
   // ---------------------------------------------------------------- the lantern and the pole
   const L = buildLantern(part, thin);
+  L.lantern.scale.setScalar(SCALE);
   root.add(L.lantern);
   const lanternState = { state: 'held', grip: 1, vy: 0, swingX: new Spring(14, 2), swingZ: new Spring(14, 2), prev: new THREE.Vector3(), rest: new THREE.Vector3(), placed: 0 };
   const P = buildPole(part, thin);
+  P.pole.scale.setScalar(SCALE);
   root.add(P.pole);
   const poleState = { plant: 0, planted: new THREE.Vector3(0, 0, 0), tilt: 0 };
 
@@ -251,7 +256,7 @@ export function createLanternMother() {
   const handPos = (A, out) => { A.wrist.localToWorld(out.set(0, -0.06, 0.01)); return root.worldToLocal(out); };
 
   const api = {
-    root, head, name: 'The Lantern Mother', height: 2.45, radius: 0.6, center: 1.3,
+    root, head, name: 'The Lantern Mother', height: 2.5, radius: 0.65, center: 1.45,
     // Moves: attack/lamp-pole (her hooked pole, swung like a scythe), hush-now ("hush now, hush": all Hexed),
     // lead-them-down (charging: she takes your hand to lead you down under the water, where it's safe: Led Away),
     // mourning (she lifts her veil and you see her grief), snuff (she pinches out the lamps), moths (a lamp-moth comes
@@ -452,10 +457,10 @@ export function createLanternMother() {
       function restHands(s) {
         // kneeling, her hands folded in her lap
         for (const A of arms) {
-          A.shoulder.rotation.x = lerp(A.shoulder.rotation.x, -0.45, s);
-          A.shoulder.rotation.z = lerp(A.shoulder.rotation.z, A.side * 0.08, s);
-          A.elbow.rotation.x = lerp(A.elbow.rotation.x, -0.9, s);
-          A.elbow.rotation.z = lerp(0, -A.side * 0.4, s);
+          A.shoulder.rotation.x = lerp(A.shoulder.rotation.x, -0.2, s);
+          A.shoulder.rotation.z = lerp(A.shoulder.rotation.z, A.side * 0.16, s);
+          A.elbow.rotation.x = lerp(A.elbow.rotation.x, -1.05, s);
+          A.elbow.rotation.z = lerp(0, -A.side * 0.85, s);
         }
       }
       // Kneeling: she sinks down and her gown pools round her
@@ -475,7 +480,7 @@ export function createLanternMother() {
       handPos(armR, v);
       if (plant < 0.01) poleState.planted.set(v.x, 0, v.z);
       const poleHand = v.clone();
-      const planted = v2.set(poleState.planted.x, 1.1, poleState.planted.z);
+      const planted = v2.set(poleState.planted.x, 1.1 * SCALE, poleState.planted.z);
       P.pole.position.copy(poleHand).lerp(planted, plant);
       P.pole.rotation.set(poleSwing * (1 - plant), 0, poleTilt + Math.sin(time * 0.8) * 0.01 + poleSwing * 0.35 * (1 - plant), 'YXZ');
       P.tipFlame.material.opacity = phaseN >= 2 ? 0.8 : 0.35;
@@ -493,15 +498,15 @@ export function createLanternMother() {
         L.lantern.position.y += lanternState.vy * dt;
         L.lantern.rotation.x *= 0.95;
         L.lantern.rotation.z *= 0.95;
-        if (L.lantern.position.y < 0.54) {
-          L.lantern.position.y = 0.54;
+        if (L.lantern.position.y < 0.54 * SCALE) {
+          L.lantern.position.y = 0.54 * SCALE;
           if (Math.abs(lanternState.vy) > 1.2) { lanternState.vy = -lanternState.vy * 0.25; ripples.fire(v2.set(L.lantern.position.x, 0.01, L.lantern.position.z), { from: 0.05, to: 0.7, life: 0.9, peak: 0.8 }); }
           else { lanternState.state = 'dropped'; lanternState.vy = 0; }
         }
       } else if (lanternState.state === 'placing') {
         // she sets it down in front of her, gently
         lanternState.placed = Math.min(1, lanternState.placed + dt * 1.5);
-        L.lantern.position.lerp(v2.set(0.28, 0.54, 0.42), lanternState.placed * 0.2);
+        L.lantern.position.lerp(v2.set(0.3, 0.54 * SCALE, 0.48), lanternState.placed * 0.2);
         L.lantern.rotation.x *= 0.9;
         L.lantern.rotation.z *= 0.9;
         if (lanternState.placed >= 1) lanternState.state = 'dropped';
@@ -579,7 +584,7 @@ export function createLanternMother() {
       wind = [Math.sin(time * 0.7) * 0.02, -windY];
       if (veil.state === 'held') {
         const slip = (1 - veil.grip) * 0.35;
-        veilLift.rotation.x = -veilUp * 3.4 - slip;
+        veilLift.rotation.x = -veilUp * 3.85 - slip;
         veilBackJ.rotation.x = slip * 0.3;
         rippleDrape(veilFrontGeo, { time, ripple: 0.006 + gust * 0.02, wave: 0.008 + veilUp * 0.02, wind: [wind[0] * 0.3, wind[1] * 0.3], pin: 1.8 });
         rippleDrape(veilBackGeo, { time: time * 0.8, ripple: 0.012 + gust * 0.03, wave: 0.02 + p3 * 0.03, wind, pin: 1.4, drag: 0.02 * Math.sin(time * 0.5) });

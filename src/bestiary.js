@@ -47,10 +47,24 @@ function show(entry) {
     return b;
   }));
   for (const b of document.querySelectorAll('#models button')) b.setAttribute('aria-pressed', String(b.dataset.id === entry.id));
-  const h = Math.max(model.height ?? 1.5, 1.7);
-  view.dist = Math.max(3.6, h * 2.9);
-  view.target = new THREE.Vector3(0, h * 0.5, 0);
+  document.querySelector(`#models button[data-id="${entry.id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  view.height = Math.max(model.height ?? 1.5, 1.7);
+  view.target = new THREE.Vector3(0, view.height * 0.5, 0);
+  frameModel();
   if (witch) witch.root.visible = view.withWitch && entry.id !== 'witch';
+}
+
+// Back off far enough that the model fits, with some air, in the part of the screen the panel leaves free.
+function frameModel() {
+  const H = canvas.clientHeight || innerHeight;
+  const panel = document.getElementById('panel').getBoundingClientRect().height + 20;
+  const free = THREE.MathUtils.clamp((H - panel) / H, 0.3, 1);
+  const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+  const aspect = (canvas.clientWidth || innerWidth) / H;
+  // How wide the pair is: the witch at -0.8 and the model at +0.55, each with some room either side
+  const r = Math.max(0.35, current?.model.radius ?? 0.4);
+  const width = view.withWitch && current?.entry.id !== 'witch' ? 1.35 + 0.35 + r + 0.3 : 2 * r + 0.6;
+  view.dist = Math.max(3.6, (view.height * 1.3) / (2 * tan * free), (width * 1.25) / (2 * tan * aspect));
 }
 
 witch = createWitch();
@@ -82,8 +96,11 @@ function resize() {
   const panel = document.getElementById('panel').getBoundingClientRect().height + 20;
   camera.setViewOffset(w, h, 0, panel * 0.5, w, h);
   camera.updateProjectionMatrix();
+  if (current) frameModel();
 }
 addEventListener('resize', resize);
+// The panel changes height with each model's list of moves
+new ResizeObserver(() => resize()).observe(document.getElementById('panel'));
 
 const start = MODELS.find((m) => m.id === location.hash.slice(1)) ?? MODELS[0];
 show(start);

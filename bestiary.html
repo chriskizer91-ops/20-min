@@ -23,14 +23,21 @@
   h1 { margin: 0; font: 400 clamp(36px, 6vw, 54px)/0.95 var(--display); color: var(--cream); }
   header p { margin: 6px 0 0; max-width: 50ch; color: var(--dim); font-size: 14px; }
   #panel { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 760px;
-    display: grid; gap: 10px; padding: 14px 16px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
+    display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 16px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .row b { width: 64px; font-weight: 400; color: var(--gold); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
   button { font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; padding: 6px 12px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.5); border-radius: 6px; }
   button:hover { border-color: var(--cream); }
   button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
   button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  @media (max-width: 520px) { .row b { width: 100%; } button { padding: 6px 10px; font-size: 13px; } }
+  @media (max-width: 520px) {
+    .row b { width: 100%; }
+    button { padding: 6px 10px; font-size: 13px; flex: none; }
+    /* On a phone the models scroll sideways in one row, so the model keeps most of the screen */
+    #models { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 4px; scrollbar-width: thin; }
+    #moves { width: 100%; }
+    #panel { gap: 6px; padding: 10px 12px; }
+  }
 </style>
 <div id="backdrop"></div>
 <canvas id="stage" aria-label="A 3D model turning slowly"></canvas>

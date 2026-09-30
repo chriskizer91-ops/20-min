@@ -119,7 +119,7 @@ const LM_MOVES = {
 };
 
 const LANTERN_MOTHER = {
-  name: 'The Lantern Mother', hp: 52, guard: 14, atk: 7, dmg: 4, speed: 16,
+  name: 'The Lantern Mother', hp: 52, guard: 14, atk: 7, dmg: 5, speed: 16,
   immune: ['calm'],
   koText: 'The lamps go out, all but hers, and the one at the skiff\'s bow. She stops being gentle.',
   moves: LM_MOVES,
@@ -130,7 +130,7 @@ const LANTERN_MOTHER = {
 };
 
 const LIGHTS_OUT = {
-  name: 'The Lantern Mother', hp: 44, guard: 14, atk: 7, dmg: 4, speed: 16,
+  name: 'The Lantern Mother', hp: 44, guard: 14, atk: 7, dmg: 5, speed: 16,
   immune: ['calm'],
   opener: 'snuff',
   koText: 'The veil falls. "Are they safe?" she asks. "I was taking them home."',

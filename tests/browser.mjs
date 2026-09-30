@@ -31,7 +31,7 @@ check(moved.y < start.y - 20, `the up arrow walks her up the painting (${Math.ro
 
 const door = await game(() => { const g = window.__game; const s = g.stage.pixelToScreen(new g.THREE.Vector2(776, 470)); return [s.x, s.y]; });
 await page.mouse.click(door[0], door[1]);
-for (let i = 0; i < 30 && (await game(() => !!window.__game.player.path)); i++) await wait(300);
+for (let i = 0; i < 120 && (await game(() => !!window.__game.player.path)); i++) await wait(300); // slow in software rendering
 const up = await pixel();
 check(up.h > 0.1, `tapping the chapel steps walks her up them (${up.h.toFixed(2)} m high)`);
 
@@ -50,10 +50,10 @@ for (let i = 0; i < 40 && !(await game(() => window.__game.field.basket.lavender
 check(await game(() => window.__game.field.basket.lavender === 1), 'tapping a lavender patch walks her over, kneels and puts it in the basket');
 
 await page.click('#btn-backstage');
-for (let i = 0; i < 20 && (await game(() => window.__game.stage.reveal.t < 1)); i++) await wait(250);
+for (let i = 0; i < 80 && (await game(() => window.__game.stage.reveal.t < 1)); i++) await wait(250);
 check(await game(() => window.__game.stage.reveal.t === 1), `Behind the scenes flies the camera out (${await game(() => window.__game.stage.reveal.t.toFixed(2))})`);
 await page.click('#btn-back');
-for (let i = 0; i < 20 && (await game(() => window.__game.stage.reveal.t > 0)); i++) await wait(250);
+for (let i = 0; i < 80 && (await game(() => window.__game.stage.reveal.t > 0)); i++) await wait(250);
 check(await game(() => window.__game.stage.reveal.t === 0), 'Back to the game flies it home');
 
 // The battle demo: the witch's menu opens, and a Witchfire resolves against a foe.

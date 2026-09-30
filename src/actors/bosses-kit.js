@@ -338,7 +338,7 @@ export function drape({ profile, cols = 24, rows = 10, span = TAU, center = Math
       if (r === rows) y -= (c % 2 ? zig : -zig * 0.3) + ragged * tatter[c] + (scallop ? Math.abs(Math.sin(c * Math.PI / 2)) * scallop : 0);
       if (ground !== null && y < ground) { radius += (ground - y) * 0.9; y = ground + (c % 3) * 0.002; }
       positions.push(Math.cos(a) * radius, y, Math.sin(a) * radius);
-      uvs.push(closed ? c / n : c / (n - 1), 1 - v);
+      uvs.push(closed ? c / n : c / (n - 1), v); // v 0 at the top, like skirt(): paint() these with flipY false
     }
   }
   const idx = [];

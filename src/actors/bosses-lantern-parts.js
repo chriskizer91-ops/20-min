@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { joint, sphere, cyl, taperedTube } from './kit.js';
-import { mat, glowMat, glow, paint, mergeParts, rng, TAU } from './bosses-kit.js';
+import { cyl, taperedTube } from './kit.js';
+import { mat, glow, paint, mergeParts, rng, TAU } from './bosses-kit.js';
 import { fx as fxArt } from '../assets.js';
 
 // The Lantern Mother's things: the lamplighter's lantern full of Wickhollow's borrowed violet flames, her hooked
@@ -130,7 +130,7 @@ export function makeLace(seed = 3, repeat = 3, clearTop = false) {
   const motifs = [];
   // rosettes scattered over the net, thinning toward the top
   // (the face veil keeps its top clear, so her face shows through)
-  for (let i = 0; i < 14; i++) motifs.push({ x: r() * W, y: H * (clearTop ? 0.58 + r() * 0.14 : 0.2 + r() * 0.5), s: 22 + r() * 16, k: r() });
+  if (!clearTop) for (let i = 0; i < 14; i++) motifs.push({ x: r() * W, y: H * (0.2 + r() * 0.5), s: 22 + r() * 16, k: r() });
   const rosette = (g, x, y, s, fill, stroke) => {
     g.save();
     g.translate(x, y);
@@ -175,7 +175,7 @@ export function makeLace(seed = 3, repeat = 3, clearTop = false) {
     g.strokeStyle = 'rgba(120,100,170,0.5)';
     g.lineWidth = 1;
     for (let x = -H; x < W + H; x += 9) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + H * 0.35, H); g.stroke(); g.beginPath(); g.moveTo(x, 0); g.lineTo(x - H * 0.35, H); g.stroke(); }
-    pattern(g, '#4a3c6e', '#c8b6f0');
+    pattern(g, '#3e325e', '#8e7eba');
     // beads of fen water
     for (let i = 0; i < 60; i++) {
       g.fillStyle = 'rgba(220,235,255,0.95)';
@@ -192,7 +192,7 @@ export function makeLace(seed = 3, repeat = 3, clearTop = false) {
     g.strokeStyle = '#7a7a7a';
     g.lineWidth = 1.2;
     for (let x = -H; x < W + H; x += 9) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + H * 0.35, H * 0.84); g.stroke(); g.beginPath(); g.moveTo(x, 0); g.lineTo(x - H * 0.35, H * 0.84); g.stroke(); }
-    pattern(g, '#f0f0f0', '#ffffff');
+    pattern(g, '#c4c4c4', '#dcdcdc');
     g.fillStyle = '#000000';
     for (let x = 0; x < W; x += 32) { g.beginPath(); g.arc(x + 16, H * 0.895, 5, 0, TAU); g.fill(); g.beginPath(); g.arc(x, H * 0.865, 3, 0, TAU); g.fill(); }
   }, { flipY: false, srgb: false, repeat: [repeat, 1] });
@@ -286,7 +286,7 @@ export function makeFaces() {
       g.beginPath(); g.arc(x + 5, eyeY + 9, 1.8, 0, TAU); g.fill();
       // the upper lid, heavy and lowered, and long lashes toward the outer corner
       g.fillStyle = LM.skin;
-      const lid = mood === 'ask' ? 0 : mood === 'stern' ? 10 : 5;
+      const lid = mood === 'ask' ? 0 : mood === 'stern' ? 10 : mood === 'calm' ? 8 : 5;
       g.beginPath(); g.ellipse(x, eyeY - h + lid - 6, 20, 10, 0, 0, TAU); g.fill();
       g.strokeStyle = INKC;
       g.lineWidth = 3.8;
@@ -332,7 +332,7 @@ export function makeFaces() {
       g.beginPath(); g.moveTo(cx - 10, my); g.lineTo(cx + 10, my); g.stroke();
     } else {
       // a small, kind, sad smile
-      g.beginPath(); g.moveTo(cx - 11, my - 1); g.quadraticCurveTo(cx, my + 5, cx + 11, my - 1); g.stroke();
+      g.beginPath(); g.moveTo(cx - 9, my); g.quadraticCurveTo(cx, my + 3, cx + 9, my); g.stroke();
       g.fillStyle = 'rgba(190,110,150,0.5)';
       g.beginPath(); g.ellipse(cx, my + 4, 6, 2, 0, 0, TAU); g.fill();
     }
@@ -423,9 +423,9 @@ export function makeCoatTexture() {
 export function buildMoths(count) {
   const r = rng(51);
   return sheetSprites(fxArt.mothsFireflies, count, 4, 2, (s) => {
-    s.material.color.set('#fff2c8');
-    s.scale.set(0.2, 0.2, 1);
-    const g = glow('#ffd98a', 0.25, 0);
+    s.material.color.set('#fff6d8');
+    s.scale.set(0.34, 0.34, 1);
+    const g = glow('#ffd98a', 0.4, 0);
     s.add(g);
     return { s, g, a: r() * TAU, r: 0.28 + r() * 0.2, y: (r() - 0.5) * 0.3, sp: 1.6 + r() * 1.2, f: r() * 4, on: 0, want: 0 };
   }).list;

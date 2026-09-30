@@ -190,7 +190,7 @@ export function createSourWisp(tint = '#8fe89a', { hollowed = false } = {}) {
     sour: { value: 1 }, opacity: { value: 0.96 }, flash: { value: 0 }, time: { value: 0 }, lift: { value: 0 }, hScale: { value: 2.4 }, ripple: { value: 0.009 },
   };
   const flame = flameMaterial(H, U);
-    const tailMat = flameMaterial(H, { ...U, lift: { value: -0.06 }, hScale: { value: 0 } });
+  const tailMat = flameMaterial(H, { ...U, lift: { value: -0.06 }, hScale: { value: 0 } });
   const inkGreen = col.deep.clone().multiplyScalar(0.32);
   const outline = flameInk(inkGreen, U);
   const withInk = (mesh) => { const o = new THREE.Mesh(mesh.geometry, outline); o.name = 'ink'; mesh.add(o); return mesh; };

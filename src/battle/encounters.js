@@ -126,7 +126,7 @@ export const ORDER = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
 // Inkblot joins in the square (before B1) and Nettie at her hut (before B4), each with the witch's XP.
 export const STORY_FLOORS = {
   B2: { xp: xpForLevel(2), why: 'Silas relit at the wayside kettle, and the way to the Hollow opens: level 2.' },
-  B4: { xp: xpForLevel(3), why: 'Nettie\'s hut: the middle turn, an hour\'s sleep, and Nettie joins. Level 3.' },
+  B4: { xp: 160, why: 'Nettie\'s hut: the middle turn, an hour\'s sleep, and Nettie joins. Level 3, well on the way to 4.' },
 };
 
 export function fightXp(id) {

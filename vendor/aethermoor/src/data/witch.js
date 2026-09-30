@@ -179,9 +179,9 @@ export const WITCH_SKILLS = {
     effects: [{ type: 'cleanse', statuses: ['poisoned', 'bleeding', 'rooted'] }, { type: 'heal', dice: '1d6' }],
   },
   hex: {
-    id: 'hex', name: 'Hex', domain: 'attunement', mp: 2, delay: 0.8, target: 'enemy',
-    text: 'She spits in her palm and says its name backwards. WIS save or Hexed: its attacks and saves roll with disadvantage for two turns.',
-    effects: [{ type: 'status', status: 'hexed', save: 'WIS' }],
+    id: 'hex', name: 'Hex', domain: 'attunement', mp: 1, delay: 0.5, target: 'enemy',
+    text: 'Quick as spitting: she says its name backwards. For its next three turns it is Hexed (its attacks and saves roll with disadvantage) and Exposed (-2 Guard). No save: it is her name for it now.',
+    effects: [{ type: 'status', status: 'exposed' }, { type: 'status', status: 'hexed', turns: 3 }],
   },
 };
 

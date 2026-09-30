@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { createHilde, createAgnes, createCrow } from './actors/villagers.js';
+import { createHilde, createAgnes } from './actors/villagers.js';
+import { createCrow } from './actors/party-crow.js'; // the new Inkblot, with the old crow's interface
 import { portraits } from './assets.js';
 import { createSound } from './audio/sound.js';
 import { ring } from './paint.js';

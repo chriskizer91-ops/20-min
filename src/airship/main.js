@@ -7,7 +7,8 @@ import { buildCutouts } from '../layers.js';
 import { Stage, LAYER_GLOW } from '../stage.js';
 import { createAirship } from '../actors/airship.js';
 import { createWitch } from '../actors/witch.js';
-import { createCrow } from '../actors/villagers.js';
+import { createCrow } from '../actors/party-crow.js';
+import { createNettie } from '../actors/nettie.js';
 import { glowSprite, onLayer } from '../actors/kit.js';
 import { createKeys } from '../input.js';
 import { createSound } from '../audio/sound.js';
@@ -133,6 +134,13 @@ async function boot() {
   crow.root.position.copy(ship.perch);
   crow.root.rotation.y = -0.9;
   ship.deck.add(crow.root);
+  // Nettie comes aboard at Bogmire, where she joins the party (docs/SLICE.md)
+  const nettie = createNettie();
+  nettie.root.position.set(0.32, -0.06, 1.35);
+  nettie.root.rotation.y = 0.5;
+  nettie.root.visible = false;
+  ship.deck.add(nettie.root);
+  world.add(nettie.fx);
   onLayer(ship.root);
 
   const home = place.wickhollow;
@@ -242,6 +250,15 @@ async function boot() {
     audio.music(p.music);
     witch.play?.('cheer');
     showCard(p);
+    if (p.id === 'bogmire' && !nettie.root.visible) {
+      // She's been waiting at the mast with her staff and lantern
+      setTimeout(() => {
+        nettie.root.visible = true;
+        nettie.play('cheer');
+        audio.sfx('deck-steps');
+        $('card-text').textContent = `${p.blurb} Nettie climbs aboard: "Took your time."`;
+      }, 900);
+    }
   }
 
   const keys = createKeys((what) => {
@@ -368,6 +385,7 @@ async function boot() {
     ship.update(dt, S.speed, S.turn, S.climb, 0);
     witch.update(dt, 0, 0);
     crow.update(dt, 'stand', ship.perch.y);
+    if (nettie.root.visible) nettie.update(dt, 0, 0);
 
     // Time of day: glide the grade and the lights toward the chosen look
     const L = TIMES[time], g = 1 - Math.exp(-dt * 2);
@@ -441,7 +459,7 @@ async function boot() {
   showCard(home);
   document.body.classList.add('ready');
   requestAnimationFrame(frame);
-  window.__airship = { THREE, stage, paint, ship, witch, state: S, places: place, flyTo, takeOff, setTime: (k) => { time = k; syncButtons(); } };
+  window.__airship = { THREE, stage, paint, ship, witch, nettie, state: S, places: place, flyTo, takeOff, setTime: (k) => { time = k; syncButtons(); } };
 }
 
 function pickTime() {

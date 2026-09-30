@@ -134,6 +134,16 @@ export function createGloamwing() {
     return g;
   })();
   const abdomen = part(abdomenJ, abdomenGeo, abdomenMat);
+  // Phase 2: it begins to wrap itself in silk (A's Cocoon), strand by strand round its abdomen.
+  const silkWraps = [0.18, 0.32, 0.46, 0.58].map((d, i) => {
+    const r = 0.2 * Math.sin(Math.min(1, (d / 0.78) * 1.1 + 0.18) * Math.PI) * (1 - (d / 0.78) * 0.35) + 0.03;
+    const w = new THREE.Mesh(new THREE.TorusGeometry(r, 0.012, 5, 24), new THREE.MeshToonMaterial({ color: C.silk, transparent: true, opacity: 0.85, emissive: new THREE.Color('#9a94c0'), emissiveIntensity: 0.5 }));
+    w.position.set(0, -((d / 0.78) ** 2) * 0.18, -d);
+    w.rotation.set(0.15 * (i % 2 ? 1 : -1), 0.25 * (i % 2 ? -1 : 1), 0);
+    w.scale.setScalar(0.001);
+    abdomenJ.add(w);
+    return w;
+  });
 
   // ---------------------------------------------------------------- legs (dangling while it hovers)
   const legs = [];
@@ -178,7 +188,7 @@ export function createGloamwing() {
   const bellHang = joint(body, [0, -0.2, 0.16], 'bell-hang');
   const bell = joint(bellHang, [0, 0, 0], 'dawnbell');
   const bellTex = makeBellTexture();
-  const bellMat = mat('#c09a62', { map: bellTex, emissive: new THREE.Color('#ffcf6a'), emissiveIntensity: 0 });
+  const bellMat = mat('#d8b478', { map: bellTex, emissive: new THREE.Color('#ffcf6a'), emissiveIntensity: 0 });
   part(bell, lathe([[0.02, 0.0], [0.05, -0.01], [0.075, -0.04], [0.085, -0.1], [0.1, -0.17], [0.135, -0.215], [0.14, -0.23]].reverse(), 22), bellMat);
   part(bell, new THREE.CircleGeometry(0.135, 22), mat(C.bellDark), { pos: [0, -0.215, 0], rot: [Math.PI / 2, 0, 0], ink: false });
   part(bell, new THREE.TorusGeometry(0.03, 0.01, 6, 14), mat(C.bell), { pos: [0, 0.02, 0] });
@@ -310,8 +320,8 @@ export function createGloamwing() {
     update(dt) {
       dt = Math.min(dt, 0.05);
       time += dt;
-      flapRate = 1.4;
-      let flapAmp = 0.5, flapBase = 0.12, sweep = -0.05, pitch = PITCH, rise = 0, lean = 0, forward = 0, sleep = 0, hum = 0, dustRate = 1.2, bellShine = 0;
+      flapRate = 1.2;
+      let flapAmp = 0.4, flapBase = 0.04, sweep = -0.05, pitch = PITCH, rise = 0, lean = 0, forward = 0, sleep = 0, hum = 0, dustRate = 1.2, bellShine = 0;
       fly.position.set(0, HOVER, 0);
       fly.rotation.set(0, 0, 0);
       let manualWings = false;
@@ -511,6 +521,7 @@ export function createGloamwing() {
 
       // Silk (phase 2): threads spin out round its abdomen now and then, the moons on its wings brighten
       for (const m of wingMats) m.emissiveIntensity = 0.12 + (phaseN >= 2 ? 0.14 + Math.sin(time * 2) * 0.04 : 0) + hum * 0.15;
+      silkWraps.forEach((w, i) => { const t = phaseN >= 2 ? 1 : 0; const s2 = lerp(w.scale.x, Math.max(0.001, t), 1 - Math.exp(-dt * (1.2 - i * 0.2))); w.scale.setScalar(s2); w.rotation.z += dt * 0.3 * (i % 2 ? 1 : -1); });
       if (phaseN >= 2 && (silkT -= dt) < 0) { silkT = 0.2; abdomen.getWorldPosition(v); root.worldToLocal(v); sparks.spawn(v.x + (Math.random() - 0.5) * 0.3, v.y, v.z, 0, 0.1, 0, 1.5, '#f6f3ff'); }
 
       // Dust: scales drift off its wings like snow

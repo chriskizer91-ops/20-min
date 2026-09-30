@@ -121,6 +121,12 @@ export function createMireLeech({ hollowed = false } = {}) {
   }
   // Two little feelers under the chin
   for (const side of [-1, 1]) part(head, taperedTube([[0, 0, 0], [side * 0.015, -0.01, 0.02], [side * 0.02, -0.02, 0.03]], 0.007, 0.003, 4, 5), skin, { pos: [side * 0.02, -0.025, 0.02], ink: false });
+  // A small, slightly smug smile under the eye-stalks (hidden while the sucker is out)
+  // (the head's +z runs out along the body, +y is its back; the chin faces forward-and-down from there)
+  const chin = joint(head, [0, 0, 0], 'chin');
+  chin.rotation.x = 0.75;
+  const smile = part(chin, new THREE.TorusGeometry(0.015, 0.0035, 4, 10, Math.PI), H.basic('#0a080e'), { pos: [0, 0.004, 0.06], rot: [0, 0, Math.PI], ink: false });
+  const cheeks = [-1, 1].map((side) => part(chin, sphere(0.007, 6, 4), H.basic('#7a4a66'), { pos: [side * 0.027, 0.008, 0.055], scale: [1.4, 0.8, 0.4], ink: false }));
   // The sucker: a soft pink ring with a dark middle, tucked flat until it latches
   const mouth = joint(head, [0, -0.012, 0.052], 'mouth');
   part(mouth, new THREE.TorusGeometry(0.03, 0.012, 8, 16), H.toon(C.mouth, { rim: 0.6 }), {});
@@ -150,7 +156,7 @@ export function createMireLeech({ hollowed = false } = {}) {
 
   let t = Math.random() * 10, blinkT = 2, look = 0, lookT = 0, nextLook = 1;
   const S = { headZ: new Spring(40, 6), headY: new Spring(40, 6), sway: new Spring(20, 4), mouth: new Spring(50, 6) };
-  const v = new THREE.Vector3(), v2 = new THREE.Vector3(), q = new THREE.Quaternion(), m4 = new THREE.Matrix4(), upV = new THREE.Vector3();
+  const v = new THREE.Vector3(), v2 = new THREE.Vector3(), m4 = new THREE.Matrix4();
   if (hollowed) H.set(true, { instant: true });
 
   const api = {
@@ -262,14 +268,11 @@ export function createMireLeech({ hollowed = false } = {}) {
         return Math.max(0.0005, r * shrink * (1 + glow * 0.08));
       }, undefined, (s) => 0.68 + 0.32 * ss(s, 0.45, 0.8));
 
-      // ---- the head rides the front of the tube, looking along it
-      const tip = spine[N - 1], nb = spine[N - 3];
-      v.subVectors(tip, nb).normalize();
-      upV.set(0, 1, 0);
-      m4.lookAt(v2.set(0, 0, 0), v, upV);
-      q.setFromRotationMatrix(m4);
-      // lookAt points -z at the target; turn it round so +z faces along the body
-      head.quaternion.copy(q).multiply(FLIP);
+      // ---- the head rides the front of the tube: +z along the body, +y its back (the tube's own frame, so it
+      // never flips when it rears straight up)
+      const tip = spine[N - 1], fi = N - 2;
+      m4.makeBasis(v.copy(tube.B[fi]).negate(), tube.N[fi], tube.T[fi]);
+      head.quaternion.setFromRotationMatrix(m4);
       head.position.copy(spine[N - 2]).lerp(tip, 0.4);
       head.scale.setScalar(Math.max(0.001, shrink));
       head.rotateZ(lean * 0.3);
@@ -283,6 +286,8 @@ export function createMireLeech({ hollowed = false } = {}) {
       const mo = S.mouth.update(mouthOpen, dt);
       mouth.scale.setScalar(Math.max(0.001, mo * 1.1));
       mouth.visible = mo > 0.02;
+      smile.visible = mo < 0.3 && hs.k < 0.5;
+      for (const c of cheeks) c.visible = smile.visible;
       mouth.position.z = 0.045 + mo * 0.02;
       eyeWhite.color.set(C.eye).lerp(DULL, hs.k * 0.8);
       skin.emissive.set(DRINK).multiplyScalar(glow * 0.35);
@@ -310,4 +315,3 @@ export function createMireLeech({ hollowed = false } = {}) {
   return api;
 }
 const DULL = new THREE.Color('#77737e'), DRINK = new THREE.Color('#4a2a6a');
-const FLIP = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);

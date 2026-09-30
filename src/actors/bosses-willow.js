@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { joint, sphere, cone, taperedTube, blobShadow, onLayer, Spring } from './kit.js';
+import { joint, sphere, taperedTube, blobShadow, onLayer, Spring } from './kit.js';
 import { mat, glowMat, inkMat, makePart, paint, glow, Strands, Particles, Pulses, movePlayer, window4, ss, lerp, rng, flash, mergeParts, TAU } from './bosses-kit.js';
 
 // The Willow-Wight (docs/LORE.md §7; Aethermoor's `willow-wight`): "a weeping black willow that pulled up its

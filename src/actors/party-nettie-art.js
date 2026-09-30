@@ -10,7 +10,7 @@ export const NC = {
   hair: '#2f2838', hairLight: '#4a3f58', hairDark: '#211b29', streak: '#d8d2de',
   hat: '#54402e', hatDark: '#3e2f24', band: '#627030', patch: '#6f5a8a',
   robe: '#6b7337', robeDark: '#4d5328', trim: '#3d5e40', petticoat: '#3f4e40', mud: '#5a4630',
-  shawl: '#d8d2ba', hex: '#c6f25e', sash: '#9c2e24', sashDark: '#6e1f1a', leather: '#5c3b26', boot: '#382820',
+  shawl: '#cdc5aa', hex: '#c6f25e', sash: '#9c2e24', sashDark: '#6e1f1a', leather: '#5c3b26', boot: '#382820',
   wood: '#6e4e2c', woodDark: '#4a3420', amber: '#f2b440', reed: '#8e9a44', bone: '#e8dfc4', tin: '#8c8a7c',
   sea: '#34b4ae', ruby: '#c02c40', amberGlass: '#e09a2a', emerald: '#2f9a5a', toad: '#7c7a3a', toadDark: '#4e4c26', toadBelly: '#d8c888',
 };
@@ -77,8 +77,8 @@ export function drawNettieFace(g, mood, S) {
   g.lineCap = 'round';
   for (const [s, y, tilt] of browSets[mood]) {
     // tilt > 0: the inner end down (cross); < 0: the inner end up (worried or sceptical)
-    const inner = 256 + s * 16, outer = 256 + s * 70;
-    g.lineWidth = 11;
+    const inner = 256 + s * 15, outer = 256 + s * 74;
+    g.lineWidth = 13;
     g.beginPath();
     g.moveTo(inner, y + tilt * 16);
     g.quadraticCurveTo(256 + s * 42, y - 9 + tilt * 4, outer, y + 4 - tilt * 6);
@@ -94,7 +94,7 @@ export function drawNettieFace(g, mood, S) {
 
   // eyes
   const eye = (s, { open = 1, lid = 0.32, lower = 0, look = 0 } = {}) => {
-    const cx = 256 + s * 46, cy = 262, rx = 25, ry = 15 * open;
+    const cx = 256 + s * 47, cy = 262, rx = 28, ry = 17 * open;
     g.save();
     g.beginPath(); // the almond
     g.moveTo(cx - rx, cy);
@@ -106,14 +106,14 @@ export function drawNettieFace(g, mood, S) {
     g.clip();
     const ix = cx + look * 4 - s * 1, iy = cy - 1;
     g.fillStyle = NC.irisRing;
-    g.beginPath(); g.arc(ix, iy, 13.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix, iy, 15.5, 0, Math.PI * 2); g.fill();
     g.fillStyle = NC.iris;
-    g.beginPath(); g.arc(ix, iy, 10.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix, iy, 12, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#140a08';
-    g.beginPath(); g.arc(ix, iy, 5.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix, iy, 6.2, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#ffffff';
-    g.beginPath(); g.arc(ix - 4, iy - 5, 3.6, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(ix + 4.5, iy + 3.5, 1.5, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix - 4.5, iy - 5.5, 4, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(ix + 5, iy + 4, 1.7, 0, Math.PI * 2); g.fill();
     // the heavy upper lid (skin, a shade darker) comes down over the top of the iris
     g.fillStyle = mixColor(NC.skin, NC.skinShade, 0.55);
     g.fillRect(cx - rx - 2, cy - 30, rx * 2 + 4, 30 - ry * (1.6 - lid * 2.2) + 12 * lid);
@@ -122,7 +122,7 @@ export function drawNettieFace(g, mood, S) {
     // lash line along the lid's edge, and a flick at the outer corner
     const lidY = cy - ry * (1.6 - lid * 2.2) + 12 * lid;
     g.strokeStyle = NC.lash;
-    g.lineWidth = 4.5;
+    g.lineWidth = 5.5;
     g.beginPath();
     g.moveTo(cx - rx - 1, cy + 1);
     g.quadraticCurveTo(cx, Math.min(lidY, cy) - 4, cx + rx + 2, cy - 2);
@@ -140,7 +140,7 @@ export function drawNettieFace(g, mood, S) {
     g.stroke();
   };
   const closed = (s, curve) => {
-    const cx = 256 + s * 46, cy = 264;
+    const cx = 256 + s * 47, cy = 264;
     g.strokeStyle = NC.lash;
     g.lineWidth = 4.5;
     g.beginPath();
@@ -154,7 +154,7 @@ export function drawNettieFace(g, mood, S) {
     g.stroke();
   };
   const squeeze = (s) => {
-    const cx = 256 + s * 46, cy = 262;
+    const cx = 256 + s * 47, cy = 262;
     g.strokeStyle = NC.lash;
     g.lineWidth = 4.5;
     g.beginPath();
@@ -175,7 +175,7 @@ export function drawNettieFace(g, mood, S) {
   // mouth
   g.strokeStyle = NC.lip;
   g.lineCap = 'round';
-  g.lineWidth = 4.5;
+  g.lineWidth = 5.5;
   if (mood === 'calm' || mood === 'blink') {
     // the smirk: flat on her right, hooked up on her left
     g.beginPath();

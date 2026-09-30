@@ -138,9 +138,12 @@ export class Director {
         if (foe) await this.fx.bolt(actor.fire.getWorldPosition(new THREE.Vector3()), this.center(tgt), color, cmd?.type === 'attack' ? 1 : 1.4);
       }
     } else {
-      actor.play('attack');
+      // Each foe model maps its Aethermoor move ids to its own signature moves (Lure, Batter, Spore Puff...);
+      // the bosses name theirs after the move ids themselves.
+      const move = actor.intents?.[e.move] ?? (actor.moves?.includes(e.move) ? e.move : 'attack');
+      actor.play(move);
       this.audio.sfx(FOE_SOUND[this.unit(e.actor)?.family] ?? 'foe-charge');
-      await wait(380);
+      await wait(move === 'attack' ? 380 : 620);
     }
     if (e.text && !(side === 'hero' && cmd?.type === 'attack')) this.caption(e.text);
   }
@@ -212,7 +215,7 @@ export class Director {
     this.actors[e.target]?.play('ko');
     const beaten = BEATEN[this.unit(e.target)?.family];
     if (e.text || beaten) this.caption(e.text || beaten);
-    if (this.unit(e.target)?.family === 'lamp-moth') this.fx.floatHome(this.center(e.target));
+    // A beaten lamp-moth lets go of the flame it carried, and the flame floats home (the model does this itself)
     this.audio.sfx(this.unit(e.target)?.side === 'foe' ? 'foe-down' : 'ko');
     const l = this.labels[e.target];
     if (l) l.el.classList.add('gone');

@@ -155,7 +155,7 @@ export function createGlowcap({ hollowed = false } = {}) {
   part(torso, new THREE.LatheGeometry(stemProfile.map(([x, y]) => new THREE.Vector2(x, y)), 18), stemMat);
   // The ring (annulus): a frilly skirt round the stem just under the cap
   const ringGeo = skirt({ top: 0.1, bottom: 0.155, height: 0.07, flare: 0.6, points: 18, zig: 0.012, rows: 2, ragged: 0.01 });
-  const ring = part(torso, ringGeo, H.toon(C.ring, { side: THREE.DoubleSide }), { pos: [0, 0.37, 0] });
+  part(torso, ringGeo, H.toon(C.ring, { side: THREE.DoubleSide }), { pos: [0, 0.37, 0] });
 
   const arms = [-1, 1].map((side) => {
     const sh = joint(torso, [side * 0.115, 0.24, 0.01]);
@@ -166,10 +166,10 @@ export function createGlowcap({ hollowed = false } = {}) {
   });
 
   const face = paintedFace(H, {
-    cone: { top: 0.118, bottom: 0.144, height: 0.15 }, width: 1.7, size: [256, 176], draw: drawFace, rim: 0.2,
+    cone: { top: 0.119, bottom: 0.147, height: 0.15 }, width: 1.7, size: [256, 176], draw: drawFace, rim: 0.2,
     moods: ['dreamy', 'blink', 'bonk', 'puff', 'glow', 'ouch', 'rest', 'hollow'],
   });
-  const faceHolder = joint(torso, [0, 0.235, 0]);
+  const faceHolder = joint(torso, [0, 0.2, 0]);
   faceHolder.add(face.mesh);
 
   // ---------------------------------------------------------------- the cap
@@ -186,7 +186,6 @@ export function createGlowcap({ hollowed = false } = {}) {
   capJ.add(gills);
   // Spots: cream warts scattered over the cap, each sitting on the surface
   const spotMat = H.toon(C.spot, { emissive: new THREE.Color('#6a5020'), emissiveIntensity: 0.5 });
-  const spots = [];
   const capCurve = new THREE.SplineCurve(capProfile.slice(0, 7).map(([x, y]) => new THREE.Vector2(x, y)));
   // [how far from the crown 0-1, angle round from the front, radius]
   const SPOTS = [
@@ -201,7 +200,6 @@ export function createGlowcap({ hollowed = false } = {}) {
     const n = new THREE.Vector3(Math.sin(a) * p.x, p.y + 0.12, Math.cos(a) * p.x).normalize();
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n);
     m.scale.set(1, 0.4, 1);
-    spots.push(m);
   }
 
   // Light: warm under the cap, a halo

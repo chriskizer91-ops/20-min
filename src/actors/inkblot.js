@@ -49,7 +49,7 @@ export function createInkblot() {
   neck.rotation.x = TILT; // level again
   const head = joint(neck, [0, 0.052, 0.018], 'head');
   head.rotation.order = 'YXZ';
-  const headTex = scallops({ cols: 16, rows: 8, base: C.feather, dark: C.dark, edge: C.sheen, sheenByU: false, strength: 0.22 });
+  const headTex = scallops({ cols: 16, rows: 8, base: C.feather, dark: C.feather, edge: C.sheen, sheenByU: false, strength: 0.16 });
   // poles at the beak and the nape, so the feathers' tips all point back
   part(head, sphere(0.07, 18, 14), toonMap(headTex), { rot: [Math.PI / 2, 0, 0], scale: [0.94, 1.06, 0.9] });
   // the scruffy crown: a few feathers at the back that never lie flat
@@ -236,7 +236,7 @@ export function createInkblot() {
     peck: 0.9, pinch: 1.8, kraa: 1.3, caw: 0.8, fetch: 2.8, preen: 2.4, puff: 1.9,
     hop: 2.8, walk: 3.6, fly: 4.2, perch: 0.9, cheer: 1.6, hurt: 0.6, ko: 1.3, rise: 0.9,
   };
-  const ALIAS = { attack: 'peck', provoke: 'kraa' };
+  const ALIAS = { attack: 'peck', provoke: 'kraa', cast: 'caw' };
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), q1 = new THREE.Quaternion(), qTmp = new THREE.Quaternion();
   const eu = new THREE.Euler(), AX = new THREE.Vector3(1, 0, 0);
 
@@ -260,7 +260,9 @@ export function createInkblot() {
   }
 
   const api = {
-    root, head, beakTip, fx,
+    root, head, beakTip, fx, shadow, fire: beakTip,
+    // How high he cruises when update() is given a flying speed; 0 when the caller flies his root itself.
+    flyHeight: 0.42,
     name: 'Inkblot',
     height: 0.44,
     radius: 0.14,
@@ -300,7 +302,7 @@ export function createInkblot() {
       flapPh += dt * Math.PI * 2 * 5.2;
       if (walkAmt > 0.01) walkGait(P, walkAmt, walkPh);
       if (hopAmt > 0.01) hopGait(P, hopAmt, hopPh);
-      if (flyAmt > 0.01) flyGait(P, flyAmt, flapPh, -turn * 0.25);
+      if (flyAmt > 0.01) flyGait(P, flyAmt, flapPh, -turn * 0.25, api.flyHeight);
       P.pitch += clamp(accel * 0.01, -0.15, 0.15) * (1 - flyAmt);
 
       const still = walkAmt + hopAmt + flyAmt < 0.05 && !action;
@@ -522,6 +524,7 @@ export function createInkblot() {
           }
         }
         if (k >= 1) {
+          if (!action.hit) action.onHit?.(); // every move calls back by its end, so callers can await any of them
           if (action.name === 'ko') downed = true;
           if (action.name === 'perch') perched = true;
           loot.visible = false;

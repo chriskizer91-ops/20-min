@@ -402,7 +402,8 @@ function nettieOffense(s, h, C, level, mem) {
   const hex = pick(C, 'hex');
   if (hex && h.mp >= 5) {
     if (level === 'sensible') {
-      const t = foes.find(f => (isBoss(f) || f.tier === 'veteran') && !has(f, 'hexed') && !(mem.hexed ||= new Set()).has(f.id));
+      // hex the big one once, unless her jars already hurt it more (a Tide-weak foe gets the jars instead)
+      const t = foes.find(f => (isBoss(f) || f.tier === 'veteran') && !has(f, 'hexed') && damageMult(f, 'tide', 'tide') <= 1 && !(mem.hexed ||= new Set()).has(f.id));
       if (t) { mem.hexed.add(t.id); return withTarget(hex, t); }
     }
   }
@@ -574,6 +575,23 @@ export function expertReaction(s, h, C, mem) {
   if (pick(C, 'defend')) add(C.defend, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]) })), 0.4);
   const kraa = pick(C, 'kraa');
   if (kraa) add(kraa, dangerOf(s, hitsComing(s, { guarded: new Set([h.id]), redirect: h.id })), 0);
+  // Hex: its attack rolls go to disadvantage for two of its turns (the second turn is worth about as much again)
+  const hex = pick(C, 'hex');
+  if (hex) {
+    for (const f of foesUp(s)) {
+      if (has(f, 'hexed')) continue;
+      const hexedF = { ...f, statuses: [...f.statuses, { id: 'hexed', stacks: 1, turns: 3 }] };
+      const s2 = { ...s, units: { ...s.units, [f.id]: hexedF } };
+      const gain = d0 - dangerOf(s2, hitsComing(s2));
+      // Exposed: -2 Guard for its next two turns, so the party lands about 10% more of the hits it throws meanwhile
+      // Exposed for three of its turns: -2 Guard, so the party's attacks land more often meanwhile (at most two rounds
+      // counted, since the fight moves on). Hex is a quick action, 0.6 of a turn.
+      const exposedF = { ...f, statuses: [...f.statuses, { id: 'exposed', stacks: 1, turns: 3 }] };
+      const rounds = Math.min(2, 3 * f.delay / 100);
+      const exposeGain = has(f, 'exposed') ? 0 : heroesUp(s).reduce((a, x) => a + (weaponExp(x, exposedF) - weaponExp(x, f)) * 100 / x.delay, 0) * rounds;
+      add(withTarget(hex, f), d0 - gain * 1.3 - exposeGain - 0.5 * offenseWorth(s, h, C) * damageWorth(s));
+    }
+  }
   const pinch = pick(C, 'pinch'), hush = pick(C, 'hush-tea');
   for (const f of foesUp(s)) {
     if (!f.intent?.charging || f.intent.cancelled) continue;
@@ -627,14 +645,6 @@ function expertTurn(s, h, C, mem) {
     if (h.heroId === 'nettie' && pick(C, 'stir-the-pot')) return withTarget(C['stir-the-pot'], worst);
     if (heart && !nettieCanHeal(s)) return withTarget(heart, worst);
   }
-  // Hex a foe whose attack rolls are what hurts (the willow), when that is worth more than a jar
-  if (h.heroId === 'nettie' && pick(C, 'hex') && h.mp >= 4) {
-    for (const f of foes) {
-      if (has(f, 'hexed')) continue;
-      const v = (1 - saveChance(f.saves?.WIS || 0, saveDC(h))) * 2 * attackRollThreat(s, f) * 0.35;
-      if (v > offenseWorth(s, h, C) * damageWorth(s)) return withTarget(C.hex, f);
-    }
-  }
   return OFFENSE[h.heroId](s, h, C, 'expert', mem);
 }
 
@@ -654,14 +664,24 @@ function attackRollThreat(s, f) {
   return v;
 }
 
+// Slip Away: only when the fight is lost anyway (one hero up and nearly down, nothing left to drink, foes well)
+function hopeless(s, C) {
+  if (!pick(C, 'flee')) return false;
+  const up = heroesUp(s);
+  const heals = (s.bag['heartsease-tonic'] || 0) + (up.some(x => x.heroId === 'nettie' && x.mp >= 4) ? 1 : 0);
+  const foeHp = foesUp(s).reduce((a, f) => a + f.hp / f.maxHp, 0);
+  return up.length === 1 && frac(up[0]) < 0.35 && heals === 0 && foeHp > 0.8;
+}
+
 export function decide(s, heroId, level, mem = {}) {
   const h = s.units[heroId];
-  const C = cmdIndex(commands(s, heroId));
+  const C = cmdIndex(commands(s, heroId).filter(c => !mem.ban?.has(c.id) && !mem.ban?.has(`${h.heroId}:${c.id}`)));
   mem.inc = null;
+  if (level !== 'naive' && hopeless(s, C)) return C.flee;
   mem.cut ||= new Set();
   if (mem.blessCd > 0 && h.heroId === 'witch') mem.blessCd--;
   let c = level === 'naive' ? naiveTurn(s, h, C) : level === 'sensible' ? sensibleTurn(s, h, C, mem) : expertTurn(s, h, C, mem);
-  if (!c || !c.enabled) c = pick(C, 'defend') || pick(C, 'attack');
+  if (!c || !c.enabled || !C[c.id]) c = pick(C, 'defend') || pick(C, 'attack') || Object.values(C).find(x => x.enabled && x.targeting !== 'ally-ko');
   if (c.targeting === 'enemy' && !c.target) c = { ...c, target: foesUp(s)[0]?.id };
   return c;
 }
@@ -669,7 +689,7 @@ export function decide(s, heroId, level, mem = {}) {
 // ---- playing one fight -------------------------------------------------------------------------------------------------------
 const cmdKey = c => (c.type === 'attack' ? 'attack' : c.type === 'skill' ? c.skill : c.type === 'item' ? `brew:${c.item}` : c.type);
 
-export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = false, path = 'typical', level, wears, bag, trace = false, maxActions = 500 } = {}) {
+export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = false, path = 'typical', level, wears, bag, trace = false, maxActions = 500, ban = [] } = {}) {
   let s = startEncounter(id, { seed, firstStrike, path, level, wears, bag });
   const st = {
     id, seed, policy, result: null, heroTurns: 0, foeTurns: 0, lost: 0, seconds: 0, lowest: 1, lowestParty: 1, downs: 0,
@@ -677,7 +697,7 @@ export function playFight(id, { seed = 1, policy = 'sensible', firstStrike = fal
     hollowed: { start: 0, broken: 0, stripped: 0, struck: 0 }, rot: 0, forms: 1, trace: [], hurt: {},
   };
   let lastMove = null;
-  const mem = { cut: new Set() };
+  const mem = { cut: new Set(), ban: new Set(ban) };
   const hollowStart = new Set(unitsOf(s, 'foe').filter(f => f.omens?.includes('hollowed')).map(f => f.id));
   st.hollowed.start = hollowStart.size;
   const note = (u, text) => { if (trace) st.trace.push(`${String(Math.round(s.time)).padStart(4)} ${u}: ${text}`); };
@@ -768,7 +788,7 @@ export function battery(id, { n = 400, seed0 = 1, ...opts } = {}) {
   const sum = (f) => runs.reduce((a, r) => a + f(r), 0);
   return {
     id, policy: opts.policy, firstStrike: !!opts.firstStrike, n,
-    win: wins.length / n, lose: runs.filter(r => r.result === 'defeat').length / n, stalemate: runs.filter(r => r.result === 'stalemate').length / n,
+    win: wins.length / n, lose: runs.filter(r => r.result === 'defeat').length / n, fled: runs.filter(r => r.result === 'fled').length / n, stalemate: runs.filter(r => r.result === 'stalemate').length / n,
     heroTurns: median(runs.map(r => r.heroTurns)), foeTurns: median(runs.map(r => r.foeTurns)),
     minutes: median(runs.map(r => r.seconds / 60)), minutesP10: pct(runs.map(r => r.seconds / 60), 0.1), minutesP90: pct(runs.map(r => r.seconds / 60), 0.9),
     lowest: median(runs.map(r => r.lowest)), lowestWin: median(wins.map(r => r.lowest)), lowestParty: median(runs.map(r => r.lowestParty)),
@@ -786,7 +806,7 @@ const P = x => `${(100 * x).toFixed(0)}%`.padStart(4);
 export function report(b) {
   const lines = [];
   const tag = `${b.id}${b.firstStrike ? '+FS' : ''} ${b.policy}`.padEnd(16);
-  lines.push(`${tag} win ${P(b.win)}  turns ${String(b.heroTurns).padStart(3)} (+${b.foeTurns} foe)  ${b.minutes.toFixed(1)} min [${b.minutesP10.toFixed(1)}-${b.minutesP90.toFixed(1)}]  lowest ${P(b.lowest)} (party ${P(b.lowestParty)})  downs ${b.downs.toFixed(2)}  brews ${b.brewsPerFight.toFixed(2)}  fire land ${P(b.fire.land)} graze ${P(b.fire.graze)} miss ${P(b.fire.miss)}`);
+  lines.push(`${tag} win ${P(b.win)}${b.fled ? ` (fled ${P(b.fled).trim()})` : ''}  turns ${String(b.heroTurns).padStart(3)} (+${b.foeTurns} foe)  ${b.minutes.toFixed(1)} min [${b.minutesP10.toFixed(1)}-${b.minutesP90.toFixed(1)}]  lowest ${P(b.lowest)} (party ${P(b.lowestParty)})  downs ${b.downs.toFixed(2)}  brews ${b.brewsPerFight.toFixed(2)}  fire land ${P(b.fire.land)} graze ${P(b.fire.graze)} miss ${P(b.fire.miss)}`);
   const total = {};
   for (const [k, v] of Object.entries(b.moves)) { const h = k.split(':')[0]; total[h] = (total[h] || 0) + v; }
   for (const h of Object.keys(total)) {
@@ -820,6 +840,7 @@ function parseArgs(argv) {
     else if (a === '--trace') o.trace = true;
     else if (a === '--json') o.json = true;
     else if (a === '--wears') for (const w of argv[++i].split(',')) { const [h, r] = w.split(':'); (o.wears[h] ||= []).push(r); }
+    else if (a === '--ban') o.ban = argv[++i].split(',');
     else if (a === '--bag') o.bag = Object.fromEntries(argv[++i].split(',').map(x => { const [k, v] = x.split(':'); return [k, +v]; }));
   }
   if (!o.ids.length) o.ids = ORDER;
@@ -842,7 +863,7 @@ async function main() {
     if (!o.json) console.log(`\n== ${id} ${ENCOUNTERS[id].name}: party ${ENCOUNTERS[id].party.join(', ')} at level ${lv} (${o.path}); foes ${ENCOUNTERS[id].foes.map(f => `${f.name} L${f.level}`).join(', ')}`);
     const fsModes = o.firstStrike ? [true] : ENCOUNTERS[id].flags.firstStrike ? [false, true] : [false];
     for (const fs of fsModes) for (const policy of o.policies) {
-      const b = battery(id, { n: o.n, policy, firstStrike: fs, path: o.path, level: o.level, wears: o.wears, bag: o.bag });
+      const b = battery(id, { n: o.n, policy, firstStrike: fs, path: o.path, level: o.level, wears: o.wears, bag: o.bag, ban: o.ban });
       all.push(b);
       if (!o.json) console.log(report(b));
     }
