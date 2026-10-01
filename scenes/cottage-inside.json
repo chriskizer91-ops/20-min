@@ -56,8 +56,9 @@
     {
       "name": "the garden",
       "to": "cottage-garden",
-      "zone": [[1330, 952], [1446, 958], [1496, 1024], [1330, 1024]],
-      "line": "Out to the garden."
+      "zone": [[1250, 897], [1300, 906], [1350, 930], [1440, 964], [1496, 1024], [1250, 1024]],
+      "line": "Out to the garden.",
+      "_zone": "The doormat and the sill in front of the door, so a tap on the mat takes her out too."
     }
   ]
 }

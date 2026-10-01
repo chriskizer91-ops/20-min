@@ -52,7 +52,7 @@
   },
   "spawn": {"pixel": [180, 960], "facing": "up"},
   "arrivals": {
-    "lantern-path": {"pixel": [150, 1010], "walk": [230, 900], "facing": "up"}
+    "lantern-path": {"pixel": [150, 994], "walk": [230, 900], "facing": "up"}
   },
   "exits": [
     {

@@ -629,7 +629,7 @@ const LINES = {
     ? { first: ["Tonight's moonwater is drawn. The crock fills again at moonrise, with the well."] }
     : {
       first: [
-        'The wayside crock, with a gold moon on its belly. It holds moonwater: rain that caught the moon on its way down.',
+        'The wayside crock, with a gold moon on its belly. It holds moonwater: water that held the moon\'s reflection all night.',
         {
           say: 'Three bottles a night, shared with the well in the square.',
           do: (field) => { night.moonwater = true; field.give('moonwater', 3); field.path.props.crock.setFull(false); field.toast('The wayside crock gives three moonwater.', 'well-bucket'); },
@@ -804,6 +804,7 @@ bootTown({
 }).then((game) => {
   // She comes with one Lantern Oil in her basket, brewed at home, so the relight can be played
   game.field.give('lantern-oil', 1);
+  game.field.showPlace(); // (again, now the page is up: building it can take a while on a slow device)
   game.night = night;
 }).catch((err) => {
   console.error(err);

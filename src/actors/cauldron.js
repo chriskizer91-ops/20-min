@@ -184,12 +184,14 @@ export function createCauldron() {
   flare.position.y = RIM_Y + 0.25;
   root.add(flare);
   const column = glowSprite('#ffffff', 1, 0, LAYER_GLOW);
+  column.name = 'column';
   column.material.depthTest = false;
   column.center.set(0.5, 0.05);
   column.position.y = RIM_Y;
   root.add(column);
   // the dud's big comic bubble
   const plop = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 10), new THREE.MeshToonMaterial({ color: '#7d9a3a', transparent: true, opacity: 0.85 }));
+  plop.name = 'plop';
   plop.visible = false;
   pot.add(plop);
 
@@ -452,8 +454,8 @@ export function createCauldron() {
               for (let i = 0; i < 12; i++) {
                 const a = (i / 12) * Math.PI * 2;
                 puffs.spawn(toRoot(onSurface(0.1)).add(v.set(0, 0.12, 0)), {
-                  vel: [Math.cos(a) * (0.5 + Math.random() * 0.3), 0.55 + Math.random() * 0.5, Math.sin(a) * (0.4 + Math.random() * 0.3)], drag: 1.6,
-                  life: 1.3 + Math.random() * 0.7, size: 0.28 + Math.random() * 0.12, grow: 1.6, color: i % 2 ? '#9aa886' : '#b8a8c8', opacity: 0.9,
+                  vel: [Math.cos(a) * (0.8 + Math.random() * 0.4), 0.6 + Math.random() * 0.6, Math.sin(a) * (0.5 + Math.random() * 0.3)], drag: 1.4,
+                  life: 1.2 + Math.random() * 0.7, size: 0.18 + Math.random() * 0.1, grow: 1.3, color: ['#9aa886', '#b8a8c8', '#c9d6a0'][i % 3], opacity: 0.85,
                 });
               }
             }

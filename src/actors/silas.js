@@ -21,7 +21,7 @@ import { merge, win, arch, holdOrientation } from './party-kit.js';
 
 const C = {
   skin: '#d2eaec', skinShade: '#a9cdd3', glow: '#9ff0ff', line: '#2a4a56', eye: '#1f3a46', iris: '#5fb0bc',
-  hair: '#e6f2ee', hairTip: '#b4d2d8', coat: '#34485a', coatDark: '#233240', coatEdge: '#5a7488', cap: '#2e3e4e',
+  hair: '#d6eaea', hairTip: '#9fc6ce', coat: '#34485a', coatDark: '#233240', coatEdge: '#5a7488', cap: '#2e3e4e',
   capDark: '#1e2a36', brass: '#d8a848', brassDark: '#8a6424', cravat: '#eef8f8', wood: '#4a3226', woodDark: '#2e1e18',
   flame: '#ffb24a', flameCore: '#fff2c0', smoke: '#9aa8b0', mist: '#c8f4f4',
 };
@@ -188,7 +188,7 @@ export function createSilas() {
     thick, thick * 0.3, { segments: 10, radial: 5, color: C.hair, tip: C.hairTip, stiff: 6 + rh() * 3, damp: 1.4, wave: 0.02, sway: 0.8, lag: 0.8 });
   };
   // a tousled fringe swept to his left, locks round the ears, and a soft fall at the nape
-  for (const [a, sweep, d] of [[-0.62, 0.03, 0.08], [-0.38, 0.035, 0.07], [-0.14, 0.04, 0.06], [0.1, 0.04, 0.055], [0.34, 0.03, 0.065], [0.6, 0.02, 0.075]]) lock(a, 0.15, d, 0.03, 0.025, sweep, 0.015);
+  for (const [a, sweep, d, th] of [[-0.6, 0.035, 0.085, 0.042], [-0.3, 0.045, 0.075, 0.046], [0.0, 0.05, 0.065, 0.044], [0.3, 0.04, 0.07, 0.042], [0.6, 0.025, 0.08, 0.04]]) lock(a, 0.15, d, th, 0.028, sweep, 0.02);
   for (const s of [-1, 1]) {
     lock(s * 0.95, 0.07, 0.17, 0.035, 0.02, 0, s * 0.02);
     lock(s * 1.35, 0.08, 0.2, 0.038, 0.02, 0, -s * 0.02);

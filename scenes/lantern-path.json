@@ -137,8 +137,7 @@
     "inkblot": [1150, 330],
     "waterfall": [760, 400],
     "garden": [120, 900],
-    "footbridge": [815, 676],
-    "encounter": [1030, 560]
+    "footbridge": [815, 676]
   },
   "herbs": [
     ["witchs_bells", 262, 556], ["witchs_bells", 1234, 290],
@@ -150,7 +149,7 @@
   ],
   "spawn": {"pixel": [1176, 232], "facing": "down"},
   "arrivals": {
-    "sable-bridge": {"pixel": [480, 1076], "walk": [470, 990], "facing": "up"}
+    "sable-bridge": {"pixel": [470, 1060], "walk": [320, 980], "facing": "up"}
   },
   "exits": [
     {

@@ -88,6 +88,17 @@ check(planks.filter((p) => p.holds).every((p) => p.floor) && planks.filter((p) =
   `she can stand on the ${planks.filter((p) => p.holds).length} planks that hold, and on none of the ${planks.filter((p) => !p.holds).length} that don't`);
 await page.click('#btn-hagsight');
 await unfocus();
+// Trying a plank that won't hold
+const rotten = await game(() => {
+  const g = window.__game, L = g.field.fen.low, p = L.planks.filter((k) => !k.holds).at(-1);
+  const s = g.stage.worldToScreen(p.a.clone().lerp(p.b, 0.5));
+  return [s.x, s.y];
+});
+await putAt(1150, 690, 0);
+await wait(300);
+await page.mouse.click(...rotten);
+check(await until(() => /soft/.test(document.getElementById('toast').textContent), null, 40), `tapping a plank that won't hold says so ("${await game(() => document.getElementById('toast').textContent.slice(0, 40))}...")`);
+await until(() => !window.__game.player.path, null, 100);
 
 // A Hollowed patch: grey; Moonlight shows the rot; witchfire burns it off; it blooms; she picks it
 const patch = 'murkway:silver_mugwort:300,860';
@@ -207,6 +218,15 @@ await until(() => !window.__game.field.locked && !window.__game.player.path, nul
 const in5 = await pixel();
 check(home && in5.y > 880 && Math.abs(in5.x - 808) < 120, `back up to Bogmire, at the bottom of the pier (${in5.x}, ${in5.y})`);
 check(await game(() => document.getElementById('btn-hagsight').hidden && !document.body.classList.contains('hagsight')), 'the Hag-Sight button is only on the Murkway');
+
+// And past the mast, the Long Boardwalk again, the short way
+await putAt(1450, 598, Math.PI / 2);
+await wait(400);
+await walkTo(1532, 592);
+const east = await until(() => window.__game.here.id === 'long-boardwalk', null, 200, 300);
+await until(() => !window.__game.field.locked && !window.__game.player.path, null, 120);
+const in6 = await pixel();
+check(east && in6.x < 320 && in6.y > 780, `past the mast, the Long Boardwalk runs out from Bogmire (${in6.x}, ${in6.y})`);
 
 check(errors.length === 0, `no errors in the console${errors.length ? ': ' + errors.join(' | ') : ''}`);
 await browser.close();
