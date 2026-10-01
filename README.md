@@ -26,8 +26,9 @@ Every fight is a real one: the field spins away into the battle screen and comes
 XP and levels carry from fight to fight; brews brewed at a cauldron are what she has to drink or throw; herbs she
 Gathers, relics Inkblot prises loose and drops come home in her basket. A lost fight costs nothing: she wakes at her
 last rest with everything she had, and the fight waits. The night saves whenever she changes screens, rests, brews,
-swaps or wins, and **Continue** on the title picks it up. **Menu** (or M) shows the party, what she keeps about
-her, and a line on what to do next.
+swaps or wins, and **Continue** on the title picks it up (after the Ending too: the lights have gone home, and the
+Lantern Mother sits with her cold tea). **Menu** (or M) shows the party, what she keeps about her, and a line on what
+to do next.
 
 To play it, serve it: `npm run serve` and open http://localhost:8000/game.html, or `node tools/build.mjs game` and
 serve `dist/game/` with any static server. (It can't be double-clicked like the demos: it's a page and a folder of

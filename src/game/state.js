@@ -46,7 +46,10 @@ export function newGame() {
   };
 }
 
-export function save(state, storage = globalThis.localStorage) {
+// (in a sandbox that blocks storage, even looking at localStorage throws)
+const local = () => { try { return globalThis.localStorage; } catch { return null; } };
+
+export function save(state, storage = local()) {
   try {
     storage?.setItem(SAVE_KEY, JSON.stringify(state));
     return true;
@@ -55,7 +58,7 @@ export function save(state, storage = globalThis.localStorage) {
   }
 }
 
-export function load(storage = globalThis.localStorage) {
+export function load(storage = local()) {
   try {
     const raw = storage?.getItem(SAVE_KEY);
     if (!raw) return null;
@@ -67,7 +70,7 @@ export function load(storage = globalThis.localStorage) {
   }
 }
 
-export function clearSave(storage = globalThis.localStorage) {
+export function clearSave(storage = local()) {
   try { storage?.removeItem(SAVE_KEY); } catch { /* nothing to clear */ }
 }
 
