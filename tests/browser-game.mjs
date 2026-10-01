@@ -260,15 +260,15 @@ check(await until(() => (window.__play.state.bag['inkblots-feather'] ?? 0) === 1
 
 // ---------------------------------------------------------------- Quill's swap, the Skiff Wakes, and the flight
 await game(() => { window.__play.town.field.give('warming-balm', 1); });
+const balms = await bag('warming-balm'); // (B3's loot can have brought her one already)
 await goTo('sable-riverbank');
 await talkTo('quill');
 check(await until(() => !!window.__play.shop, null, 100), "talking to Quill opens his swap shop");
 await game(() => { const s = window.__play.shop; s.select('the-magpie'); s.confirm(); });
 await wait(800);
 await game(() => window.__play.shop.accept());
-// (the swap plays out before it's made: wait for it rather than for the shop)
-const swapped = await until(() => { const s = window.__play.state; return s.flags.skiff && !s.bag['warming-balm'] && !s.bag['bow-lamp']; }, null, 100);
-check(swapped, 'the Magpie is hers, for a Warming Balm and the bow-lamp');
+const swapped = await until((n) => { const s = window.__play.state; return s.flags.skiff && (s.bag['warming-balm'] ?? 0) === n - 1 && !s.bag['bow-lamp']; }, balms, 100);
+check(swapped, `the Magpie is hers, for a Warming Balm and the bow-lamp (balms ${balms} -> ${await bag('warming-balm')}, bow-lamp ${await bag('bow-lamp')})`);
 await game(() => window.__play.shop.close());
 await until(() => !window.__play.shop && window.__play.town.active, null, 100);
 await talkTo('magpie');
