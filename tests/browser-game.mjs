@@ -344,7 +344,7 @@ await game(() => window.__play.title.choose('Continue'));
 await page.waitForFunction(() => window.__play?.town?.here?.id && window.__play.current === window.__play.town, null, { timeout: 120000 });
 await wait(2500);
 check(await here() === 'mothers-hollow', `Continue picks the night up where it was saved (${await here()})`);
-const epilogue = await talkTo('lantern-mother');
+const epilogue = await talkTo('lantern-mother-home');
 check(/got home/.test(epilogue ?? ''), `the Lantern Mother sits with her tea ("${(epilogue ?? '').slice(0, 60)}...")`);
 check(await game(() => window.__play.state.flags.lightsHome), 'the lights have gone home');
 

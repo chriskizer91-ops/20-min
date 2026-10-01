@@ -372,15 +372,20 @@ export function createBogmire(host) {
       const faceY = 2.06 * scene.lanternMother.scale;
       const portrait = modelPortrait(field.stage.renderer, mother, { at: [0, faceY - 0.02, 0], from: [0.38, faceY + 0.02, 1.25], fov: 24 });
       const say = (text, mood = 'calm', extra = {}) => ({ say: text, face: portrait(mood), mood, ...extra });
-      // After the Ending: the veil is off, the lamp is down, and she's sitting with her tea
+      // After the Ending: her veil is off and her lamp is down, and the lights have gone home
       if (flags.ending) {
         mother.dropRelic?.('veil');
         mother.dropRelic?.('lantern');
+        for (let i = 0; i < 80; i++) mother.update(0.05); // (they're already down when she comes back: no fall to watch)
         field.things.push({
-          id: 'lantern-mother', name: 'The Lantern Mother', actor: mother, pos: mother.root.position, voice: 7,
-          lines: {
-            first: [say('They got home. Every one of them. Somebody should have told me a hundred years ago.', 'rest'), say('The tea has gone cold. I find I don\'t mind.', 'calm')],
-            again: [say('Go on home, little witch. The lights will find their own way now.', 'rest')],
+          // (her own id: the first thing she says after the Ending is new, however often they spoke before it)
+          id: 'lantern-mother-home', name: 'The Lantern Mother', actor: mother, pos: mother.root.position, voice: 7,
+          // (her face drawn when she speaks, as she is now: without the veil)
+          get lines() {
+            return {
+              first: [say('They got home. Every one of them. Somebody should have told me a hundred years ago.', 'rest'), say('The tea has gone cold. I find I don\'t mind.', 'calm')],
+              again: [say('Go on home, little witch. The lights will find their own way now.', 'rest')],
+            };
           },
         });
         field.fight = null;

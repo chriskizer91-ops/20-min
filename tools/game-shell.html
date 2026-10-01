@@ -94,6 +94,12 @@
   #menu-kept span small { display: block; color: var(--dim); }
   #menu-note { margin: 12px 0; font-size: 14px; color: var(--dim); }
   #game-menu .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 560px) {
+    /* On a phone the basket keeps to its corner, and the walking hint gives way to it */
+    #basket { min-width: 0; max-width: calc(100% - 32px); }
+    #basket ul { max-height: 24vh; }
+    body:has(#basket:not([hidden])) #hint { display: none; }
+  }
 <!-- /STYLE field -->
 <!-- MARKUP field -->
 <section id="game-menu" hidden role="dialog" aria-modal="true" aria-labelledby="game-menu-title">
