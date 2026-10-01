@@ -21,7 +21,8 @@ import { createWillowWight } from '../actors/bosses-willow.js';
 import { createDrownedChorister } from '../actors/bosses-chorister.js';
 import { createGloamwing } from '../actors/bosses-gloamwing.js';
 import { createLanternMother } from '../actors/bosses-lantern.js';
-import { glowSprite, onLayer } from '../actors/kit.js';
+import { createSilas } from '../actors/silas.js';
+import { glowSprite } from '../actors/kit.js';
 import { createSound } from '../audio/sound.js';
 import { RARITY } from './engine.js';
 import { ENCOUNTERS, ORDER, startEncounter, nextForm, CURVE } from './encounters.js';
@@ -50,7 +51,7 @@ const FOES = {
   'marsh-light': [(o) => createMarshLight('#8fe89a', o), 1.35], 'lamp-moth': [createLampMoth, 1.4], glowcap: [createGlowcap, 1.3],
   'hollowed-mandrake': [createMandrake, 1.45], boglurcher: [createBoglurcher, 1.1], 'mire-leech': [createMireLeech, 1.4],
   'willow-wight': [createWillowWight, 0.95], drowned: [createDrownedChorister, 1], gloamwing: [createGloamwing, 0.95],
-  'lantern-mother': [createLanternMother, 0.95], silas: [createSilasFlame, 1],
+  'lantern-mother': [createLanternMother, 0.95], silas: [createSilas, 1],
 };
 const HERO_SCALE = { inkblot: 1.7 };
 
@@ -284,34 +285,6 @@ async function boot() {
 function pickFromHash() {
   const id = location.hash.slice(1).toUpperCase();
   return ENCOUNTERS[id] && id !== 'B6B' ? id : null;
-}
-
-// Silas, the ghost lamplighter, steps out of the bow-lamp's flame in Lights Out. He has no model yet: he shows as
-// that flame, a warm lamplight that brightens when he lights the lamps.
-function createSilasFlame() {
-  const root = new THREE.Group();
-  root.name = 'silas';
-  const flame = glowSprite('#ffc46e', 1.1, 0.95);
-  const core = glowSprite('#fff4d6', 0.35, 1);
-  flame.position.y = core.position.y = 1.2;
-  const light = new THREE.PointLight('#ffb45e', 5, 8, 2);
-  light.position.y = 1.2;
-  root.add(flame, core, light);
-  onLayer(root);
-  let t = 0, pulse = 0;
-  return {
-    root, name: 'Silas', height: 1.5, radius: 0.3, center: 1.2,
-    play(name, onHit) { pulse = 1; setTimeout(() => onHit?.(), 300); },
-    get busy() { return false; },
-    update(dt) {
-      t += dt;
-      pulse = Math.max(0, pulse - dt * 0.8);
-      const f = 1 + Math.sin(t * 9) * 0.06 + pulse * 0.8;
-      flame.scale.setScalar(1.1 * f);
-      light.intensity = 5 * f;
-      root.position.y = Math.sin(t * 1.6) * 0.08;
-    },
-  };
 }
 
 function addLights(group, scene, paint, { dark = false } = {}) {

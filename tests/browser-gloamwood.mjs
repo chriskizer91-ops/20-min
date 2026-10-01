@@ -113,6 +113,7 @@ const card = await game(() => ({ tag: document.getElementById('enc-tag').textCon
 check(carded && card.tag === 'B1' && card.title === 'The Lantern Path' && /Hollowed Mandrake and a Glowcap block the path/.test(card.text),
   `walking up to the foes shows the encounter card ("${card.tag} · ${card.title}: ${card.text}")`);
 check(await game(() => window.__game.field.locked), 'she waits while the card is up');
+await wait(1000); // (the card deals itself in)
 await shot('card');
 const foesBefore = await game(() => window.__game.field.path.foes.map((f) => f.root.position.toArray()));
 await page.click('#enc-go');
@@ -221,6 +222,7 @@ if (hasBridge) {
   const card2 = await game(() => ({ tag: document.getElementById('enc-tag').textContent, title: document.getElementById('enc-title').textContent, text: document.getElementById('enc-text').textContent, note: document.getElementById('enc-note').textContent }));
   check(wisped && card2.tag === 'B2' && /Sour Wisps crowd the twisted grove/.test(card2.text) && /Wisp-Calm/.test(card2.note),
     `walking up to the twisted grove shows B2's card ("${card2.tag} · ${card2.title}: ${card2.text}")`);
+  await wait(1000);
   await shot('bridge-card');
   await page.click('#enc-go');
   await wait(500);

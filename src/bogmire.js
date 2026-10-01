@@ -74,7 +74,7 @@ function arrive(field, id, music) {
   field.herbTotal = herbTotal();
   if (!$('basket').hidden) field.showBasket();
   Object.assign(field, { fen: null, fight: null, patches: null, rest: null });
-  hagSight(field.stage, 0);
+  hagSight(0);
   $('btn-hagsight').hidden = id !== murk.id;
 }
 
@@ -198,7 +198,7 @@ const MURKWAY = {
     joinParty(field);
   },
   update(field, dt, time) {
-    fenUpdate(field, dt, time);
+    fenUpdate(field, dt);
     updateLowPath(field, dt, time);
     // Patches still Hollowed (the field updates the ones in bloom, with the other herbs)
     for (const t of field.patches) if (!t.herb) t.patch.update(dt);
@@ -234,7 +234,7 @@ const BOARDWALK = {
     joinParty(field);
   },
   update(field, dt, time) {
-    fenUpdate(field, dt, time);
+    fenUpdate(field, dt);
     const R = field.rest;
     if (R) {
       R.marker.position.y = R.y + Math.sin(time * 1.6) * 0.06;
@@ -294,8 +294,7 @@ const HOLLOW = {
     joinParty(field);
   },
   update(field, dt, time) {
-    for (const v of field.villagers) v.tick(dt);
-    fenUpdate(field, dt, time, { villagers: false });
+    fenUpdate(field, dt);
   },
   labels(field) {
     return { floor: field.paint.toWorld(790, 850) };
@@ -313,8 +312,8 @@ function cardTop(field) {
 }
 
 // ---------------------------------------------------------------- every fen screen, every frame
-function fenUpdate(field, dt, time, { villagers = true } = {}) {
-  if (villagers) for (const v of field.villagers) v.tick(dt);
+function fenUpdate(field, dt) {
+  for (const v of field.villagers) v.tick(dt);
   followParty(field, dt);
   // Far off under the water, a drowned bell, now and then
   const F = field.fen;
@@ -598,7 +597,7 @@ function updateLowPath(field, dt, time) {
   const want = night.sight ? 1 : near && F.still > 1.5 ? 0.7 : 0;
   F.sight += (want - F.sight) * (1 - Math.exp(-dt * 3));
   const s = F.sight;
-  hagSight(field.stage, s);
+  hagSight(s);
   for (const f of L.fog) {
     f.m.position.x = f.base.x + Math.sin(time * 0.13 + f.drift) * 0.35;
     f.m.position.z = f.base.z + Math.cos(time * 0.11 + f.drift) * 0.2;
@@ -627,7 +626,7 @@ function warnPlank(field) {
 // Looking through the hag stone: the edges of the view close in like the stone's hole, tinged green (bogmire.html's
 // #hagstone). It's an overlay rather than a grade of the painting, because the cut-outs draw the painting's own pixels
 // and would show ungraded through it.
-function hagSight(stage, k) {
+function hagSight(k) {
   document.body.classList.toggle('hagsight', k > 0.35);
 }
 

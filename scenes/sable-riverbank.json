@@ -7,7 +7,7 @@
   "size": [1448, 1086],
   "footsteps": "step-stone",
   "camera": {
-    "_about": "Witch Way's painter looks down on the bank from high up, like the square, but with more of the river running away to the far shore. The lamp posts shrink from about 150 px at the bottom left to 110 px at the right, and ripples on the water are ellipses about 0.3 as tall as wide, so the camera looks 28 degrees down through a 28 degree lens. At 74 pixels to the meter she is about 120 px tall on the path, a little shorter than the lamp posts, and the stone bench comes out 1.6 m long.",
+    "_about": "Witch Way's painter looks down on the bank from high up, like the square, with the river running away to the far shore and the bridge. The cobbles and the bench top are seen well from above and the jetty's planks hardly converge, so the camera looks 28 degrees down through a fairly long 28 degree lens. At 74 pixels to the meter she is about 130 px tall on the path, a head shorter than the lamp posts, the stone bench comes out about 1.3 m long, and Rosalind stands a little shorter than her beside it.",
     "fov": 28,
     "pitch": 28,
     "ppm": 74

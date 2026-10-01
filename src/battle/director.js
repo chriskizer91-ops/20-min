@@ -164,7 +164,8 @@ export class Director {
         if (foe) await this.fx.bolt(actor.fire.getWorldPosition(new THREE.Vector3()), this.center(tgt), color, cmd?.type === 'attack' ? 1 : 1.4);
       }
     } else if (side === 'ally') {
-      actor?.play?.('cast');
+      // A guest's turn: Silas lights the lamps with his pole
+      actor?.play?.(actor.moves?.includes('relight') ? 'relight' : 'cast');
       this.audio.sfx('ward');
       await wait(500);
     } else {

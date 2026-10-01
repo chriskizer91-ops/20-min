@@ -7,7 +7,7 @@
   "size": [1536, 1024],
   "footsteps": "step-grass",
   "camera": {
-    "_about": "A wide, low view with a strong perspective: the cottage door (about 140 px, 2 m) is less than half the size of the gate's lantern posts, so the horizon sits near y 250, where the village lights are. The stepping stones are ellipses about 0.35 as tall as wide at the gate and 0.25 near the door, which a camera 8.5 degrees down through a 32 degree lens gives. At 70 pixels to the meter she stands about 120 px tall at the door, just under its lintel, and about 280 px at the gate, a head over its picket fence.",
+    "_about": "A wide, low view with a strong perspective: the cottage door (about 140 px, 2 m) is less than half the size of the gate's lantern posts, so the horizon sits near y 250, where the village lights are. The stepping stones are ellipses about 0.35 as tall as wide at the gate and 0.25 near the door, which a camera 8.5 degrees down through a 32 degree lens gives. At 70 pixels to the meter she stands about 120 px tall at the door, just under its lintel, and about 300 px at the gate, a head over its picket fence.",
     "fov": 32,
     "pitch": 8.5,
     "ppm": 70
