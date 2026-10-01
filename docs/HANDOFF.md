@@ -38,7 +38,7 @@ The demos still build and pass their tests: they're the same code (the areas and
 
 | Page | Entry | Published |
 |---|---|---|
-| **the game** (`game.html` → `dist/game/`) | `src/game/main.js` | see the session's final message |
+| **the game** (`game.html` → `dist/game/`) | `src/game/main.js` | https://claude.ai/artifact/6zKY7KkP7PjqCqy9iL9E5y |
 | wickhollow-square | `src/main.js` | https://claude.ai/artifact/UjsFYHW6Ya4fxZ47v7UkmF |
 | wickhollow (cottage, garden, square, riverbank) | `src/wickhollow.js` | https://claude.ai/artifact/NqMRUtUrb3LkPGYbC2wbQ7 |
 | gloamwood (lantern path, Sable bridge) | `src/gloamwood.js` | https://claude.ai/artifact/GBSaFwnFj8pzvJVkrxqBoC |
