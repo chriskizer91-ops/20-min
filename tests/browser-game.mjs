@@ -266,8 +266,9 @@ check(await until(() => !!window.__play.shop, null, 100), "talking to Quill open
 await game(() => { const s = window.__play.shop; s.select('the-magpie'); s.confirm(); });
 await wait(800);
 await game(() => window.__play.shop.accept());
-await until(() => !window.__play.shop.busy, null, 100);
-check(await flag('skiff') && await bag('warming-balm') === 0 && await bag('bow-lamp') === 0, 'the Magpie is hers, for a Warming Balm and the bow-lamp');
+// (the swap plays out before it's made: wait for it rather than for the shop)
+const swapped = await until(() => { const s = window.__play.state; return s.flags.skiff && !s.bag['warming-balm'] && !s.bag['bow-lamp']; }, null, 100);
+check(swapped, 'the Magpie is hers, for a Warming Balm and the bow-lamp');
 await game(() => window.__play.shop.close());
 await until(() => !window.__play.shop && window.__play.town.active, null, 100);
 await talkTo('magpie');
