@@ -477,12 +477,13 @@ export function createGloamwood(host) {
         say('At last, I can finish my rounds.', { mood: 'happy', do: () => silas.play('tip') }),
         say('Take this Owl charm, with thanks. Your Moonlight will reach farther with it.', {
           mood: 'happy',
-          do: (f) => silas.play('give', () => { f.give('charm-owl', 1, 'reveal-heirloom'); f.toast('The Owl charm. Moonlight reaches farther.', 'reveal-heirloom'); }),
+          // (given as the line shows: a quick reader moves him on to his next line before his hand gets there)
+          do: (f) => { silas.play('give'); f.give('charm-owl', 1, 'reveal-heirloom'); f.toast('The Owl charm. Moonlight reaches farther.', 'reveal-heirloom'); },
         }),
         witch("One more thing. Quill's skiff wants a lamp at her bow that won't blow out.", 'witch-sly'),
         say("Then take a flame from my pole. For the skiff's bow: no wind or wisp can blow it out.", {
           mood: 'happy',
-          do: (f) => silas.play('give', () => { f.give('bow-lamp', 1, 'crystal-flare'); f.toast("Silas's flame, for the Magpie's bow.", 'crystal-flare'); }),
+          do: (f) => { silas.play('give'); f.give('bow-lamp', 1, 'crystal-flare'); f.toast("Silas's flame, for the Magpie's bow.", 'crystal-flare'); },
         }),
         witch('And the lights that float away down the river. Do you see where they go?', 'witch-calm'),
         say('The moths carry them. Every night they gather in the Hollow, over the Sable bridge and through the twisted grove, and then away downriver.', { mood: 'sad', do: () => silas.play('point') }),
@@ -511,6 +512,7 @@ export function createGloamwood(host) {
           f.take('lantern-oil');
           silas.play('relight', () => { silas.setLit(true); f.audio.sfx('crystal-flare'); });
           P.after = async (ff) => {
+            silas.setLit(true);
             await relight(ff);
             night.relit = true;
             ff.player.actor.play('cheer');

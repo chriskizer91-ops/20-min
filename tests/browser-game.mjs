@@ -230,7 +230,7 @@ check(won1 === 'result' && await game(() => document.getElementById('result-titl
 const xp1 = await game(() => window.__play.state.heroes.witch.xp);
 check(xp1 > 0, `the party gains XP (${xp1})`);
 check(await carryOn(), 'Carry on goes back to the lantern path');
-check(await game(() => window.__play.state.fights.B1 === 'won' && window.__play.state.areas.gloamwood.foesAside), 'and the foes have stepped aside');
+check(await until(() => window.__play.state.fights.B1 === 'won' && window.__play.state.areas.gloamwood.foesAside, null, 60), 'and the foes have stepped aside');
 // Lantern Oil (brewed elsewhere, here from the bag) for Silas
 await game(() => { window.__play.town.field.give('lantern-oil', 1); });
 await putAt(360, 860);
@@ -243,7 +243,7 @@ check(await flag('silas') && await bag('bow-lamp') === 1 && await bag('charm-owl
 // ---------------------------------------------------------------- the bridge by Wisp-Calm, and the Hollow (B3)
 await game(() => { window.__play.town.field.give('wisp-calm', 1); });
 await goTo('sable-bridge');
-await putAt(1250, 300);
+await putAt(1350, 240);
 check(await until(() => window.__play.state.areas.gloamwood.wispsAway, null, 200), 'Wisp-Calm lets her past the Sour Wisps, without a fight');
 check(await bag('wisp-calm') === 0, 'and the Wisp-Calm is used');
 await goTo('the-hollow');
@@ -310,7 +310,7 @@ await game(() => document.getElementById('result-go').click());
 check(await until(() => window.__play.town?.active && window.__play.town.here.id === 'nettie-hut', null, 200), `she wakes at her last rest (${await here()})`);
 const after = await game(() => ({ ...window.__play.state.bag }));
 check(JSON.stringify(after) === JSON.stringify(before), 'with everything she had');
-check(await game(() => !window.__play.state.areas.bogmire.met.includes('B4')), 'and the fight waits for her');
+check(await until(() => !window.__play.state.areas.bogmire.met.includes('B4'), null, 60), 'and the fight waits for her');
 
 // ---------------------------------------------------------------- the Long Boardwalk: a rest, and B5
 await goTo('long-boardwalk');
@@ -338,6 +338,15 @@ await game(() => window.__play.title.skip());
 check(await until(() => !document.getElementById('menu').hidden, null, 100), 'and the title comes back');
 const menu2 = await game(() => [...document.querySelectorAll('#menu-list button')].map((b) => b.textContent));
 check(menu2[0] === 'Continue', `with Continue (${menu2.join(', ')})`);
+
+// ---------------------------------------------------------------- Continue: back into the night, the lights gone home
+await game(() => window.__play.title.choose('Continue'));
+await page.waitForFunction(() => window.__play?.town?.here?.id && window.__play.current === window.__play.town, null, { timeout: 120000 });
+await wait(2500);
+check(await here() === 'mothers-hollow', `Continue picks the night up where it was saved (${await here()})`);
+const epilogue = await talkTo('lantern-mother');
+check(/got home/.test(epilogue ?? ''), `the Lantern Mother sits with her tea ("${(epilogue ?? '').slice(0, 60)}...")`);
+check(await game(() => window.__play.state.flags.lightsHome), 'the lights have gone home');
 
 check(!errors.length, `no errors in the console${errors.length ? `: ${errors.slice(0, 5).join(' / ')}` : ''}`);
 await browser.close();

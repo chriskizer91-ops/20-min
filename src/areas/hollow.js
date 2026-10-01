@@ -31,22 +31,23 @@ export function createHollow(host) {
     herbTotal: 1,
     enter(field) {
       const { paint } = field;
-      const at = ([x, y, h = 0]) => paint.toWorld(x, y, h);
+      // The scene's spots are a ground point, and for things up in the trees a height above it
+      const at = ([x, y, h = 0]) => paint.toWorld(x, y).setY(h);
       const X = (field.hollow = { moths: [], t: 0 });
 
       // The Gloamwing, high in the bone tree (it hovers a little above wherever its root is)
       if (!H.won) {
         const g = createGloamwing();
         const [x, y, h = 3.5] = S.gloamwing;
-        g.root.position.copy(at([x, y])).setY(h - 1.3);
+        g.root.position.copy(at([x, y])).setY(h - 1.3); // it hovers 1.3 m over its root
         g.root.scale.setScalar(0.85);
-        g.rest = headingTo(g.root.position, at(S['gloamwing perch']));
+        g.rest = headingTo(g.root.position, at(S['gloamwing perch']).setY(0));
         g.root.rotation.y = g.rest;
         field.group.add(g.root);
         if (g.fx) field.group.add(g.fx);
         X.gloamwing = g;
         field.things.push({
-          id: 'gloamwing', name: null, actor: g, pos: g.root.position, reach: 4, lift: 1.4,
+          id: 'gloamwing', name: null, actor: g, pos: at([x, y]), reach: 2.5, lift: h,
           lines: { first: ['The Gloamwing: a moth the size of a cart, hanging in the bones of the tree, fat with stolen light.', 'There\'s a bell spun into its silk. It hums when it breathes.'] },
           onEnd: (f) => meet(f),
         });
@@ -65,11 +66,12 @@ export function createHollow(host) {
 
       field.things.push(
         {
-          id: 'nest', name: null, pos: at(S.nest), reach: 1.4, lift: 0.2,
+          // (the right-hand tree stands out in the marsh, nearly 6 m from the path: she calls up to it from the path)
+          id: 'nest', name: null, pos: at([S.nest[0], S.nest[1]]), reach: 5.6, lift: S.nest[2] ?? 3,
           get lines() { return nestLines(field); },
         },
-        { id: 'gate', name: null, pos: at(S.gate), reach: 0.8, lift: 1.2, lines: LINES.gate, sound: 'sealed-door' },
-        { id: 'rune-stone', name: null, pos: at(S['rune stone']), reach: 0.9, lift: 0.6, lines: LINES.rune, sound: 'wisp' },
+        { id: 'gate', name: null, pos: at([S.gate[0], S.gate[1]]), reach: 0.8, lift: 1.4, lines: LINES.gate, sound: 'sealed-door' },
+        { id: 'rune-stone', name: null, pos: at(S['rune stone']), reach: 1.5, lift: 0.6, lines: LINES.rune, sound: 'wisp' },
       );
       // One Hollowed bed by the path: clean it for bogwick (docs/SLICE.md screen 7)
       const [bx, by] = S['hollowed bed'];
@@ -82,7 +84,7 @@ export function createHollow(host) {
       for (const o of X.moths) {
         if (o.leaving) {
           o.leaving.t = Math.min(1, o.leaving.t + dt / o.leaving.dur);
-          const k = o.leaving.t;
+          const k = Math.max(0, o.leaving.t); // (they set off one after another)
           o.m.root.position.lerpVectors(o.leaving.from, o.leaving.to, k * k);
           o.m.root.position.y += Math.sin(Math.PI * k) * 2;
           o.m.root.rotation.y = headingTo(o.leaving.from, o.leaving.to);
@@ -102,8 +104,8 @@ export function createHollow(host) {
         if (!H.met && !field.locked && !field.talking) {
           // it turns its great soft face to watch her come, and comes down to meet her
           g.root.rotation.y = turnToward(g.root.rotation.y, headingTo(g.root.position, player.pos), 1.5, dt);
-          const perch = field.paint.toWorld(...S['gloamwing perch']);
-          if (perch.distanceTo(player.pos) < 3.2) meet(field);
+          const perch = field.paint.toWorld(S['gloamwing perch'][0], S['gloamwing perch'][1]);
+          if (Math.hypot(perch.x - player.pos.x, perch.z - player.pos.z) < 3.2) meet(field);
         }
       }
     },
@@ -120,8 +122,8 @@ export function createHollow(host) {
     field.keys?.clear?.();
     field.audio.sfx('insect');
     const from = g.root.position.clone();
-    const perch = field.paint.toWorld(...S['gloamwing perch']);
-    const to = perch.clone().setY(perch.y + 0.4);
+    const [px, py, ph = 1.3] = S['gloamwing perch'];
+    const to = field.paint.toWorld(px, py).setY(ph - 1.3 + 0.2); // hovering over the perch
     let t = 0;
     await new Promise((resolve) => {
       g.descend = (dt) => {
@@ -146,9 +148,10 @@ export function createHollow(host) {
     H.won = true;
     flags.b3 = true;
     field.things = field.things.filter((t2) => t2.id !== 'gloamwing');
-    // It flutters up after the moon...
+    // It flutters up into the moon...
     g.play('ko');
-    const up = field.paint.toWorld(...(S['moths away']?.[0] ?? [200, 120, 8]));
+    const [ux, uy, uh = 3.5] = S.moon ?? [250, 240, 3.5];
+    const up = field.paint.toWorld(ux, uy).setY(uh);
     const start = g.root.position.clone();
     let k = 0;
     g.descend = (dt) => {
@@ -160,9 +163,10 @@ export function createHollow(host) {
     field.audio.sfx('wind');
     await sleep(1200);
     // ...and every moth rises and streams away downriver, with its stolen flame
-    const away = S['moths away'] ?? [[200, 120, 8]];
+    const away = S['moths away'] ?? [[250, 240, 2]];
     X.moths.forEach((o, i) => {
-      o.leaving = { from: o.m.root.position.clone(), to: field.paint.toWorld(...away[i % away.length]), t: -i * 0.15, dur: 3 + i * 0.3 };
+      const [ax, ay, ah = 2] = away[i % away.length];
+      o.leaving = { from: o.m.root.position.clone(), to: field.paint.toWorld(ax, ay).setY(ah), t: -i * 0.15, dur: 3 + i * 0.3 };
     });
     field.audio.sfx('insect');
     await sleep(2600);

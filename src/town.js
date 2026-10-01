@@ -55,13 +55,24 @@ export class Town {
     return this.loading.get(id);
   }
 
+  // Screens she isn't near give their painting back to the GPU (it uploads again, from the picture kept in memory, if
+  // she comes back), so a long night over many screens doesn't fill a phone's memory
+  rest(id) {
+    const near = new Set([id, ...(this.screens[id]?.data.exits ?? []).map((e) => e.to)]);
+    for (const [other, p] of this.loading) {
+      if (near.has(other)) continue;
+      p.then((s) => { if (this.here?.id !== other) s.painting.dispose(); }).catch(() => {});
+    }
+  }
+
   // The screens next door to this one, built while she looks around
   warmNeighbours(id) {
     const ids = this.prebuild === 'all' ? Object.keys(this.screens) : (this.screens[id]?.data.exits ?? []).map((e) => e.to).filter((to) => to && this.screens[to]);
     setTimeout(() => { for (const n of ids) this.screen(n).catch((err) => console.warn('screen', n, err)); }, 1500);
   }
 
-  async start(id, at = null) {
+  // memory: what the field starts with ({ bag, picked, visits, seenHerbs }: see Field)
+  async start(id, at = null, memory = {}) {
     loadFonts();
     this.here = await this.screen(id);
     const here = this.here;
@@ -72,7 +83,7 @@ export class Town {
     this.place(here, at ?? here.data.spawn);
     here.world.add(this.witch.root, this.witch.fx);
     this.aim(here);
-    this.field = new Field({ world: here.world, walk: here.walk, paint: here.paint, stage: this.stage, player: this.player, scene: here.data, cast: here.cast, followers: this.followers });
+    this.field = new Field({ world: here.world, walk: here.walk, paint: here.paint, stage: this.stage, player: this.player, scene: here.data, cast: here.cast, followers: this.followers, memory });
     this.field.hasScreen = (to) => !!this.screens[to];
     this.keys = createKeys((what) => { if (this.active) this.field.onKey(what); });
     this.field.keys = this.keys;
@@ -115,6 +126,7 @@ export class Town {
     field.locked = false;
     if (spot.walk) field.walkTo(next.paint.toWorld(...spot.walk));
     this.warmNeighbours(to);
+    this.rest(to);
     this.onScreen?.(next, from);
     if (fade) {
       this.fade?.classList.remove('on');

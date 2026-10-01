@@ -8,6 +8,7 @@ import { turnToward } from './actors/kit.js';
 import { HERBS, SQUARE_HERBS } from './data/herbs.js';
 import { createHerb } from './actors/herbs.js';
 import { sortBag, nameOf, iconOf, kindOf } from './items.js';
+import { freeGpu } from './gpu.js';
 
 const REACH = 1.15; // meters: how close she has to be to talk to someone
 const $ = (id) => document.getElementById(id);
@@ -23,17 +24,18 @@ const $ = (id) => document.getElementById(id);
 // What a cast can have: enter(field), update(field, dt, time), leave(field), labels(field), music, ambience,
 // herbTotal, and locked(exit, field), which returns a line to say (or true) while an exit's way on is shut.
 export class Field {
-  constructor({ world, walk, paint, stage, player, scene, cast = SQUARE, followers = [] }) {
+  // `memory`: what she's carried and done already ({ bag, picked, visits, seenHerbs }), for a night picked up again
+  constructor({ world, walk, paint, stage, player, scene, cast = SQUARE, followers = [], memory = {} }) {
     Object.assign(this, { stage, player, followers });
     this.from = null; // the screen she came from
     this.audio = createSound();
     this.talking = null;
     this.moved = false;
     this.time = 0;
-    this.bag = {}; // everything she carries, by item id (src/items.js)
-    this.seenHerbs = new Set(); // kinds she's picked before (the first of each gets its note)
-    this.picked = new Set(); // herbs already gathered, so they stay gone when she comes back to a screen
-    this.visits = new Map(); // how often she's spoken to someone with an id, whichever screen they're on
+    this.bag = memory.bag ?? {}; // everything she carries, by item id (src/items.js)
+    this.seenHerbs = new Set(memory.seenHerbs ?? []); // kinds she's picked before (the first of each gets its note)
+    this.picked = new Set(memory.picked ?? []); // herbs already gathered, so they stay gone when she comes back to a screen
+    this.visits = new Map(Object.entries(memory.visits ?? {})); // how often she's spoken to someone with an id, whichever screen they're on
     this.enter({ world, walk, paint, scene }, cast);
     this.buildHud();
     this.bindPointer();
@@ -80,6 +82,10 @@ export class Field {
     if (this.talking) this.endTalk();
     this.cast.leave?.(this);
     this.world.remove(this.group);
+    // What this screen built goes back to the GPU (three.js uploads it again if it's shown again): not the party,
+    // who walk on with her
+    for (const f of this.followers) { f.actor.root.removeFromParent(); f.actor.fx?.removeFromParent(); }
+    freeGpu(this.group);
     this.walk.obstacles.length = 0;
     this.player.path = null;
     this.player.onArrive = null;

@@ -1,11 +1,16 @@
 {
-  "_about": "The Hollow (docs/SLICE.md screen 7), Witch Way's own painting (witch_game_assets/backgrounds/hollow.webp): a marsh graveyard in the Gloamwood, at the end of the way from the Sable bridge, which is off the bottom left. The cobbles come in at the bottom left corner, run up past the rubble and the bone-hung tree with its rune stones, over a short footbridge across the black stream, and wind up past the graves to three steps and an iron gate between two lit lanterns, which stays shut. The Gloamwing (B3) hangs in the bone-hung tree on the left; Inkblot's nest is in the tree on the right. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/the-hollow.json out.png",
+  "_about": "The Hollow (docs/SLICE.md screen 7), Witch Way's own painting (witch_game_assets/backgrounds/hollow.webp): a marsh graveyard in the Gloamwood, through the twisted grove past the Sable bridge, which is off the bottom left. The cobbles come in at the bottom left corner, run up past the rubble and the bone-hung tree with its rune stones, over a short footbridge across the black stream, and wind up past the graves to three steps and an iron gate between two lit lanterns, which stays shut. The Gloamwing (B3) hangs in the bone-hung tree on the left; Inkblot's nest is in the tree on the right. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/the-hollow.json out.png",
   "id": "the-hollow",
   "title": "The Hollow",
   "subtitle": "The Gloamwood",
   "image": "art/backgrounds/the-hollow.webp",
   "size": [1448, 1086],
-  "camera": {"_about": "", "fov": 30, "pitch": 32, "ppm": 68},
+  "camera": {
+    "_about": "Same painter, size and style as the lantern path, and the same lens and tilt fit it: through a 30 degree lens looking 32 degrees down, the painted gravestones by the path all come out the same height wherever they stand (by the climb, under the celtic cross, bottom right). The scale is a little smaller than the lantern path's 76, so that those gravestones are 1.2 m and she stands a head taller than them: at 68 pixels to the meter the footbridge deck is 1.3 to 1.7 m between its rails, the gate 2.8 m and its pillars 4 m, and she stands about 114 px tall where she comes in at the bottom left, 104 by the rune stones, 101 on the footbridge, 90 beside the gravestone at the bend (which is 70) and 79 at the foot of the gate steps.",
+    "fov": 30,
+    "pitch": 32,
+    "ppm": 68
+  },
   "ambient": {
     "sky": "#8b80d8",
     "ground": "#2b1b2e",
@@ -17,14 +22,14 @@
   "walk": [
     {
       "name": "the path",
-      "_what": "",
+      "_what": "One outline round the whole path, so there are no seams: in at the bottom left corner, where it leaves the painting for the Sable bridge, round the end of the low wall, past the big tree's roots and the nook in front of the second rune stone and its candle, along the reeds by the water, over the footbridge between its rails, up the climb and round the wide bend under the celtic cross to the landing below the gate steps. It keeps off the water, the rubble and the graves, but runs a little way behind the stone blocks along the bottom and the gravestone at the bend, so their cut-outs hide her feet as she passes. The footbridge's four posts stand just outside it: the far two behind the deck's far edge, the near two in front of its near edge.",
       "points": [
-        [0, 1086], [0, 962], [38, 957], [76, 950], [100, 938], [110, 908], [120, 876], [138, 848], [168, 836],
-        [204, 822], [238, 802], [268, 784], [302, 770], [342, 757], [366, 738], [374, 712], [366, 690], [350, 676],
-        [326, 670], [306, 664], [312, 655], [336, 654], [362, 653], [386, 657], [402, 667], [432, 676], [470, 680],
-        [520, 679], [560, 682], [600, 688], [630, 695], [648, 692], [700, 675], [742, 662], [758, 659], [766, 645],
-        [770, 625], [786, 600], [798, 580], [804, 555], [801, 525], [803, 498], [806, 476], [806, 450], [826, 432],
-        [860, 424], [900, 418], [950, 408], [995, 398], [1010, 390], [1012, 365], [1000, 346], [998, 320],
+        [0, 1086], [0, 962], [38, 957], [76, 950], [100, 938], [107, 912], [112, 882], [126, 858], [138, 848],
+        [168, 836], [204, 822], [238, 802], [268, 784], [302, 770], [342, 757], [366, 738], [374, 712], [366, 690],
+        [350, 676], [326, 670], [306, 664], [312, 655], [336, 654], [362, 653], [386, 657], [402, 667], [432, 676],
+        [470, 680], [520, 679], [560, 682], [600, 688], [630, 695], [648, 692], [700, 675], [742, 662], [758, 659],
+        [766, 645], [770, 625], [786, 600], [798, 580], [804, 555], [801, 525], [803, 498], [806, 476], [806, 450],
+        [826, 432], [860, 424], [900, 418], [950, 408], [995, 398], [1010, 390], [1012, 365], [1000, 346], [998, 320],
         [1006, 300], [1022, 286], [1050, 272], [1075, 259], [1096, 251], [1112, 247], [1230, 247], [1215, 254],
         [1190, 262], [1168, 275], [1150, 290], [1136, 302], [1138, 318], [1160, 332], [1190, 340], [1212, 348],
         [1216, 364], [1205, 392], [1185, 410], [1155, 422], [1120, 428], [1095, 433], [1086, 442], [1063, 446],
@@ -38,14 +43,14 @@
     },
     {
       "name": "the gate steps",
-      "_what": "",
+      "_what": "The three stone steps up to the gate, as a slope: about 30 cm up over 80 cm, going by the painted risers. Their bottom edge is the path's own, corner for corner, so there's no seam; the top stops at the shut gate.",
       "points": [[1112, 247, 0], [1230, 247, 0], [1238, 216, 0.3], [1142, 216, 0.3]]
     }
   ],
   "layers": [
     {
       "name": "footbridge, near rail",
-      "_what": "Posts 2 and 4 at the deck's near corners, the length of chain that hangs from post 4, and post 5 beside it.",
+      "_what": "The two posts at the deck's near corners, the length of chain hanging from the right-hand one, and the post beside it where the path comes off the bridge.",
       "base": [[720, 726], [859, 676]],
       "outline": [
         [[706, 762], [706, 680], [710, 671], [718, 668], [728, 670], [733, 678], [733, 762]],
@@ -170,7 +175,7 @@
     }
   ],
   "spots": {
-    "gloamwing": [295, 690, 3.6],
+    "gloamwing": [295, 690, 3.9],
     "gloamwing perch": [318, 730, 1.3],
     "nest": [1265, 790, 4.1],
     "hollowed bed": [505, 682],
@@ -178,10 +183,12 @@
     "rune stone": [700, 588],
     "footbridge": [750, 686],
     "moths": [[110, 728, 2.6], [215, 742, 3.2], [300, 712, 2.0], [175, 768, 1.6], [262, 700, 3.4]],
-    "moths away": [[250, 240, 1.2], [282, 234, 2.2], [318, 244, 1.4]]
+    "moths away": [[250, 240, 1.2], [282, 234, 2.2], [318, 244, 1.4]],
+    "moon": [250, 240, 3.5]
   },
   "herbs": [],
   "spawn": {"pixel": [60, 1066], "facing": "up"},
+  "footsteps": "step-stone",
   "arrivals": {
     "sable-bridge": {"pixel": [60, 1066], "walk": [170, 930], "facing": "up"}
   },
@@ -197,5 +204,7 @@
       "zone": [[1138, 212], [1240, 212], [1236, 232], [1126, 232]],
       "line": "The iron gate stays shut. Whatever's behind it can wait for another night."
     }
-  ]
+  ],
+  "_herbs": "No plain herbs here. The Hollow's one herb is the hollowed bed (see spots), a grey rotted bed of bogwick that the game plants at that spot; she cleans it with Moonlight and witchfire before she can pick it.",
+  "_spots": "[x, y] is a point on the ground in painting pixels. [x, y, h] is the ground point under something off the ground and how high above it it is, in meters: paint.toWorld(x, y) raised by h (not toWorld(x, y, h), which is where that pixel's ray reaches the height). gloamwing: B3's boss, hanging fat with light among the bones on the left tree's branch, over the rune stones (it shows at about (259, 430)). gloamwing perch: where it comes down to meet her, in front of the tree just off the path, at about its own hovering height (shows at about (307, 647)). nest: Inkblot's nest, in the crook where the right-hand tree's bone-hung branch leaves the trunk (shows at about (1317, 504)). hollowed bed: the rotted bed at the path's edge by the reeds, before the footbridge. gate: the foot of the shut gate, on the top step. rune stone: the one above the stream. footbridge: the middle of the deck. moths: where lamp-moths circle the bone-hung tree. moths away: over the river by the moon, where they stream off downriver once the Gloamwing is beaten (they show at about (242, 181), (269, 126) and (310, 175)). moon: in front of the painted moon, where the Gloamwing flies up and away once it's beaten (it shows at about (226, 64))."
 }

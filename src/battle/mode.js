@@ -25,6 +25,7 @@ import { glowSprite } from '../actors/kit.js';
 import { ENCOUNTERS, startEncounter, nextForm } from './encounters.js';
 import { Director } from './director.js';
 import { Fx } from './fx.js';
+import { freeGpu } from '../gpu.js';
 
 // The battle screen: one of the night's fights (docs/SLICE.md §2, tuned in docs/BALANCE.md) on its own painted
 // backdrop, with the 3D party on one side and the foes on the other, played out by the Director on Aethermoor's rules.
@@ -119,7 +120,7 @@ export async function createBattleMode({ canvas, renderer = null, audio, first =
     return a;
   }
   function clearStage() {
-    for (const o of [...world.children]) if (o.userData.actor) world.remove(o);
+    for (const o of [...world.children]) if (o.userData.actor) { world.remove(o); freeGpu(o); }
     $('labels')?.replaceChildren();
     cast.heroes = {};
     cast.foes = {};

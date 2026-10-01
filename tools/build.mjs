@@ -42,7 +42,7 @@ for (const page of PAGES) {
     target: 'es2020',
     legalComments: 'none',
     ...(page.files
-      ? { outdir: out, outbase: '.', assetNames: '[dir]/[name]', loader: { '.webp': 'file', '.png': 'file', '.ttf': 'file' } }
+      ? { outdir: out, outbase: '.', assetNames: '[dir]/[name]', loader: { '.webp': 'file', '.png': 'file', '.ttf': 'dataurl' } } // (the two pixel fonts ride in the page)
       : { loader: { '.webp': 'dataurl', '.png': 'dataurl', '.ttf': 'dataurl' } }),
   });
   if (page.files) {
@@ -53,7 +53,9 @@ for (const page of PAGES) {
       writeFileSync(f.path, f.contents);
     }
   }
-  const js = result.outputFiles.find((f) => f.path.endsWith('.js')).text.replace(/<\/script/gi, '<\\/script');
+  // (a one-file page's code comes back as esbuild's <stdout>; the game's beside its art, as a .js)
+  const code = page.files ? result.outputFiles.find((f) => f.path.endsWith('.js')) : result.outputFiles[0];
+  const js = code.text.replace(/<\/script/gi, '<\\/script');
   const html = readFileSync(page.html, 'utf8');
   const body = html.slice(html.indexOf('<!-- PAGE -->') + 13, html.indexOf('<!-- /PAGE -->')).trim();
   const script = `<script>${js}</script>`;

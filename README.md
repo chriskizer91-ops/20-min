@@ -1,11 +1,37 @@
-# Moonlight in the Aether: an FF9-style slice in the browser
+# Moonlight in the Aether: an FF9-style game in the browser
 
 A 20-40 minute game built the way Final Fantasy IX is built: painted backgrounds, 3D characters walking over
 them, and battles that cut to a separate scene. It merges your games: the Moonlight Witch and Wickhollow from
 *Follow Me Down Witch Way*, Aethermoor's Gloomfen, battle rules and loot, and Thareia's sunstone skiff, which
 flies her between the two towns over a painted map. Her party is the witch, Inkblot and Nettie. The story is in
-`docs/LORE.md`, the route in `docs/SLICE.md`. We're building it as small demos first, to get each piece looking
-right before the full build.
+`docs/LORE.md`, the route in `docs/SLICE.md`. It was built as small demos first, to get each piece looking right;
+now the pieces are joined into one game, `game.html`.
+
+## The game
+
+**`dist/game/`** is the whole night, title to ending (docs/SLICE.md §1 and §3):
+
+- **The title** and **the Opening**: Wickhollow's lanterns go out, one a night, and float down the Sable.
+- **Wickhollow**: her cottage (the hag stone, two moonwater, her armchair to rest in, her cauldron), the garden
+  (the gathering tutorial and the grey lavender bed), the square (Inkblot joins; Hilde swaps her Horseshoe charm
+  for a Heartsease Tonic; the well's moonwater) and the riverbank (Quill and his swap shop, Rosalind, the Magpie).
+- **The Gloamwood**: the lantern path (B1, Silas and his lanterns, the wayside kettle), the Sable bridge (B2, or
+  Wisp-Calm), and **the Hollow** (B3, the Gloamwing; Inkblot's nest; a Hollowed bed).
+- **The Magpie**: Quill's swap made, the Skiff Wakes, and the flight down the Sable, back and forth as she likes.
+- **Bogmire and the fen**: Gretch, Nettie's hut (the Middle Turn, a Hush Tea, and Nettie joins), the Murkway (B4,
+  Hag-Sight, a First Strike if she comes up behind them), the Long Boardwalk (B5 and the rest bench), and
+  Mother's Hollow: the Lantern Mother, Lights Out with Silas as a guest, and **the Ending**.
+
+Every fight is a real one: the field spins away into the battle screen and comes back after. The party's HP, MP,
+XP and levels carry from fight to fight; brews brewed at a cauldron are what she has to drink or throw; herbs she
+Gathers, relics Inkblot prises loose and drops come home in her basket. A lost fight costs nothing: she wakes at her
+last rest with everything she had, and the fight waits. The night saves whenever she changes screens, rests, brews,
+swaps or wins, and **Continue** on the title picks it up. **Menu** (or M) shows the party, what she keeps about
+her, and a line on what to do next.
+
+To play it, serve it: `npm run serve` and open http://localhost:8000/game.html, or `node tools/build.mjs game` and
+serve `dist/game/` with any static server. (It can't be double-clicked like the demos: it's a page and a folder of
+art, about 15 MB in all, and browsers won't hand art from `file://` to WebGL.)
 
 ## The demos
 
@@ -31,14 +57,18 @@ crowd him.
 
 ## Play it
 
-Open **`dist/wickhollow-square.html`** in a browser. It is one file of about 3 MB, with everything inside.
+The demos are one file each: open **`dist/wickhollow-square.html`** (or any other) in a browser. The game is served
+(see above).
 
 | | Keyboard | Touch or mouse |
 |---|---|---|
 | Walk | arrow keys or WASD | tap or click where to go |
 | Talk, next line | Space, Enter or E | tap the person, then tap the box |
-| Behind the scenes | B | the button, top right |
-| Show the layers | L | the button, top right |
+| The menu (the game) | M | the button, top right |
+| Hag-Sight (the Murkway) | H | the button, bottom left |
+| In a fight | arrow keys and Enter to pick a target, Escape to go back | tap a command, then a foe |
+| Behind the scenes | B | the button, top right (the demos) |
+| Show the layers | L | the button, top right (the demos) |
 
 **Bogmire** plays the same way. Walk into Nettie's door (the cottage with bottles in the window, on the left) to go
 inside; the gate at the bottom of her hut leads back out. On these wider paintings the arrow keys follow the screen.
@@ -78,12 +108,30 @@ the witch added as a hero (`vendor/aethermoor/src/data/witch.js`). Music and sou
 from Thareia's sound studio (`vendor/thareia-sfx/`) and music from Aethermoor's synth (`src/audio/synth.js`),
 following the "no recorded songs" decision in Thareia's notes.
 
+### One game from the pieces
+
+- **Areas** (`src/areas/`): Wickhollow, the Gloamwood, the Hollow and Bogmire, each a set of painted screens with
+  their casts (who and what is on each). An area asks a *host* for what it can't do itself: a fight, the cauldron,
+  Quill's shop, the skiff, a cut-scene, a rest, who's in the party (`src/areas/common.js`). The game is one host;
+  each town demo (`src/wickhollow.js`, `src/gloamwood.js`, `src/bogmire.js`) is another, which shows encounter cards.
+- **Screens** that take turns on one WebGL renderer: the field (`src/town.js`: every painted screen of the night,
+  joined by doors), the battle (`src/battle/mode.js`), the map (`src/airship/mode.js`), and the title with its
+  cut-scenes (`src/title/mode.js`, on its own 2D canvas). The brewing screen (`src/brew/ui.js`) and the swap shop
+  (`src/swap/ui.js`) open over the field.
+- **The night** (`src/game/state.js`): one plain object that saves as JSON: her bag (everything by Quill's catalogue
+  ids, `src/items.js`), the party's XP, HP and MP, the story's flags, each area's own record, and her last rest.
+- **The page** (`game.html`) is written by `tools/game-page.mjs` from `tools/game-shell.html` and the demo pages
+  whose screens the game uses, one `<template>` each, so the game and the demos share one look. Only the screen on
+  show is in the page, so their ids and styles never meet.
+- **The game** (`src/game/main.js`) runs it all: the title and New game or Continue, the swirl into a fight and the
+  result after, a lost fight's wake-up, the Skiff Wakes and the flight, the Middle Turn, the Ending, and the menu.
+
 ## Folders
 
 | Folder | What it holds |
 |---|---|
-| `dist/` | the built game: `wickhollow-square.html` to play, plus a copy without the `<html>` wrapper for hosts that add their own |
-| `src/` | the engine and the game |
+| `dist/` | the built demos (`wickhollow-square.html` and the rest, each with a copy without the `<html>` wrapper for hosts that add their own), and `dist/game/`, the whole game: `index.html` and its `art/` |
+| `src/` | the engine and the game: `areas/` (the places), `game/` (the night and the game), `battle/`, `airship/`, `title/`, `brew/`, `swap/`, `actors/` (the models) |
 | `scenes/` | one JSON file per painted screen: the camera, the walkmesh, the cut-outs, the lights and the exits |
 | `art/` | paintings (`backgrounds/`, `battle/`, `stills/`, `map/`), dialogue portraits, face sheets, effects and pixel fonts: from *Follow Me Down Witch Way*, Thareia, and art batches 1 and 2 (`docs/art-requests/`) |
 | `tools/` | build, dev server, screenshots, and `overlay.py`, which draws a scene file over its painting |
@@ -97,10 +145,11 @@ following the "no recorded songs" decision in Thareia's notes.
 ```
 npm install            # three.js and esbuild
 npm run serve          # play from source at http://localhost:8000, rebuilding as you edit
-npm run build          # build every demo into dist/ (node tools/build.mjs airship builds one)
-npm test               # rule tests for the camera and the walkmesh
+npm run build          # build the game and every demo into dist/ (node tools/build.mjs game builds one)
+npm test               # rule tests: the camera and walkmesh, balance, brewing, swaps, the game's record of the night
 node --test vendor/aethermoor/test/*.test.mjs   # Aethermoor's battle and loot tests
 npm run test:browser   # build, then play the demos in headless Chromium
+node tests/browser-game.mjs   # play the whole game through, title to ending (slow: about 15 minutes)
 python3 tools/overlay.py scenes/wickhollow-square.json out.png   # check a scene by eye (needs Pillow)
 ```
 

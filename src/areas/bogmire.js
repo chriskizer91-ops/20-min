@@ -78,6 +78,9 @@ export function createBogmire(host) {
     middle: false, // the Middle Turn has been told
   });
   const cleaned = flagSet(night.cleaned), met = flagSet(night.met), won = flagSet(night.won);
+  // A fight met but never won (the night was saved, or the page closed, in the middle of it) waits for her again
+  for (const id of [...night.met]) if (!won.has(id)) forget(id);
+  function forget(id) { const i = night.met.indexOf(id); if (i >= 0) night.met.splice(i, 1); }
   const flags = host.flags ?? {};
   const game = !!host.game;
   const herbTotal = () => (night.fen ? ALL_HERBS : TOWN_HERBS);
@@ -369,6 +372,20 @@ export function createBogmire(host) {
       const faceY = 2.06 * scene.lanternMother.scale;
       const portrait = modelPortrait(field.stage.renderer, mother, { at: [0, faceY - 0.02, 0], from: [0.38, faceY + 0.02, 1.25], fov: 24 });
       const say = (text, mood = 'calm', extra = {}) => ({ say: text, face: portrait(mood), mood, ...extra });
+      // After the Ending: the veil is off, the lamp is down, and she's sitting with her tea
+      if (flags.ending) {
+        mother.dropRelic?.('veil');
+        mother.dropRelic?.('lantern');
+        field.things.push({
+          id: 'lantern-mother', name: 'The Lantern Mother', actor: mother, pos: mother.root.position, voice: 7,
+          lines: {
+            first: [say('They got home. Every one of them. Somebody should have told me a hundred years ago.', 'rest'), say('The tea has gone cold. I find I don\'t mind.', 'calm')],
+            again: [say('Go on home, little witch. The lights will find their own way now.', 'rest')],
+          },
+        });
+        field.fight = null;
+        return;
+      }
       field.things.push(
         {
           id: 'lantern-mother', name: 'The Lantern Mother', actor: mother, pos: mother.root.position, voice: 7,
@@ -488,7 +505,7 @@ export function createBogmire(host) {
     const result = await (host.encounter?.(id, { field, card: F, firstStrike }) ?? 'card');
     if (result === 'lost') {
       // She woke at her last rest; the fight waits for her
-      night.met.splice(night.met.indexOf(id), 1);
+      forget(id);
       return;
     }
     field.player.actor.setMood?.('calm');

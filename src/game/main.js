@@ -78,6 +78,22 @@ const fade = {
 };
 const busy = (on) => { $('busy').hidden = !on; };
 
+// ---------------------------------------------------------------- reloading the page
+// The title at the end of the night, and Quit to the title, reload the page; what comes next rides in sessionStorage.
+function reloadTo(next) {
+  try { sessionStorage.setItem('moonlight-in-the-aether:next', next); } catch { /* the title asks again */ }
+  location.reload();
+}
+function takeNext() {
+  try {
+    const next = sessionStorage.getItem('moonlight-in-the-aether:next');
+    sessionStorage.removeItem('moonlight-in-the-aether:next');
+    return next;
+  } catch { return null; }
+}
+// When the page is published again while someone plays, the viewer reloads it and hands back what the old page kept
+const hot = { data: null };
+
 // ---------------------------------------------------------------- the game
 const game = {
   state: null, audio: null, renderer: null, town: null, title: null, battle: null, map: null, areas: null,
@@ -106,9 +122,14 @@ async function boot() {
   game.title = await createTitleMode({ canvas: $('cut-stage'), audio, game: true });
   game.current = game.title;
   const saved = G.load();
-  const choice = location.hash === '#continue' && saved ? 'continue' : location.hash === '#new' ? 'new' : await game.title.menu({ canContinue: !!saved });
-  history.replaceState(null, '', location.pathname + location.search);
-  if (choice === 'continue' && saved) {
+  // Straight back into the night: after a republish of the page (the viewer's hot reload carries the night over), or
+  // after Continue or New game from the title at the end
+  const carried = hot.data?.state;
+  const next = takeNext();
+  const choice = carried ? 'carried' : next === 'continue' && saved ? 'continue' : next === 'new' ? 'new' : await game.title.menu({ canContinue: !!saved });
+  if (choice === 'carried') {
+    game.state = { ...G.newGame(), ...carried };
+  } else if (choice === 'continue' && saved) {
     game.state = saved;
   } else {
     G.clearSave();
@@ -132,13 +153,10 @@ async function startField() {
   const images = Object.assign({}, ...areas.map((a) => a.images));
   const town = (game.town = new Town({ screens, images, footsteps: 'step-stone', renderer: game.renderer, canvas: $('stage') }));
   const where = state.where;
-  await town.start(where.screen, where.pixel ? { pixel: where.pixel, heading: where.heading } : null);
+  // Her things are the night's: the field starts with them (so a picked herb stays picked on the first screen too)
+  await town.start(where.screen, where.pixel ? { pixel: where.pixel, heading: where.heading } : null,
+    { bag: state.bag, picked: state.picked, visits: state.visits, seenHerbs: state.seenHerbs });
   const field = town.field;
-  // Her things are the night's
-  field.bag = state.bag;
-  field.picked = new Set(state.picked);
-  field.visits = new Map(Object.entries(state.visits));
-  field.seenHerbs = new Set(state.seenHerbs);
   field.basketLabel = () => `${basketUsed(state.bag)} of ${basketSlots(state.bag)} slots`;
   field.onBag = () => save();
   if (Object.keys(state.bag).length) field.showBasket();
@@ -533,8 +551,7 @@ async function ending() {
   save();
   // The title again: Continue walks her back into the night, with the lights gone home
   const choice = await title.menu({ canContinue: true });
-  location.hash = choice === 'continue' ? '#continue' : '#new';
-  location.reload();
+  reloadTo(choice === 'continue' ? 'continue' : 'new');
 }
 
 // ---------------------------------------------------------------- the menu: the party, and what she keeps
@@ -559,8 +576,7 @@ function bindMenu() {
   $('game-menu-close').addEventListener('click', close);
   $('game-menu-quit').addEventListener('click', () => {
     save();
-    location.hash = '';
-    location.reload();
+    reloadTo('title');
   });
   addEventListener('keydown', (e) => {
     if (showing !== 'field' || e.target.closest?.('input, textarea')) return;
@@ -588,8 +604,25 @@ function bindMenu() {
       return li;
     }));
     const mins = Math.round(state.playtime / 60);
-    $('menu-note').textContent = `${state.rest?.name ? `Last rest: ${state.rest.name}. ` : ''}${mins ? `${mins} minute${mins === 1 ? '' : 's'} into the night.` : ''}`;
+    $('menu-note').textContent = `${nextStep(state)} ${state.rest?.name ? `Last rest: ${state.rest.name}.` : ''}${mins ? ` ${mins} minute${mins === 1 ? '' : 's'} into the night.` : ''}`;
   }
+}
+
+// What she'd do next, in her own words: the night's route (docs/SLICE.md §1), from what's happened so far
+function nextStep(state) {
+  const f = state.flags, A = state.areas, has = (id) => (state.bag[id] ?? 0) > 0;
+  if (f.ending) return 'The lights have gone home. The night is hers to wander.';
+  if (!has('moonwater') && !A.wickhollow?.tutorial) return 'Next: my worktable and my chest, then the garden.';
+  if (!state.party.includes('inkblot')) return 'Next: the square. Somebody there has been carrying lights home.';
+  if (!A.gloamwood?.thanked) return has('lantern-oil') ? 'Next: Silas, on the lantern path, with his Lantern Oil.' : 'Next: Lantern Oil for Silas (moonpetal and bogwick, at a cauldron), down the lane on the lantern path.';
+  if (!f.b3) return 'Next: the Hollow, over the Sable bridge, where the moths gather. Wisp-Calm (lavender and wisp-sprout) gets past the wisps.';
+  if (!f.skiff) return has('warming-balm') ? "Next: Quill, at the jetty: a Warming Balm and Silas's flame for the Magpie." : "Next: a Warming Balm for Quill's cold hands (ember-star lily and glowcap), then his swap at the jetty.";
+  if (!state.party.includes('nettie')) {
+    if (!A.bogmire) return 'Next: down the Sable after the lights, in the Magpie, from the jetty.';
+    return A.bogmire.asked ? "Next: a Hush Tea for Nettie (lavender and silver mugwort), in her hut or anyone's cauldron." : "Next: Nettie's hut, the one with the bottles in the window.";
+  }
+  if (!state.fights.B5) return 'Next: out along the Long Boardwalk, past the mast. Rest at the bench under the lamp-post.';
+  return "Next: Mother's Hollow, at the end of the boardwalk. Thrown moonwater and Nettie's jars are Tide: she's weak to it.";
 }
 
 // The time she's spent in the night, counted while the page is open
@@ -601,4 +634,12 @@ function report(err) {
   if (box && box.hidden) { box.hidden = false; box.textContent = `Something went wrong: ${err.message}`; }
 }
 
-boot().catch(report);
+// A republish carries the night over: the old page hands over its record, and the new one starts from it
+window.claude?.hot?.snapshot?.(() => {
+  if (!game.state || !game.town) return {};
+  save();
+  return { state: game.state };
+});
+const start = (data) => { hot.data = data ?? {}; boot().catch(report); };
+if (window.claude?.hot?.ready) window.claude.hot.ready(start);
+else start(window.claude?.hot?.data ?? {});
