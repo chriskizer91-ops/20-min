@@ -1,10 +1,11 @@
-// Build each page into one HTML file you can double-click: node tools/build.mjs [name]
+// Build each page into one HTML file you can double-click: node tools/build.mjs [name] [--full]
 //   dist/<name>.html           the page, everything inlined (art, fonts, code)
 //   dist/<name>.fragment.html  the same page without <html>/<head>/<body>, for hosts that add their own
 // The whole game (dist/game.html) holds every painting of the night. At full quality that's over the 16 MB a published
 // page can be, so its paintings are first made a little smaller by tools/compact-art.py (Pillow), into
 // node_modules/.cache/compact-art/, and the game reads those copies; the demos use the originals. game.html itself is
-// written first, by tools/game-page.mjs.
+// written first, by tools/game-page.mjs. `node tools/build.mjs game --full` writes dist/game-full.html instead, with the
+// original paintings: about 20 MB, too big to publish, but fine to open from a file (it isn't kept in git).
 import * as esbuild from 'esbuild';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -39,13 +40,15 @@ const compactArt = {
   },
 };
 
-const only = process.argv[2];
+const only = process.argv.slice(2).find((a) => !a.startsWith('--'));
+const full = process.argv.includes('--full');
 mkdirSync('dist', { recursive: true });
 if (!only || only === 'game') gamePage();
 for (const page of PAGES) {
   if (only && page.name !== only) continue;
   if (!existsSync(page.html) || !existsSync(page.entry)) { if (only) console.log(`${page.name}: ${page.html} or ${page.entry} doesn't exist yet`); continue; }
-  if (page.compact) {
+  const name = page.compact && full ? `${page.name}-full` : page.name;
+  if (page.compact && !full) {
     try { execFileSync('python3', ['tools/compact-art.py'], { stdio: 'inherit' }); } catch { console.log('compact-art: not run (python3 and Pillow are needed); using the full-size art'); }
   }
   const result = await esbuild.build({
@@ -57,13 +60,13 @@ for (const page of PAGES) {
     target: 'es2020',
     legalComments: 'none',
     loader: { '.webp': 'dataurl', '.png': 'dataurl', '.ttf': 'dataurl' },
-    plugins: page.compact ? [compactArt] : [],
+    plugins: page.compact && !full ? [compactArt] : [],
   });
   const js = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
   const html = readFileSync(page.html, 'utf8');
   const body = html.slice(html.indexOf('<!-- PAGE -->') + 13, html.indexOf('<!-- /PAGE -->')).trim();
   const script = `<script>${js}</script>`;
-  const full = `<!doctype html>
+  const doc = `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -71,8 +74,8 @@ ${body}
 ${script}
 </html>
 `;
-  writeFileSync(`dist/${page.name}.html`, full);
-  writeFileSync(`dist/${page.name}.fragment.html`, `${body}\n${script}\n`);
-  const size = Buffer.byteLength(full);
-  console.log(`dist/${page.name}.html  ${(size / 1e6).toFixed(2)} MB${size > LIMIT ? `  (over the ${LIMIT / 1e6} MB a published page can be)` : ''}`);
+  writeFileSync(`dist/${name}.html`, doc);
+  writeFileSync(`dist/${name}.fragment.html`, `${body}\n${script}\n`);
+  const size = Buffer.byteLength(doc);
+  console.log(`dist/${name}.html  ${(size / 1e6).toFixed(2)} MB${size > LIMIT ? `  (over the ${LIMIT / 1e6} MB a published page can be)` : ''}`);
 }

@@ -31,7 +31,7 @@ The demos still build and pass their tests: they're the same code (the areas and
 - **Commits:** end every commit message with the two trailer lines the session gives you. Put no model names in commits. Don't open a PR unless asked.
 - **Stop hook:** it wants a clean tree. Commit work-in-progress snapshots when it asks, after checking that the pages bundle and `npm test` passes.
 - **The user:** likes building in pieces. They get demos and the game as published Artifacts; republish the same file path to keep the link.
-- **Publishing the game:** `dist/game.fragment.html`, one file like the demos. Keep it under 16 MB: `node tools/build.mjs game` prints its size and says if it's over. Don't go back to art as separate files beside the page: the user's phone viewer didn't load them (the title broke).
+- **Publishing the game:** `dist/game.fragment.html`, one file like the demos. Keep it under 16 MB: `node tools/build.mjs game` prints its size and says if it's over. Don't go back to art as separate files beside the page: the user's phone viewer didn't load them (the title broke). The user also has the full-quality file (`--full`), sent as a download: a sent file has no size limit, a published page does.
 - **Publishing brewing:** `dist/brewing.fragment.html` is rejected by the Artifact publisher as a "review page". The cause wasn't found, so it's unpublished; everything else publishes fine.
 
 ## The game and the demos
@@ -55,6 +55,7 @@ The demos still build and pass their tests: they're the same code (the areas and
 
 ```
 node tools/build.mjs [name]        # build the game and all demos, or one ('game' writes game.html, compacts the paintings, then dist/game.html)
+node tools/build.mjs game --full   # dist/game-full.html: the game with the original paintings, about 19 MB (too big to publish; not kept in git)
 node tools/serve.mjs               # dev server with live rebuild: http://localhost:8000/game.html is the game
 npm test                           # rule tests: scenes, balance, brewing, swaps, the game's state (+ vendor: node --test vendor/aethermoor/test/*.test.mjs)
 node tests/browser-game.mjs        # the whole game, title to ending (serves dist/game.html itself; 10-15 minutes)

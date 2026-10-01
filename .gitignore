@@ -1,2 +1,4 @@
 node_modules/
 dev/
+dist/game-full.html
+dist/game-full.fragment.html
