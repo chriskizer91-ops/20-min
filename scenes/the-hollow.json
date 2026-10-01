@@ -1,0 +1,201 @@
+{
+  "_about": "The Hollow (docs/SLICE.md screen 7), Witch Way's own painting (witch_game_assets/backgrounds/hollow.webp): a marsh graveyard in the Gloamwood, at the end of the way from the Sable bridge, which is off the bottom left. The cobbles come in at the bottom left corner, run up past the rubble and the bone-hung tree with its rune stones, over a short footbridge across the black stream, and wind up past the graves to three steps and an iron gate between two lit lanterns, which stays shut. The Gloamwing (B3) hangs in the bone-hung tree on the left; Inkblot's nest is in the tree on the right. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/the-hollow.json out.png",
+  "id": "the-hollow",
+  "title": "The Hollow",
+  "subtitle": "The Gloamwood",
+  "image": "art/backgrounds/the-hollow.webp",
+  "size": [1448, 1086],
+  "camera": {"_about": "", "fov": 30, "pitch": 32, "ppm": 68},
+  "ambient": {
+    "sky": "#8b80d8",
+    "ground": "#2b1b2e",
+    "hemi": 1.3,
+    "moon": "#d4cdff",
+    "moonlight": 1.35,
+    "moonFrom": [-8, 12, -8]
+  },
+  "walk": [
+    {
+      "name": "the path",
+      "_what": "",
+      "points": [
+        [0, 1086], [0, 962], [38, 957], [76, 950], [100, 938], [110, 908], [120, 876], [138, 848], [168, 836],
+        [204, 822], [238, 802], [268, 784], [302, 770], [342, 757], [366, 738], [374, 712], [366, 690], [350, 676],
+        [326, 670], [306, 664], [312, 655], [336, 654], [362, 653], [386, 657], [402, 667], [432, 676], [470, 680],
+        [520, 679], [560, 682], [600, 688], [630, 695], [648, 692], [700, 675], [742, 662], [758, 659], [766, 645],
+        [770, 625], [786, 600], [798, 580], [804, 555], [801, 525], [803, 498], [806, 476], [806, 450], [826, 432],
+        [860, 424], [900, 418], [950, 408], [995, 398], [1010, 390], [1012, 365], [1000, 346], [998, 320],
+        [1006, 300], [1022, 286], [1050, 272], [1075, 259], [1096, 251], [1112, 247], [1230, 247], [1215, 254],
+        [1190, 262], [1168, 275], [1150, 290], [1136, 302], [1138, 318], [1160, 332], [1190, 340], [1212, 348],
+        [1216, 364], [1205, 392], [1185, 410], [1155, 422], [1120, 428], [1095, 433], [1086, 442], [1063, 446],
+        [1042, 441], [1036, 468], [1000, 476], [962, 491], [930, 504], [908, 518], [908, 550], [910, 576], [904, 598],
+        [892, 608], [872, 612], [848, 618], [845, 645], [845, 668], [838, 677], [800, 693], [760, 706], [736, 714],
+        [728, 711], [720, 710], [711, 712], [705, 720], [700, 730], [690, 748], [676, 766], [650, 782], [612, 785],
+        [586, 784], [552, 781], [520, 779], [490, 784], [460, 790], [430, 796], [400, 806], [370, 816], [345, 829],
+        [325, 846], [305, 868], [288, 890], [270, 912], [252, 930], [243, 942], [240, 1000], [226, 1018], [190, 1024],
+        [152, 1026], [143, 1034], [143, 1086]
+      ]
+    },
+    {
+      "name": "the gate steps",
+      "_what": "",
+      "points": [[1112, 247, 0], [1230, 247, 0], [1238, 216, 0.3], [1142, 216, 0.3]]
+    }
+  ],
+  "layers": [
+    {
+      "name": "footbridge, near rail",
+      "_what": "Posts 2 and 4 at the deck's near corners, the length of chain that hangs from post 4, and post 5 beside it.",
+      "base": [[720, 726], [859, 676]],
+      "outline": [
+        [[706, 762], [706, 680], [710, 671], [718, 668], [728, 670], [733, 678], [733, 762]],
+        [[848, 712], [847, 622], [851, 615], [860, 612], [868, 615], [872, 622], [871, 712]],
+        [[843, 638], [850, 641], [831, 680], [824, 677]],
+        [[878, 676], [877, 615], [881, 608], [889, 606], [896, 609], [899, 616], [898, 676]]
+      ]
+    },
+    {
+      "name": "the stone blocks by the footbridge",
+      "base": [[578, 876], [762, 868]],
+      "outline": [
+        [
+          [577, 876], [578, 790], [584, 778], [596, 772], [640, 768], [668, 770], [676, 763], [700, 761], [744, 762],
+          [752, 770], [760, 780], [762, 868]
+        ]
+      ]
+    },
+    {
+      "name": "the blocks in the bottom left corner",
+      "base": [[143, 1086], [452, 1086]],
+      "outline": [
+        [
+          [143, 1086], [143, 1012], [152, 1004], [190, 1000], [232, 1001], [240, 996], [240, 930], [252, 922],
+          [272, 922], [306, 934], [312, 952], [348, 960], [370, 972], [382, 994], [388, 1014], [418, 1020],
+          [446, 1036], [452, 1086]
+        ]
+      ]
+    },
+    {
+      "name": "the low wall, left",
+      "base": [[0, 921], [104, 917]],
+      "outline": [[[0, 921], [0, 862], [30, 858], [70, 860], [104, 866], [106, 918]]]
+    },
+    {
+      "name": "the gravestone by the path",
+      "base": [1063, 503],
+      "outline": [[[1040, 506], [1040, 448], [1048, 437], [1063, 432], [1078, 436], [1086, 448], [1087, 506]]]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "the lantern on the gate's left pillar",
+      "pixel": [1122, 144],
+      "base": [1120, 228],
+      "color": "#ffb45e",
+      "intensity": 4.5,
+      "distance": 5,
+      "glow": 0.6
+    },
+    {
+      "_what": "the lantern on the gate's right side",
+      "pixel": [1255, 171],
+      "base": [1252, 230],
+      "color": "#ffb45e",
+      "intensity": 4.5,
+      "distance": 5,
+      "glow": 0.6
+    },
+    {
+      "_what": "the rune on the stone under the left tree",
+      "pixel": [271, 572],
+      "base": [262, 645],
+      "color": "#7dffa8",
+      "intensity": 1.4,
+      "distance": 3,
+      "glow": 0.45
+    },
+    {
+      "_what": "the green candle between the two stones",
+      "pixel": [321, 626],
+      "base": [321, 650],
+      "color": "#9dffb8",
+      "intensity": 0.9,
+      "distance": 2.5,
+      "glow": 0.3
+    },
+    {
+      "_what": "the rune on the stone above the stream",
+      "pixel": [695, 535],
+      "base": [700, 588],
+      "color": "#7dffa8",
+      "intensity": 1.3,
+      "distance": 3,
+      "glow": 0.45
+    },
+    {
+      "_what": "the rune on the big stone, bottom right",
+      "pixel": [1280, 845],
+      "base": [1285, 940],
+      "color": "#7dffa8",
+      "intensity": 1.3,
+      "distance": 3,
+      "glow": 0.45
+    },
+    {
+      "_what": "a green light hanging in the left tree, over the rune stones",
+      "pixel": [275, 482],
+      "base": [280, 662],
+      "color": "#7dffa8",
+      "intensity": 0.7,
+      "distance": 2.5,
+      "glow": 0.3
+    },
+    {
+      "_what": "another, further along the same branch",
+      "pixel": [360, 423],
+      "base": [368, 664],
+      "color": "#7dffa8",
+      "intensity": 0.6,
+      "distance": 2.5,
+      "glow": 0.28
+    },
+    {
+      "_what": "the green light hanging in the right-hand tree",
+      "pixel": [1276, 622],
+      "base": [1270, 790],
+      "color": "#7dffa8",
+      "intensity": 0.7,
+      "distance": 2.5,
+      "glow": 0.3
+    }
+  ],
+  "spots": {
+    "gloamwing": [295, 690, 3.6],
+    "gloamwing perch": [318, 730, 1.3],
+    "nest": [1265, 790, 4.1],
+    "hollowed bed": [505, 682],
+    "gate": [1188, 232, 0.3],
+    "rune stone": [700, 588],
+    "footbridge": [750, 686],
+    "moths": [[110, 728, 2.6], [215, 742, 3.2], [300, 712, 2.0], [175, 768, 1.6], [262, 700, 3.4]],
+    "moths away": [[250, 240, 1.2], [282, 234, 2.2], [318, 244, 1.4]]
+  },
+  "herbs": [],
+  "spawn": {"pixel": [60, 1066], "facing": "up"},
+  "arrivals": {
+    "sable-bridge": {"pixel": [60, 1066], "walk": [170, 930], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "the Sable bridge",
+      "to": "sable-bridge",
+      "zone": [[0, 962], [24, 962], [24, 1062], [143, 1062], [143, 1086], [0, 1086]],
+      "line": "Back to the Sable bridge."
+    },
+    {
+      "name": "the iron gate",
+      "zone": [[1138, 212], [1240, 212], [1236, 232], [1126, 232]],
+      "line": "The iron gate stays shut. Whatever's behind it can wait for another night."
+    }
+  ]
+}

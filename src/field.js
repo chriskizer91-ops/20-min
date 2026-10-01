@@ -7,31 +7,31 @@ import { ring } from './paint.js';
 import { turnToward } from './actors/kit.js';
 import { HERBS, SQUARE_HERBS } from './data/herbs.js';
 import { createHerb } from './actors/herbs.js';
+import { sortBag, nameOf, iconOf, kindOf } from './items.js';
 
 const REACH = 1.15; // meters: how close she has to be to talk to someone
 const $ = (id) => document.getElementById(id);
-
-// Things she carries that aren't herbs, with a little painted icon for the basket.
-const ITEMS = {
-  moonwater: {
-    name: 'Moonwater',
-    icon: `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" shape-rendering="crispEdges"><path fill="#2a1a33" d="M5 1h4v2H8v1h2v1h1v7H3V5h1V4h2V3H5z"/><path fill="#c9b27a" d="M6 2h2v1H6z"/><path fill="#dfe8ff" d="M4 6h6v5H4z"/><path fill="#8fb4ff" d="M4 8h6v3H4z"/><path fill="#fff" d="M5 6h1v2H5z"/></svg>')}`,
-  },
-};
 
 // Everything that happens on a field screen: the people, talking, tapping to walk, gathering, the exits, and
 // the buttons for looking behind the scenes. Who and what is on a screen comes from its cast: the square's is
 // SQUARE, at the bottom of this file. A town with several screens (src/town.js) calls enter() with each
 // screen's own cast when she walks through a door; the basket, the sound and what she's already picked carry over.
+//
+// Her things are one bag, { id: count }, by the ids in src/items.js (herbs, brews, moonwater, charms, found things):
+// count(id), has(id, n), give(id, n), take(id, n). A game keeps its own bag and hands it over (field.bag = ...).
+//
+// What a cast can have: enter(field), update(field, dt, time), leave(field), labels(field), music, ambience,
+// herbTotal, and locked(exit, field), which returns a line to say (or true) while an exit's way on is shut.
 export class Field {
-  constructor({ world, walk, paint, stage, player, scene, cast = SQUARE }) {
-    Object.assign(this, { stage, player });
+  constructor({ world, walk, paint, stage, player, scene, cast = SQUARE, followers = [] }) {
+    Object.assign(this, { stage, player, followers });
+    this.from = null; // the screen she came from
     this.audio = createSound();
     this.talking = null;
     this.moved = false;
     this.time = 0;
-    this.basket = {}; // herbs, by kind
-    this.items = {}; // everything else she carries (moonwater)
+    this.bag = {}; // everything she carries, by item id (src/items.js)
+    this.seenHerbs = new Set(); // kinds she's picked before (the first of each gets its note)
     this.picked = new Set(); // herbs already gathered, so they stay gone when she comes back to a screen
     this.visits = new Map(); // how often she's spoken to someone with an id, whichever screen they're on
     this.enter({ world, walk, paint, scene }, cast);
@@ -58,14 +58,14 @@ export class Field {
     this.nearby = null;
     this.herbTotal = cast.herbTotal ?? 0;
     this.sounds = (cast.ambience ?? []).map((a) => ({ ...a, wait: a.first }));
-    cast.enter(this);
-    for (const t of this.things) t.visits ??= 0;
     // An exit she's standing in when she arrives (the door she came through) waits until she's stepped out of it.
     const foot = paint.toPixel(this.player.pos);
     this.exits = scene.exits.map((e) => {
       const zone = ring(e.zone);
       return { ...e, zone, inside: pointInPolygon(foot.x, foot.y, zone) };
     });
+    cast.enter(this);
+    for (const t of this.things) t.visits ??= 0;
     // Where the labels sit behind the scenes
     const cam = paint.camera;
     const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
@@ -78,6 +78,7 @@ export class Field {
 
   leave() {
     if (this.talking) this.endTalk();
+    this.cast.leave?.(this);
     this.world.remove(this.group);
     this.walk.obstacles.length = 0;
     this.player.path = null;
@@ -158,6 +159,7 @@ export class Field {
     let pinch = 0, downAt = null;
     canvas.addEventListener('pointerdown', (e) => {
       this.audio.unlock();
+      if (this.paused) return;
       canvas.setPointerCapture(e.pointerId);
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       downAt = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -201,9 +203,10 @@ export class Field {
     }, { passive: false });
   }
 
-  // Tap: talk if a dialogue is open; walk to a person and talk; or walk to the spot.
+  // Tap: talk if a dialogue is open; walk to a person and talk; or walk to the spot. (Not while another screen has
+  // the canvas: paused.)
   tap(x, y) {
-    if (this.locked) return;
+    if (this.locked || this.paused) return;
     if (this.talking) return this.advance();
     if (this.stage.revealing) return;
     this.noteMoved();
@@ -331,42 +334,55 @@ export class Field {
     this.leaving = [...(this.leaving ?? []), thing];
     this.picked.add(thing.id);
     this.glints.burst(thing.pos.clone().setY(thing.pos.y + 0.2), 22);
-    const first = !this.basket[thing.herb];
-    this.basket[thing.herb] = (this.basket[thing.herb] ?? 0) + 1;
-    this.showBasket(thing.herb);
+    const first = !this.seenHerbs.has(thing.herb);
+    this.seenHerbs.add(thing.herb);
+    this.bag[thing.herb] = this.count(thing.herb) + 1;
+    this.changed(thing.herb);
     this.toast(first ? herb.note : `${herb.name} went into the basket.`, 'shard-pickup');
     this.player.actor.setMood?.('happy');
     setTimeout(() => !this.talking && this.player.actor.setMood?.('calm'), 1400);
   }
 
-  // Something that isn't an herb goes into the basket (three moonwater from Nettie's rain-butt).
-  give(item, n = 1) {
-    this.items[item] = (this.items[item] ?? 0) + n;
-    this.showBasket(item);
-    this.audio.sfx('shard-pickup');
+  // Her things: how many of something she has, and things going in and out of the basket
+  count(id) { return this.bag[id] ?? 0; }
+  has(id, n = 1) { return this.count(id) >= n; }
+  give(id, n = 1, sound = 'shard-pickup') {
+    this.bag[id] = this.count(id) + n;
+    this.changed(id);
+    if (sound) this.audio.sfx(sound);
+  }
+  take(id, n = 1) {
+    const left = this.count(id) - n;
+    if (left > 0) this.bag[id] = left;
+    else delete this.bag[id];
+    this.changed();
+  }
+  // After any change to the bag: the game hears of it (onBag), and the basket shows it
+  changed(fresh) {
+    this.onBag?.(fresh);
+    this.showBasket(fresh);
   }
 
   showBasket(fresh) {
     const box = $('basket');
     box.hidden = false;
     const list = $('basket-list');
-    const row = (key, n, icon, name) => {
+    const row = (key, n) => {
       const li = document.createElement('li');
       if (key === fresh) li.className = 'fresh';
       const img = document.createElement('img');
-      img.src = icon;
+      img.src = iconOf(key);
       img.alt = '';
       const label = document.createElement('span');
-      label.textContent = `${name} ×${n}`;
+      label.textContent = n > 1 || kindOf(key) !== 'charm' ? `${nameOf(key)} ×${n}` : nameOf(key);
       li.append(img, label);
       return li;
     };
-    list.replaceChildren(
-      ...Object.entries(this.basket).map(([key, n]) => row(key, n, HERBS[key].icon, HERBS[key].name)),
-      ...Object.entries(this.items).map(([key, n]) => row(key, n, ITEMS[key].icon, ITEMS[key].name)),
-    );
-    const total = Object.values(this.basket).reduce((a, b) => a + b, 0);
-    $('basket-count').textContent = `${total} of ${this.herbTotal}`;
+    list.replaceChildren(...sortBag(this.bag).map(([key, n]) => row(key, n)));
+    $('basket-count').textContent = this.basketLabel?.() ?? `${this.herbsCarried()} of ${this.herbTotal}`;
+  }
+  herbsCarried() {
+    return Object.entries(this.bag).reduce((a, [id, n]) => a + (kindOf(id) === 'herb' ? n : 0), 0);
   }
 
   endTalk() {
@@ -436,8 +452,10 @@ export class Field {
     for (const e of this.exits) {
       const inside = pointInPolygon(foot.x, foot.y, e.zone);
       if (inside && !e.inside) {
-        if (e.to && this.onExit) this.onExit(e);
-        else this.toast(e.line);
+        const open = e.to && this.hasScreen?.(e.to) !== false;
+        const shut = open && (this.cast.locked?.(e, this) || e.locked);
+        if (open && !shut && this.onExit) this.onExit(e);
+        else this.toast(typeof shut === 'string' ? shut : e.line);
       }
       e.inside = inside;
     }
@@ -654,8 +672,9 @@ export function pointInPolygon(x, y, pts) {
 // ---------------------------------------------------------------- the Wickhollow square
 
 // Who and what is in the square: Hilde at her anvil, Agnes knitting by the chapel, Inkblot, the well, the chapel
-// door, Quill's stall, and the source game's herb patches.
-const SQUARE = {
+// door, Quill's stall, and the source game's herb patches. (Wickhollow's own square, src/areas/wickhollow.js, starts
+// from this one.)
+export const SQUARE = {
   music: 'wickhollow',
   // Night sounds: crickets now and then, and once in a while an owl in the Gloamwood
   ambience: [{ sfx: 'crickets', first: 3, gap: 6, spread: 6 }, { sfx: 'owl', first: 20, gap: 25, spread: 30 }],
@@ -723,7 +742,7 @@ const SQUARE = {
 
 // What people say. Hilde's, Agnes's and Inkblot's first lines are from Follow Me Down Witch Way's
 // dialogue.json; the rest are written for this square. Lines with no name are the witch's own thoughts.
-const DIALOGUE = {
+export const DIALOGUE = {
   hilde: {
     first: [
       "Ha! Evening, witch! Mind the soot. I've hammered all night, and my heart won't settle!",

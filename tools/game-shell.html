@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- game.html is written by tools/game-page.mjs from this shell and the demo pages: edit this, not game.html -->
+<!-- PAGE -->
+<title>Moonlight in the Aether</title>
+<style>
+  /* The game's page: one WebGL canvas that the field, the battles and the map take turns to draw on, the title's
+     own canvas, the violet fade between screens and the swirl into a battle. Each screen's HUD is a <template> below
+     (with its own styles), put into the page while that screen is on show. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --hp: #7ed98c;
+    --mp: #8fb0ff;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  body.mode-title #stage { visibility: hidden; }
+
+  /* Between screens: a short fade to violet, not black (docs/SLICE.md §5) */
+  #fade { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.45s ease-in; z-index: 40;
+    background: radial-gradient(ellipse at 50% 45%, #3b1a52, #160a22 75%); }
+  #fade.on { opacity: 1; transition: opacity 0.45s ease-out; }
+  #fade.slow, #fade.slow.on { transition-duration: 1.1s; }
+
+  /* Into a battle, FF9's way: the field spins and blurs away into a flash */
+  #swirl { position: fixed; inset: 0; pointer-events: none; z-index: 41; overflow: hidden; }
+  #swirl canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #swirl.go canvas { animation: swirl 1s cubic-bezier(.5, 0, .9, .4) forwards; }
+  #swirl::after { content: ''; position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at 50% 50%, #fff6ff, #c9a2ff 30%, #3b1a52 70%); }
+  #swirl.go::after { animation: flash 1s ease-in forwards; }
+  @keyframes swirl { to { transform: rotate(540deg) scale(2.6); filter: blur(10px) brightness(1.8) saturate(1.6); opacity: 0.3; } }
+  @keyframes flash { 0%, 55% { opacity: 0; } 85% { opacity: 1; } 100% { opacity: 1; } }
+
+  #busy { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0; z-index: 42;
+    font: 14px var(--body); color: var(--dim); letter-spacing: 0.1em; animation: breathe 1.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: 0.4; } }
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; z-index: 60; }
+  @media (prefers-reduced-motion: reduce) { #swirl.go canvas { animation-duration: 0.2s; } #swirl.go::after { animation-duration: 0.3s; } }
+</style>
+
+<canvas id="stage" aria-label="Moonlight in the Aether: the Moonlight Witch on a painted night"></canvas>
+<div id="swirl" hidden aria-hidden="true"><canvas id="swirl-canvas"></canvas></div>
+<div id="fade" aria-hidden="true"></div>
+<p id="busy" hidden>…</p>
+<p id="error" hidden></p>
+
+<!-- MODE title -->
+<!-- MODE field -->
+<!-- MODE battle -->
+<!-- MODE map -->
+
+<!-- STYLE field -->
+  /* The game's field: the demos' scene tools are tucked away (B and L still work), the basket scrolls when it's
+     full, and the menu shows the party and what she keeps about her */
+  #btn-backstage, #btn-layers, #btn-pixels { display: none; }
+  #basket ul { max-height: min(42vh, 360px); overflow-y: auto; padding-right: 4px; }
+  #game-menu { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px);
+    overflow: auto; padding: 16px 18px 18px; z-index: 30; background: linear-gradient(180deg, rgba(58, 22, 49, 0.97), rgba(20, 9, 26, 0.98));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 12px 40px rgba(0, 0, 0, 0.7); }
+  #game-menu header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  #game-menu h2 { margin: 0 0 10px; font: 400 40px/1 var(--display); color: var(--cream); }
+  #game-menu h3 { margin: 14px 0 6px; font: 400 26px/1 var(--display); color: var(--gold); }
+  #game-menu button { padding: 7px 14px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #game-menu button:hover { border-color: var(--cream); }
+  #menu-party { display: grid; gap: 10px; }
+  .member { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; }
+  .member img { width: 56px; height: 56px; image-rendering: pixelated; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; object-fit: cover; }
+  .member b { font-weight: 600; }
+  .member small { color: var(--dim); margin-left: 6px; }
+  .bar { display: grid; grid-template-columns: 28px 1fr 64px; gap: 8px; align-items: center; font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .bar i { height: 7px; border-radius: 4px; background: #231a2c; overflow: hidden; display: block; }
+  .bar u { display: block; height: 100%; background: var(--hp); }
+  .bar.mp u { background: var(--mp); }
+  .bar em { font-style: normal; text-align: right; color: var(--ink); }
+  #menu-kept { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  #menu-kept li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; font-size: 14px; }
+  #menu-kept img { width: 28px; height: 28px; image-rendering: pixelated; }
+  #menu-kept span small { display: block; color: var(--dim); }
+  #menu-note { margin: 12px 0; font-size: 14px; color: var(--dim); }
+  #game-menu .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+<!-- /STYLE field -->
+<!-- MARKUP field -->
+<section id="game-menu" hidden role="dialog" aria-modal="true" aria-labelledby="game-menu-title">
+  <header><h2 id="game-menu-title">The Night</h2><button id="game-menu-close" type="button">Close</button></header>
+  <div id="menu-party"></div>
+  <h3>Kept about her</h3>
+  <ul id="menu-kept"></ul>
+  <p id="menu-note"></p>
+  <div class="row"><button id="game-menu-quit" type="button">Quit to the title</button></div>
+</section>
+<!-- /MARKUP field -->
+
+<!-- STYLE battle -->
+  /* The game's battle: the result box has one way out, back to the field */
+  #result-go { padding: 9px 20px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  #result-text b { color: var(--gold); font-weight: 400; }
+<!-- /STYLE battle -->
+<!-- /PAGE -->
+<script type="module" src="dev/game.js"></script>
+</html>

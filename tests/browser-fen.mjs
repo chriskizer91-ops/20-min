@@ -68,7 +68,7 @@ const in1 = await pixel();
 check(murk && in1.x < 300 && in1.y > 850, `walking off the bottom of the pier comes out on the Murkway, at the bottom of its path (${in1.x}, ${in1.y})`);
 check(await game(() => document.getElementById('place-name').textContent === 'The Murkway'), 'the place name says The Murkway');
 check(await game(() => window.__game.field.herbTotal === 16), `out on the fen the basket counts its herbs too (${await game(() => window.__game.field.herbTotal)})`);
-check(await game(() => window.__game.night.music === 'marsh'), "the marsh music carries on from the moot-circle");
+check(await game(() => window.__game.field.audio.track === 'marsh'), "the marsh music carries on from the moot-circle");
 check(await game(() => { const P = window.__game.party; return P.on && P.nettie.root.parent === window.__game.field.group && P.inkblot.root.parent === window.__game.field.group; }), 'Nettie and Inkblot come out onto the fen with her');
 
 // Hag-Sight: the planks that hold are lit; only those are floor
@@ -116,10 +116,10 @@ await talkTo(patch);
 await wait(1200);
 await pageThrough();
 check(await until((id) => window.__game.field.things.find((t) => t.id === id)?.patch.state === 'bloomed', patch, 300), 'witchfire burns the rot off, and it blooms');
-check(await game(() => window.__game.night.cleaned.has('murkway:silver_mugwort:300,860')), 'the cleaned patch is remembered for the night');
+check(await game(() => window.__game.night.cleaned.includes('murkway:silver_mugwort:300,860')), 'the cleaned patch is remembered for the night');
 await idle();
 await talkTo(patch);
-check(await until(() => window.__game.field.basket.silver_mugwort === 1, null, 200), 'then she can pick it, and it goes in the basket');
+check(await until(() => window.__game.field.bag.silver_mugwort === 1, null, 200), 'then she can pick it, and it goes in the basket');
 
 // The planks through the fog are a way round B4: with the high path blocked, she walks the bridge and the planks
 // to the stilts and on to the Long Boardwalk, and B4 never starts
@@ -135,7 +135,7 @@ await game(() => {
 });
 await walkTo(1300, 446);
 const round = await until(() => window.__game.here.id === 'long-boardwalk', null, 500, 300);
-check(round && !(await game(() => window.__game.night.met.has('B4'))), `she walks round B4 by the planks through the fog, to the Long Boardwalk (${await here()})`);
+check(round && !(await game(() => window.__game.night.met.includes('B4'))), `she walks round B4 by the planks through the fog, to the Long Boardwalk (${await here()})`);
 await until(() => !window.__game.field.locked && !window.__game.player.path, null, 120);
 const in2 = await pixel();
 check(in2.x < 300 && in2.y > 820, `she comes up onto the boardwalk at its bottom (${in2.x}, ${in2.y})`);
@@ -166,7 +166,7 @@ await walkTo(1340, 192);
 const hollow = await until(() => window.__game.here.id === 'mothers-hollow', null, 400, 300);
 check(hollow, `the far end of the boardwalk leads to Mother's Hollow (${await here()})`);
 await until(() => !window.__game.field.locked && !window.__game.player.path, null, 120);
-check(await game(() => window.__game.night.music === 'ruins'), "Mother's Hollow has quieter, eerier music");
+check(await game(() => window.__game.field.audio.track === 'ruins'), "Mother's Hollow has quieter, eerier music");
 check(await game(() => !window.__game.field.things.some((t) => t.herb || t.patch)), 'no herbs grow at Mother\'s Hollow');
 
 // ---------------------------------------------------------------- the Lantern Mother

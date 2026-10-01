@@ -148,12 +148,15 @@
     ["lavender", 150, 912], ["lavender", 96, 950], ["bogwick", 216, 884], ["wisp_sprout", 58, 972]
   ],
   "spawn": {"pixel": [1176, 232], "facing": "down"},
+  "footsteps": "step-stone",
   "arrivals": {
-    "sable-bridge": {"pixel": [470, 1060], "walk": [320, 980], "facing": "up"}
+    "sable-bridge": {"pixel": [470, 1060], "walk": [320, 980], "facing": "up"},
+    "wickhollow-square": {"pixel": [1176, 215], "walk": [1170, 330], "facing": "down"}
   },
   "exits": [
     {
       "name": "the square",
+      "to": "wickhollow-square",
       "zone": [[1100, 186], [1252, 186], [1248, 208], [1100, 208]],
       "line": "Back up the path to Wickhollow square. Not yet: the lights went the other way."
     },

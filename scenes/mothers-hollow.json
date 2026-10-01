@@ -155,6 +155,7 @@
   },
   "herbs": [],
   "spawn": {"pixel": [790, 940], "facing": "up"},
+  "footsteps": "step-wood",
   "arrivals": {
     "long-boardwalk": {"pixel": [790, 1016], "walk": [790, 900], "facing": "up"}
   },

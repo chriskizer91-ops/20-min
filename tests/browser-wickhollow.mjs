@@ -71,9 +71,9 @@ const gather = async (kind) => {
   const id = await game((kind) => window.__game.field.things.find((t) => t.herb === kind)?.id, kind);
   if (!id) return false;
   const at = await thingOnScreen(id);
-  const before = await game((kind) => window.__game.field.basket[kind] ?? 0, kind);
+  const before = await game((kind) => window.__game.field.bag[kind] ?? 0, kind);
   await page.mouse.click(...at);
-  return until(([kind, before]) => (window.__game.field.basket[kind] ?? 0) > before, [kind, before], 200);
+  return until(([kind, before]) => (window.__game.field.bag[kind] ?? 0) > before, [kind, before], 200);
 };
 // Walk with a key until the town has gone to another screen
 const walkOut = async (key, to) => {
@@ -100,10 +100,10 @@ const ids = await game(() => window.__game.field.things.map((t) => t.id));
 check(['armchair', 'cauldron', 'round-window', 'worktable', 'chest'].every((id) => ids.includes(id)), `the cottage has its armchair, cauldron, round window, worktable and chest (${ids.join(', ')})`);
 
 const table = await talkTo('worktable');
-check(table.met && table.closed && await game(() => window.__game.field.kept?.hag_stone === 1), `her worktable gives her the hag stone ("${table.seen.slice(0, 60)}...")`);
-check((await text('basket-list')).includes('Hag stone'), 'the hag stone shows in the basket');
+check(table.met && table.closed && await game(() => window.__game.field.bag['hag-stone'] === 1), `her worktable gives her the hag stone ("${table.seen.slice(0, 60)}...")`);
+check((await text('basket-list')).includes('Hag-Stone'), 'the hag stone shows in the basket');
 const chest = await talkTo('chest');
-check(chest.met && await game(() => window.__game.field.items.moonwater === 2), 'the chest at the foot of the stairs gives two moonwater');
+check(chest.met && await game(() => window.__game.field.bag.moonwater === 2), 'the chest at the foot of the stairs gives two moonwater');
 const chair = await talkTo('armchair');
 check(chair.met && await game(() => window.__game.field.rested?.at === 'cottage-inside'), 'the armchair is a rest point: she rests, mends and saves');
 const pot = await talkTo('cauldron');
@@ -132,7 +132,7 @@ const grey = await game(() => { const t = window.__game.field.things.find((k) =>
 check(grey, 'the grey lavender bed is there, and it is not an herb to pick');
 const bed = await talkTo('grey-bed');
 check(bed.met && /grey/i.test(bed.seen) && /rot/i.test(bed.seen), `it says a line about the rot ("${bed.seen.slice(0, 70)}...")`);
-check(await game(() => window.__game.field.basket.lavender === 1), 'and nothing came out of it into the basket');
+check(await game(() => window.__game.field.bag.lavender === 1), 'and nothing came out of it into the basket');
 check(await until(() => window.__wick.G.trail?.marks.some((m) => m.material.opacity > 0.2), null, 40), 'Moonlight shows the rot trail running down the path');
 
 // Out of the gate, to the square
@@ -178,7 +178,7 @@ check(stool.met && /swap/.test(stool.seen) && /lights in her/.test(stool.seen), 
 check(await gather('nightrose'), 'she gathers a nightrose by the jetty');
 const ros = await talkTo('rosalind');
 check(ros.met && /rose/.test(ros.seen), `Rosalind talks about her rose ("${ros.seen.slice(0, 60)}...")`);
-check(await game(() => window.__game.field.kept?.bell_charm === 1 && !window.__game.field.basket.nightrose), 'she takes the nightrose and gives the Bell charm');
+check(await game(() => window.__game.field.bag['charm-bell'] === 1 && !window.__game.field.bag.nightrose), 'she takes the nightrose and gives the Bell charm');
 
 // Back up the steps
 await putAt(150, 1000, 0);

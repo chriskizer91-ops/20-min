@@ -51,8 +51,11 @@
     ]
   },
   "spawn": {"pixel": [180, 960], "facing": "up"},
+  "footsteps": "step-stone",
   "arrivals": {
-    "lantern-path": {"pixel": [150, 994], "walk": [230, 900], "facing": "up"}
+    "lantern-path": {"pixel": [150, 994], "walk": [230, 900], "facing": "up"},
+    "wickhollow-square": {"pixel": [150, 994], "walk": [230, 900], "facing": "up"},
+    "the-hollow": {"pixel": [1500, 214], "walk": [1400, 260], "facing": "left"}
   },
   "exits": [
     {
@@ -63,6 +66,7 @@
     },
     {
       "name": "the Hollow",
+      "to": "the-hollow",
       "zone": [[1508, 166], [1536, 166], [1536, 262], [1508, 262]],
       "line": "On through the twisted grove, to the Hollow, where the moths gather. (The Hollow is another screen.)"
     }

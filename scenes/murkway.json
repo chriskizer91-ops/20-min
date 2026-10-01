@@ -207,6 +207,7 @@
     "near": [[700, 560], [880, 560], [1100, 690], [1110, 440], [1230, 440], [1240, 870], [1000, 890], [700, 650]]
   },
   "spawn": {"pixel": [120, 960], "facing": "up"},
+  "footsteps": "step-wood",
   "arrivals": {
     "bogmire-moot-circle": {"pixel": [60, 1070], "walk": [150, 960], "facing": "up"},
     "long-boardwalk": {"pixel": [1300, 442], "walk": [1220, 432], "facing": "left"}

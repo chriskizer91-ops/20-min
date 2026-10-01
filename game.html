@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- game.html is written by tools/game-page.mjs from this shell and the demo pages: edit this, not game.html -->
+<!-- PAGE -->
+<title>Moonlight in the Aether</title>
+<style>
+  /* The game's page: one WebGL canvas that the field, the battles and the map take turns to draw on, the title's
+     own canvas, the violet fade between screens and the swirl into a battle. Each screen's HUD is a <template> below
+     (with its own styles), put into the page while that screen is on show. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --hp: #7ed98c;
+    --mp: #8fb0ff;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  body.mode-title #stage { visibility: hidden; }
+
+  /* Between screens: a short fade to violet, not black (docs/SLICE.md §5) */
+  #fade { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.45s ease-in; z-index: 40;
+    background: radial-gradient(ellipse at 50% 45%, #3b1a52, #160a22 75%); }
+  #fade.on { opacity: 1; transition: opacity 0.45s ease-out; }
+  #fade.slow, #fade.slow.on { transition-duration: 1.1s; }
+
+  /* Into a battle, FF9's way: the field spins and blurs away into a flash */
+  #swirl { position: fixed; inset: 0; pointer-events: none; z-index: 41; overflow: hidden; }
+  #swirl canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #swirl.go canvas { animation: swirl 1s cubic-bezier(.5, 0, .9, .4) forwards; }
+  #swirl::after { content: ''; position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at 50% 50%, #fff6ff, #c9a2ff 30%, #3b1a52 70%); }
+  #swirl.go::after { animation: flash 1s ease-in forwards; }
+  @keyframes swirl { to { transform: rotate(540deg) scale(2.6); filter: blur(10px) brightness(1.8) saturate(1.6); opacity: 0.3; } }
+  @keyframes flash { 0%, 55% { opacity: 0; } 85% { opacity: 1; } 100% { opacity: 1; } }
+
+  #busy { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0; z-index: 42;
+    font: 14px var(--body); color: var(--dim); letter-spacing: 0.1em; animation: breathe 1.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: 0.4; } }
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; z-index: 60; }
+  @media (prefers-reduced-motion: reduce) { #swirl.go canvas { animation-duration: 0.2s; } #swirl.go::after { animation-duration: 0.3s; } }
+</style>
+
+<canvas id="stage" aria-label="Moonlight in the Aether: the Moonlight Witch on a painted night"></canvas>
+<div id="swirl" hidden aria-hidden="true"><canvas id="swirl-canvas"></canvas></div>
+<div id="fade" aria-hidden="true"></div>
+<p id="busy" hidden>…</p>
+<p id="error" hidden></p>
+
+<template id="mode-title"><style>/* from title.html */
+  /* The title screen and the cut-scenes. The paintings are drawn on the canvas; everything here floats over
+     them in the house look: plum panels with a cream edge and an inner plum line, gold for names, Jacquard 12
+     for display text and Pixelify Sans for the rest. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --gold: #e2bd67;
+    --logo: #f6ecd2;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    --top: env(safe-area-inset-top, 0px);
+    --bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #cut-stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: manipulation; opacity: 0; transition: opacity 1s; }
+  body.ready #cut-stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* The logo, in the empty sky the painting leaves at the top: just "Witch Way", in blackletter, cream with a soft
+     moonlit glow. */
+  #logo { position: fixed; left: var(--gutter); right: var(--gutter); top: calc(var(--top) + clamp(14px, 6vh, 64px)); margin: 0;
+    text-align: center; pointer-events: none; opacity: 0; transform: translateY(8px); filter: blur(6px);
+    transition: opacity 1.8s ease-out, transform 2.4s ease-out, filter 1.8s ease-out; }
+  #logo.show { opacity: 1; transform: none; filter: none; }
+  #logo h1 { margin: 0; white-space: nowrap; font: 400 clamp(48px, 12vw, 168px)/0.9 var(--display); color: var(--logo); letter-spacing: 0.01em;
+    text-shadow: 0 3px 0 rgba(26, 10, 34, 0.85), 0 0 14px rgba(255, 244, 220, 0.5), 0 0 38px rgba(186, 150, 255, 0.55), 0 0 80px rgba(120, 90, 220, 0.35); }
+  #logo.show h1 { animation: breathe 7s ease-in-out 2s infinite; }
+  @keyframes breathe { 50% { text-shadow: 0 3px 0 rgba(26, 10, 34, 0.85), 0 0 18px rgba(255, 244, 220, 0.62), 0 0 48px rgba(186, 150, 255, 0.7), 0 0 96px rgba(120, 90, 220, 0.45); } }
+  #logo h1 span { white-space: nowrap; }
+
+  /* Tap to begin */
+  #press { position: fixed; left: 50%; bottom: calc(var(--bottom) + max(28px, 9vh)); transform: translateX(-50%); margin: 0; padding: 8px 20px 9px;
+    font-size: 18px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream); white-space: nowrap; background: rgba(24, 12, 30, 0.78);
+    border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 999px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); pointer-events: none; animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+
+  /* The menu: one plum panel, bottom centre, with a gold cursor on the chosen line */
+  #menu { position: fixed; left: 50%; bottom: calc(var(--bottom) + max(20px, 6vh)); transform: translateX(-50%); width: max-content;
+    min-width: 230px; max-width: calc(100% - 2 * var(--gutter)); padding: 10px 14px 12px 8px; background: var(--panel); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.3), 0 12px 32px rgba(0, 0, 0, 0.6); animation: rise 0.45s ease-out; }
+  @keyframes rise { from { opacity: 0; translate: 0 10px; } }
+  #menu-title { margin: 0 0 4px 30px; font: 400 26px/1 var(--display); color: var(--gold); }
+  #menu ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  #menu button { position: relative; display: block; width: 100%; padding: 3px 10px 4px 30px; border: 0; border-radius: 4px; background: none; text-align: left;
+    font: 400 31px/1.05 var(--display); color: var(--cream); }
+  #menu button small { display: block; margin: 0 0 2px; font: 13px/1.2 var(--body); color: var(--dim); }
+  #menu button.on { color: var(--gold); background: linear-gradient(90deg, rgba(226, 189, 103, 0.16), rgba(226, 189, 103, 0)); }
+  #menu button.on::before { content: ''; position: absolute; left: 9px; top: 0.5em; border: 7px solid transparent; border-left: 10px solid var(--gold); border-right: 0;
+    filter: drop-shadow(0 1px 0 #000); animation: nudge 0.9s ease-in-out infinite; }
+  #menu button:focus-visible { outline: none; }
+  @keyframes nudge { 50% { translate: 3px 0; } }
+
+  /* The cut-scenes: a tap anywhere moves on */
+  #cut { position: fixed; inset: 0; cursor: pointer; }
+  #scrim { position: fixed; left: 0; right: 0; bottom: 0; height: 48%; pointer-events: none; opacity: 0; transition: opacity 0.8s;
+    background: linear-gradient(180deg, rgba(7, 5, 11, 0), rgba(7, 5, 11, 0.5) 40%, rgba(7, 5, 11, 0.86)); }
+  body.captioned:not(.bare) #scrim { opacity: 1; }
+  #scene-name { position: fixed; top: calc(12px + var(--top)); left: var(--gutter); margin: 0; font: 400 clamp(32px, 4.6vw, 52px)/0.95 var(--display); color: var(--cream);
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); pointer-events: none; opacity: 0; }
+  #scene-name.fade { animation: named 4.2s ease-in-out forwards; }
+  @keyframes named { 12% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+  #scene-tools { position: fixed; top: calc(12px + var(--top)); right: var(--gutter); display: flex; gap: 8px; }
+  #scene-tools button { min-height: 34px; padding: 6px 12px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #scene-tools button:hover { border-color: var(--cream); }
+  #btn-auto[aria-pressed='true'] { border-color: var(--gold); color: var(--gold); }
+
+  /* Narration: a centred caption low on the screen, over a dark scrim so the painting can't swallow it */
+  #caption { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(var(--bottom) + max(30px, 9vh)); margin: 0 auto; max-width: 34em;
+    text-align: center; font: 400 clamp(18px, 2.05vw, 25px)/1.5 var(--body); color: #f8f0de; text-wrap: balance;
+    text-shadow: 0 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.95), 0 0 28px rgba(0, 0, 0, 0.8); pointer-events: none; }
+  #caption .rest, #talk-text .rest { visibility: hidden; }
+  #caption .more { margin-left: 0.4em; font-size: 0.7em; color: var(--gold); animation: blink 0.8s steps(2) infinite; }
+
+  /* Dialogue: the field screens' box, at the bottom */
+  #talk { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + var(--bottom)); margin: 0 auto; max-width: 760px; display: flex; gap: 16px;
+    align-items: flex-start; padding: 16px 20px 18px 16px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.94), rgba(20, 9, 26, 0.95));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 10px 30px rgba(0, 0, 0, 0.6); }
+  #talk.rise { animation: rise 0.35s ease-out; }
+  #talk-face { width: 96px; height: 96px; flex: none; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; object-fit: cover; }
+  #talk-face.pixel { image-rendering: pixelated; }
+  #talk.faceless #talk-face { display: none; }
+  #talk .words { min-width: 0; flex: 1; }
+  #talk-name { margin: 0 0 4px; font: 400 30px/1 var(--display); color: var(--gold); }
+  #talk-text { margin: 0; font-size: 19px; line-height: 1.45; min-height: 2.9em; max-width: 60ch; }
+  #talk-more { position: absolute; right: 16px; bottom: 8px; color: var(--cream); font-size: 14px; animation: blink 0.8s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Each whole line, for screen readers (the typed text would be read out a letter at a time) */
+  .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; }
+
+  /* A tall phone: the title on two lines, and a smaller box */
+  @media (max-aspect-ratio: 4/5) {
+    #logo h1 { font-size: clamp(44px, 17vw, 110px); line-height: 0.88; }
+    #menu { bottom: calc(var(--bottom) + 16px); }
+  }
+  @media (max-width: 560px) {
+    #talk { gap: 12px; padding: 12px 14px 16px 12px; }
+    #talk-face { width: 64px; height: 64px; }
+    #talk-name { font-size: 26px; }
+    #talk-text { font-size: 16px; }
+    #menu button { font-size: 29px; }
+    #scene-tools button { min-height: 32px; padding: 5px 10px; font-size: 13px; }
+  }
+  /* A phone on its side: little height, so the logo shrinks and the menu moves to the right-hand side */
+  @media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+    #logo { top: calc(var(--top) + 10px); }
+    #logo h1 { font-size: clamp(34px, 6.6vw, 60px); }
+    #menu { left: auto; right: var(--gutter); bottom: calc(var(--bottom) + 12px); transform: none; min-width: 200px; padding: 6px 10px 8px 6px; }
+    #menu button { font-size: 24px; padding: 1px 10px 2px 28px; }
+    #menu button small { display: none; }
+    #menu-title { font-size: 22px; margin-bottom: 0; }
+    #press { bottom: calc(var(--bottom) + 18px); }
+    #caption { bottom: calc(var(--bottom) + 18px); font-size: 17px; max-width: 40em; }
+    #talk { bottom: calc(8px + var(--bottom)); padding: 10px 14px 12px 10px; gap: 12px; max-width: 700px; }
+    #talk-face { width: 60px; height: 60px; }
+    #talk-name { font-size: 24px; }
+    #talk-text { font-size: 16px; min-height: 2.6em; }
+    #scene-name { font-size: 30px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #logo { transition: opacity 1s; transform: none; filter: none; }
+    #logo.show h1, #press, #menu, #menu button.on::before, #talk.rise, #caption .more, #talk-more { animation: none; }
+  }
+</style>
+<canvas id="cut-stage" aria-label="The Magpie, a small sunstone skiff, sails over a moonlit valley"></canvas>
+<header id="logo"><h1><span>Witch</span> <span>Way</span></h1></header>
+<p id="press" hidden>Tap to begin</p>
+<nav id="menu" hidden aria-label="Title menu">
+  <h2 id="menu-title" hidden>Story</h2>
+  <ul id="menu-list"></ul>
+</nav>
+<section id="cut" hidden>
+  <div id="scrim"></div>
+  <h2 id="scene-name" hidden></h2>
+  <nav id="scene-tools" aria-label="Cut-scene">
+    <button id="btn-auto" type="button" aria-pressed="true" title="Lines move on by themselves once read">Auto</button>
+    <button id="btn-skip" type="button" title="End the scene (Escape)">Skip ▸▸</button>
+  </nav>
+  <p id="caption" hidden><span class="shown"></span><span class="rest"></span><span class="more" hidden>▼</span></p>
+  <section id="talk" hidden>
+    <img id="talk-face" alt="">
+    <div class="words"><h2 id="talk-name"></h2><p id="talk-text"><span class="shown"></span><span class="rest"></span></p></div>
+    <span id="talk-more" hidden>▼</span>
+  </section>
+</section>
+<p id="sr-line" class="sr" aria-live="polite"></p>
+
+
+</template>
+<template id="mode-field"><style>/* from bogmire.html */
+  /* Bogmire's two screens, with the square's look: a moonlit game screen whose HUD borrows the Moonlight
+     Witch's colours (plum hat, cream band, magenta shawl) and Witch Way's two pixel fonts. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --floor: #35e6ff;
+    --card: #ff5fd8;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* Where you are, top left, fading after a few seconds (FF9 names every new place) */
+  #place { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none;
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); transition: opacity 1.4s; }
+  #place h1 { margin: 0; font: 400 clamp(40px, 7vw, 64px)/0.9 var(--display); color: var(--cream); letter-spacing: 0.02em; }
+  #place p { margin: 4px 0 0 2px; font-size: 15px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+  .gone { opacity: 0 !important; pointer-events: none !important; }
+
+  /* The "!" over her head when there's someone to talk to */
+  #bang { position: fixed; left: 0; top: 0; margin: -44px 0 0 -16px; width: 32px; height: 36px; border: 0; padding: 0 0 4px;
+    background: var(--cream); color: var(--plum); font: 700 22px/32px var(--body); border-radius: 8px;
+    box-shadow: 0 0 0 2px var(--plum), 0 3px 0 2px rgba(0, 0, 0, 0.5); animation: bob 0.9s ease-in-out infinite; }
+  #bang::after { content: ''; position: absolute; left: 11px; bottom: -7px; border: 5px solid transparent; border-top: 6px solid var(--cream); }
+  @keyframes bob { 50% { margin-top: -48px; } }
+
+  #tapmark { position: fixed; left: 0; top: 0; width: 34px; height: 16px; margin: -8px 0 0 -17px; border: 2px solid var(--cream);
+    border-radius: 50%; opacity: 0; pointer-events: none; }
+  #tapmark.on { animation: tap 0.6s ease-out; }
+  @keyframes tap { from { opacity: 0.9; transform: scale(0.4); } to { opacity: 0; transform: scale(1.4); } }
+
+  /* Dialogue */
+  #talk { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin: 0 auto; max-width: 760px; display: flex; gap: 16px; align-items: flex-start; padding: 16px 20px 18px 16px;
+    background: linear-gradient(180deg, rgba(58, 22, 49, 0.94), rgba(20, 9, 26, 0.95)); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 10px 30px rgba(0, 0, 0, 0.6); cursor: pointer; }
+  #talk-face { width: 96px; height: 96px; flex: none; image-rendering: pixelated; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; }
+  #talk .words { min-width: 0; flex: 1; }
+  #talk-name { margin: 0 0 4px; font: 400 30px/1 var(--display); color: var(--gold); }
+  #talk-text { margin: 0; font-size: 18px; line-height: 1.45; min-height: 3em; max-width: 60ch; }
+  #talk.plain #talk-text { font-style: italic; color: #e9e0f2; }
+  #talk-more { position: absolute; right: 16px; bottom: 8px; color: var(--cream); font-size: 14px; animation: blink 0.8s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #toast { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 32px));
+    margin: 0; padding: 10px 16px; text-align: center; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.6); border-radius: 6px; transition: opacity 0.8s; }
+
+  #basket { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); min-width: 180px; padding: 10px 12px;
+    background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #basket h2 { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--cream); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  #basket-count { font: 13px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
+  #basket ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+  #basket li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  #basket li img { width: 28px; height: 28px; image-rendering: pixelated; }
+  #basket li.fresh { color: var(--gold); animation: fresh 1.2s ease-out; }
+  @keyframes fresh { from { transform: translateX(-6px); } }
+  body:has(#talk:not([hidden])) #basket { display: none; }
+  #hint { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: min(360px, calc(100% - 32px));
+    padding: 8px 12px; font-size: 14px; color: var(--dim); background: var(--panel); border-radius: 6px; transition: opacity 1.2s; pointer-events: none; }
+
+  /* The buttons */
+  #tools { position: fixed; right: var(--gutter); top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: calc(100% - 32px); }
+  #tools button { padding: 7px 12px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #tools button:hover { border-color: var(--cream); }
+  #tools button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
+  #btn-backstage { color: var(--cream); }
+
+  /* Behind the scenes */
+  #backstage { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(400px, calc(100% - 32px));
+    max-height: calc(100% - 120px); overflow: auto; padding: 16px 18px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
+  #backstage .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  #btn-notes { padding: 2px 0; background: none; border: 0; color: var(--dim); font-size: 13px; text-decoration: underline; }
+  #backstage.folded #notes, #backstage.folded #notes-tip { display: none; }
+  #backstage h2 { margin: 0 0 8px; font: 400 32px/1 var(--display); color: var(--cream); }
+  #backstage ul { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 8px; }
+  #backstage li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; font-size: 14px; line-height: 1.4; color: #e5dcec; }
+  #backstage li b { color: var(--ink); font-weight: 600; }
+  .sw { width: 14px; height: 14px; margin-top: 3px; border-radius: 3px; }
+  .sw.paint { background: linear-gradient(135deg, #7a5aa8, #e79a4a); }
+  .sw.cam { background: var(--gold); }
+  .sw.floor { background: var(--floor); }
+  .sw.card { background: var(--card); }
+  #backstage .small { margin: 0 0 12px; font-size: 13px; color: var(--dim); }
+  #btn-back { padding: 8px 14px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  #labels span { position: absolute; left: 0; top: 0; padding: 3px 8px; font-size: 13px; white-space: nowrap; transform-origin: 0 0;
+    background: rgba(12, 6, 16, 0.85); border-radius: 4px; border-left: 3px solid var(--c); margin: -12px 0 0 -8px; }
+
+  /* Through a door: a short fade to violet, not black (docs/SLICE.md §5) */
+  #fade { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.45s ease-in;
+    background: radial-gradient(ellipse at 50% 45%, #3b1a52, #160a22 75%); }
+  #fade.on { opacity: 1; transition: opacity 0.45s ease-out; }
+  body:not(.ready) #fade { opacity: 1; transition: none; }
+
+  /* Out on the fen: the Hag-Sight button (a stone with a hole in it), the view through the hag stone, and the
+     encounter card that stands in for each fight (the fights are in the battle demo) */
+  #btn-hagsight { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px 8px 12px; font-size: 15px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; color: var(--cream); }
+  #btn-hagsight::before { content: ''; width: 16px; height: 16px; border: 4px solid #9fb0a6; border-radius: 50% 45% 50% 40%; }
+  #btn-hagsight[aria-pressed='true'] { background: #2c5244; border-color: #b8ffd8; color: #fff; }
+  body:has(#talk:not([hidden])) #btn-hagsight, body.backstage #btn-hagsight { display: none; }
+  #hagstone { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s;
+    background: radial-gradient(ellipse 60% 62% at 50% 50%, rgba(120, 200, 160, 0.06) 60%, rgba(14, 36, 28, 0.55) 88%, rgba(6, 14, 12, 0.88)); }
+  body.hagsight #hagstone { opacity: 1; }
+  #encounter { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px);
+    overflow: auto; padding: 18px 20px 20px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.96), rgba(20, 9, 26, 0.97)); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 12px 40px rgba(0, 0, 0, 0.7); animation: card-in 0.35s ease-out; }
+  #enc-kicker { margin: 0; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  #enc-name { margin: 2px 0 12px; font: 400 42px/1 var(--display); color: var(--cream); }
+  #enc-foes { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+  #enc-foes li { display: grid; gap: 2px; padding-left: 12px; border-left: 3px solid var(--magenta); }
+  #enc-foes b { font-weight: 600; }
+  #enc-foes span, .enc-demo { font-size: 14px; color: var(--dim); }
+  #enc-note { margin: 0 0 8px; font-size: 14px; color: #e5dcec; }
+  .enc-demo { margin: 0 0 16px; }
+  .enc-demo a { color: var(--gold); }
+  #enc-go { padding: 9px 20px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  @keyframes card-in { from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); } }
+
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; }
+
+  body.backstage #hint, body.backstage #place { display: none; }
+  @media (max-width: 560px) {
+    #place { top: calc(96px + env(safe-area-inset-top, 0px)); }
+    #talk { gap: 12px; padding: 12px 14px 16px 12px; }
+    #talk-face { width: 64px; height: 64px; }
+    #talk-name { font-size: 26px; }
+    #talk-text { font-size: 16px; }
+    #tools button { padding: 6px 10px; font-size: 13px; }
+    body.backstage #tools #btn-layers, body.backstage #tools #btn-pixels { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { #bang, #talk-more, #encounter { animation: none; } #fade, #fade.on { transition-duration: 0.15s; } }
+
+  /* The game's field: the demos' scene tools are tucked away (B and L still work), the basket scrolls when it's
+     full, and the menu shows the party and what she keeps about her */
+  #btn-backstage, #btn-layers, #btn-pixels { display: none; }
+  #basket ul { max-height: min(42vh, 360px); overflow-y: auto; padding-right: 4px; }
+  #game-menu { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px);
+    overflow: auto; padding: 16px 18px 18px; z-index: 30; background: linear-gradient(180deg, rgba(58, 22, 49, 0.97), rgba(20, 9, 26, 0.98));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 12px 40px rgba(0, 0, 0, 0.7); }
+  #game-menu header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  #game-menu h2 { margin: 0 0 10px; font: 400 40px/1 var(--display); color: var(--cream); }
+  #game-menu h3 { margin: 14px 0 6px; font: 400 26px/1 var(--display); color: var(--gold); }
+  #game-menu button { padding: 7px 14px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #game-menu button:hover { border-color: var(--cream); }
+  #menu-party { display: grid; gap: 10px; }
+  .member { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; }
+  .member img { width: 56px; height: 56px; image-rendering: pixelated; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; object-fit: cover; }
+  .member b { font-weight: 600; }
+  .member small { color: var(--dim); margin-left: 6px; }
+  .bar { display: grid; grid-template-columns: 28px 1fr 64px; gap: 8px; align-items: center; font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .bar i { height: 7px; border-radius: 4px; background: #231a2c; overflow: hidden; display: block; }
+  .bar u { display: block; height: 100%; background: var(--hp); }
+  .bar.mp u { background: var(--mp); }
+  .bar em { font-style: normal; text-align: right; color: var(--ink); }
+  #menu-kept { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  #menu-kept li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; font-size: 14px; }
+  #menu-kept img { width: 28px; height: 28px; image-rendering: pixelated; }
+  #menu-kept span small { display: block; color: var(--dim); }
+  #menu-note { margin: 12px 0; font-size: 14px; color: var(--dim); }
+  #game-menu .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+</style>
+
+
+<div id="hagstone" aria-hidden="true"></div>
+<header id="place"><h1 id="place-name">Bogmire</h1><p id="place-sub">The Moot-Circle</p></header>
+<nav id="tools" aria-label="View">
+  <button id="btn-backstage" aria-pressed="false" title="Fly the camera out to see how the scene is built (B)">Behind the scenes</button>
+  <button id="btn-layers" aria-pressed="false" title="Show the floor and the cut-outs (L)">Layers</button>
+  <button id="btn-pixels" title="How chunky the 3D characters are drawn">Pixels off</button>
+  <button id="btn-sound" aria-pressed="true">Sound on</button>
+  <button id="btn-menu" aria-haspopup="dialog" title="The party and their things (M)">Menu</button>
+</nav>
+<button id="bang" hidden aria-label="Talk">!</button>
+<div id="tapmark"></div>
+<p id="hint">Arrow keys or WASD to walk. Space to talk. Or click anywhere.</p>
+<p id="toast" hidden></p>
+<section id="basket" hidden aria-live="polite"><h2>Basket <span id="basket-count"></span></h2><ul id="basket-list"></ul></section>
+
+<section id="talk" hidden aria-live="polite">
+  <img id="talk-face" alt="">
+  <div class="words"><h2 id="talk-name"></h2><p id="talk-text"></p></div>
+  <span id="talk-more" hidden>▼</span>
+</section>
+
+<button id="btn-hagsight" hidden aria-pressed="false" title="Look through the hag stone: in the fog, it shows which planks hold (H)">Hag-Sight</button>
+
+
+<aside id="backstage" hidden>
+  <div class="head"><h2>Behind the scenes</h2><button id="btn-notes" aria-expanded="true">Hide notes</button></div>
+  <ul id="notes">
+    <li><i class="sw paint"></i><span><b>The painting</b> is one flat picture, hung up behind everything. Nothing in it is 3D.</span></li>
+    <li><i class="sw cam"></i><span><b>The painter's camera.</b> The 3D camera sits where the painter "stood", so 3D things line up with the brush strokes.</span></li>
+    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the planks, not the water. She can only stand on it, and it climbs the moot-hall steps.</span></li>
+    <li><i class="sw card"></i><span><b>Cut-outs</b> are pieces of the painting stood up at their own depth. When she walks behind one, it covers her.</span></li>
+  </ul>
+  <p class="small" id="notes-tip">Drag to look around, scroll or pinch to zoom. You can keep walking with the keys.</p>
+  <button id="btn-back">Back to the game</button>
+</aside>
+<div id="labels" hidden>
+  <span data-spot="painting" style="--c: #e79a4a">The painting</span>
+  <span data-spot="camera" style="--c: var(--gold)">Painter's camera</span>
+  <span data-spot="floor" style="--c: var(--floor)">Walkmesh</span>
+  <span data-spot="fire" style="--c: var(--card)">Cut-out: the fire ring</span>
+  <span data-spot="lamp" style="--c: var(--card)">Cut-out: a lamp and its planter</span>
+  <span data-spot="cauldron" style="--c: var(--card)">Cut-out: the hearth</span>
+  <span data-spot="gate" style="--c: var(--card)">Cut-out: the gate</span>
+  <span data-spot="rail" style="--c: var(--card)">Cut-out: a rail</span>
+  <span data-spot="fog" style="--c: #c3c8dc">Fog: 3D, over the painting</span>
+  <span data-spot="bench" style="--c: #dcd6ff">The rest point</span>
+</div>
+
+
+<section id="game-menu" hidden role="dialog" aria-modal="true" aria-labelledby="game-menu-title">
+  <header><h2 id="game-menu-title">The Night</h2><button id="game-menu-close" type="button">Close</button></header>
+  <div id="menu-party"></div>
+  <h3>Kept about her</h3>
+  <ul id="menu-kept"></ul>
+  <p id="menu-note"></p>
+  <div class="row"><button id="game-menu-quit" type="button">Quit to the title</button></div>
+</section>
+</template>
+<template id="mode-battle"><style>/* from battle.html */
+  /* A battle screen in the witch's colours: plum panels with a cream edge, gold for names and numbers.
+     Layout after FF9: turn order across the top, the move's name in a banner, commands bottom left, the
+     party bottom right, and each foe's name and intent die floating over it. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --hp: #7ed98c;
+    --mp: #8fb0ff;
+    --surge: #e2bd67;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.35 var(--body); -webkit-user-select: none; user-select: none; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.6s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .panel { background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), 0 8px 24px rgba(0, 0, 0, 0.5); }
+
+  #ribbon { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; }
+  .chip { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; font-size: 13px; font-weight: 700;
+    background: #2a1a2e; border: 2px solid rgba(236, 220, 184, 0.4); color: var(--ink); }
+  .chip.foe { background: #1f3326; color: #bff5c8; }
+  .chip.hero img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+  .chip.now { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); transform: scale(1.12); }
+
+  #banner { position: fixed; top: calc(62px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 6px 22px;
+    font: 400 30px/1 var(--display); color: var(--cream); opacity: 0; pointer-events: none; white-space: nowrap; }
+  #banner.show { animation: banner 1.6s ease-out; }
+  @keyframes banner { 0% { opacity: 0; transform: translate(-50%, -6px); } 12%, 70% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+  #caption { position: fixed; top: calc(108px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(620px, calc(100% - 32px));
+    margin: 0; text-align: center; font-size: 15px; color: #e9e0f2; text-shadow: 0 1px 0 #000, 0 0 12px #000; opacity: 0; pointer-events: none; }
+  #caption.show { animation: fade 3.2s ease-out; }
+  @keyframes fade { 0% { opacity: 0; } 8%, 75% { opacity: 1; } 100% { opacity: 0; } }
+  #roll { position: fixed; top: calc(140px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); margin: 0; padding: 4px 12px;
+    font-size: 13px; font-variant-numeric: tabular-nums; background: rgba(12, 6, 16, 0.85); border-radius: 999px; opacity: 0; pointer-events: none; white-space: nowrap; }
+  #roll.show { animation: fade 2s ease-out; }
+  #roll[data-result='crit'] { color: var(--gold); }
+  #roll[data-result='miss'], #roll[data-result='fumble'], #roll[data-result='save'] { color: var(--dim); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .foe-label { position: absolute; left: 0; top: 0; width: 150px; margin: -54px 0 0 -75px; text-align: center; transition: opacity 0.6s; }
+  .foe-label b { display: block; font: 400 20px/1 var(--display); color: var(--cream); text-shadow: 0 2px 0 #000; }
+  .foe-label i { display: block; height: 5px; margin: 4px 24px; background: rgba(0, 0, 0, 0.6); border-radius: 3px; overflow: hidden; }
+  .foe-label i span { display: block; height: 100%; background: #e2586f; transition: width 0.4s; }
+  .foe-label small { display: inline-block; margin-top: 2px; padding: 1px 8px; font-size: 12px; background: rgba(12, 6, 16, 0.85); border-radius: 999px; color: #d7f5dc; }
+  .foe-label.acting b { color: var(--gold); }
+  .foe-label.gone { opacity: 0; }
+  .pop { position: absolute; left: 0; top: 0; transform: translate(-50%, 0); font: 700 26px/1 var(--body); color: #fff; text-shadow: 0 2px 0 #000, 0 0 10px #000;
+    animation: pop 1.2s ease-out forwards; white-space: nowrap; }
+  .pop.weak { color: #ffb45e; font-size: 32px; }
+  .pop.crit { color: var(--gold); font-size: 34px; }
+  .pop.resist, .pop.miss { color: #c7c0d6; font-size: 20px; }
+  .pop.heal { color: var(--hp); }
+  .pop.status, .pop.tag { font-size: 16px; color: #ffd7f0; }
+  @keyframes pop { 0% { transform: translate(-50%, 8px) scale(0.6); opacity: 0; } 15% { transform: translate(-50%, -8px) scale(1.1); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-50%, -40px); opacity: 0; } }
+  #cursor { position: fixed; left: 0; top: 0; margin: -12px 0 0 -58px; font-size: 30px; color: var(--cream); text-shadow: 0 2px 0 #000; animation: point 0.6s ease-in-out infinite; pointer-events: none; }
+  @keyframes point { 50% { margin-left: -50px; } }
+
+  #menu { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(250px, calc(50% - 24px)); padding: 10px 12px 12px; }
+  #menu-title { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--gold); }
+  #menu-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  #menu-list button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; background: none; border: 0; border-radius: 4px; text-align: left; font-size: 16px; }
+  #menu-list button:hover, #menu-list button:focus-visible { background: rgba(198, 61, 131, 0.35); outline: none; }
+  #menu-list button:hover::before, #menu-list button:focus-visible::before { content: '▶'; position: absolute; margin-left: -18px; color: var(--cream); }
+  #menu-list button[disabled] { opacity: 0.4; cursor: default; }
+  #menu-list em { font-style: normal; color: var(--mp); font-size: 13px; font-variant-numeric: tabular-nums; }
+  /* Fixed height, so the menu never shifts under the pointer as the description changes */
+  #hint { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid rgba(236, 220, 184, 0.2); height: calc(3 * 1.35em + 8px); overflow: hidden; font-size: 12.5px; line-height: 1.35; color: var(--dim); }
+
+  #party { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(330px, calc(50% - 24px)); padding: 10px 12px; display: grid; gap: 8px; }
+  .hero { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; }
+  .hero img { width: 52px; height: 52px; border-radius: 6px; border: 2px solid var(--cream); }
+  .hero b { display: block; font: 400 22px/1 var(--display); color: var(--cream); margin-bottom: 3px; }
+  .meter { display: grid; grid-template-columns: 42px 1fr 56px; gap: 6px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meter span { color: var(--dim); }
+  .meter i { height: 6px; background: rgba(0, 0, 0, 0.6); border-radius: 3px; overflow: hidden; }
+  .meter u { display: block; height: 100%; transition: width 0.4s; }
+  .meter.hp u { background: var(--hp); }
+  .meter.mp u { background: var(--mp); }
+  .meter.surge u { background: var(--surge); }
+  .meter em { font-style: normal; text-align: right; }
+
+  #result { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100% - 32px)); padding: 18px 20px; text-align: center; }
+  #result h2 { margin: 0 0 6px; font: 400 44px/1 var(--display); color: var(--cream); }
+  #result p { margin: 0 0 10px; color: #e9e0f2; }
+  #result ul { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 6px; }
+  #result li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border: 1px solid var(--rarity); border-radius: 6px; background: rgba(0, 0, 0, 0.35); }
+  #result li b { color: var(--rarity); font-weight: 600; }
+  #result li span { color: var(--dim); font-size: 13px; }
+  #result .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  #again, #onward, #choose { padding: 8px 16px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  #choose { background: var(--plum); }
+
+  /* Which fight: B1 to B6, in the night's order */
+  #where { position: fixed; left: var(--gutter); top: calc(14px + env(safe-area-inset-top, 0px)); max-width: 30%; margin: 0; font-size: 13px; color: var(--gold);
+    letter-spacing: 0.06em; text-transform: uppercase; text-shadow: 0 1px 0 #000, 0 0 10px #000; pointer-events: none; }
+  #btn-fights { position: fixed; right: var(--gutter); top: calc(12px + env(safe-area-inset-top, 0px)); padding: 6px 12px; background: var(--panel);
+    border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #picker { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; padding: 16px 18px; }
+  #picker h2 { margin: 0 0 4px; font: 400 36px/1 var(--display); color: var(--cream); }
+  #picker p { margin: 0 0 10px; color: var(--dim); font-size: 13px; }
+  #fights { display: grid; gap: 6px; }
+  #fights button { display: grid; gap: 2px; text-align: left; padding: 8px 12px; background: rgba(58, 22, 49, 0.9); border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
+  #fights button:hover, #fights button:focus-visible { border-color: var(--gold); outline: none; }
+  #fights b { font: 400 24px/1 var(--display); color: var(--gold); }
+  #fights span { font-size: 12.5px; color: var(--dim); }
+  #picker-close { margin-top: 10px; padding: 6px 14px; background: none; border: 1px solid rgba(236, 220, 184, 0.45); border-radius: 6px; }
+
+  @media (max-width: 560px) {
+    #menu, #party { width: calc(50% - 22px); }
+    #where { display: none; }
+    #ribbon { left: var(--gutter); transform: none; max-width: calc(100% - 110px); overflow: hidden; }
+    .hero b { font-size: 17px; margin: 0; }
+    #party { padding: 8px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero img { display: none; }
+    .meter { grid-template-columns: 30px 1fr; }
+    .meter em { display: none; }
+    #banner { font-size: 24px; }
+    .foe-label { width: 110px; margin-left: -55px; }
+    .foe-label b { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #cursor, .pop { animation-duration: 0.01s; } }
+
+  /* The game's battle: the result box has one way out, back to the field */
+  #result-go { padding: 9px 20px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+  #result-text b { color: var(--gold); font-weight: 400; }
+</style>
+
+<div id="labels"></div>
+<div id="ribbon" class="panel" aria-label="Turn order"></div>
+<p id="banner" class="panel"></p>
+<p id="caption"></p>
+<p id="roll"></p>
+<span id="cursor" hidden>▶</span>
+<section id="menu" class="panel" hidden><h2 id="menu-title"></h2><ul id="menu-list"></ul><p id="hint"></p></section>
+<section id="party" class="panel" aria-label="The party"></section>
+<p id="where"></p>
+
+<section id="result" class="panel" hidden aria-live="polite">
+  <h2 id="result-title"></h2>
+  <p id="result-text"></p>
+  <ul id="result-loot"></ul>
+  <div class="row"><button id="result-go" type="button">Carry on</button></div>
+</section>
+
+
+</template>
+<template id="mode-map"><style>/* from airship.html */
+  /* The world map: the painted Gloomfen with the skiff over it. Same colours as the other demos: plum panels
+     with a cream edge, gold for names. Town names hang as banners; wild places are pins. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --wild: #9ff0b0;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  #title { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none;
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); }
+  #title h1 { margin: 0; font: 400 clamp(30px, 5vw, 48px)/0.95 var(--display); color: var(--cream); }
+  #title p { margin: 4px 0 0 2px; font-size: 13px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  #tools { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: var(--gutter); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 60%; }
+  #tools button { padding: 6px 10px; min-height: 34px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; font-size: 14px; }
+  #tools button[aria-pressed='true'] { border-color: var(--gold); color: var(--gold); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .label { position: absolute; left: 0; top: 0; pointer-events: auto; border: 0; padding: 0; background: none; white-space: nowrap; }
+  .label.town b { display: block; transform: translate(-50%, -150%); padding: 3px 12px 4px; font: 400 24px/1 var(--display); color: var(--plum);
+    background: var(--cream); border-radius: 4px; box-shadow: 0 0 0 2px var(--plum), 0 3px 0 2px rgba(0, 0, 0, 0.45); }
+  .label.town b::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -6px; border: 6px solid transparent; border-top: 7px solid var(--cream); border-bottom: 0; }
+  .label.wild { transform: translate(-7px, -7px); display: flex; align-items: center; gap: 6px; }
+  .label.wild i { width: 14px; height: 14px; border-radius: 50%; background: var(--wild); box-shadow: 0 0 0 2px #10301a, 0 0 12px var(--wild); }
+  .label.wild span { padding: 1px 7px; font-size: 13px; background: rgba(12, 6, 16, 0.78); border-radius: 999px; color: #e6ffe9; }
+  .label.sight { transform: translate(-50%, -50%); }
+  .label.sight span { font: italic 13px var(--body); color: #d8d0ec; text-shadow: 0 1px 0 #000, 0 0 8px #000; }
+  .label.goal b, .label.goal span { outline: 2px solid var(--gold); }
+
+  #tapmark { position: fixed; left: 0; top: 0; width: 40px; height: 20px; margin: -10px 0 0 -20px; border: 2px solid var(--cream);
+    border-radius: 50%; opacity: 0; pointer-events: none; }
+  #tapmark.on { animation: tap 0.7s ease-out; }
+  @keyframes tap { from { opacity: 0.9; transform-origin: center; scale: 0.4; } to { opacity: 0; scale: 1.5; } }
+
+  /* Bottom: where to fly, or the card for the place she's at */
+  #dock { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 8px; pointer-events: none; }
+  #dock > * { pointer-events: auto; }
+  #dest { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #dest span { color: var(--dim); font-size: 14px; }
+  .go { padding: 7px 14px; min-height: 38px; background: var(--plum); border: 2px solid var(--cream); border-radius: 6px; font: 400 22px/1 var(--display); color: var(--cream); }
+  .go:hover { color: var(--gold); border-color: var(--gold); }
+  #btn-land { animation: glow 1.4s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 0 3px rgba(226, 189, 103, 0.5); } }
+  #hint { margin: 0; font-size: 13px; color: #e9e0f2; text-shadow: 0 1px 0 #000, 0 0 10px #000; text-align: center; }
+
+  #card { width: min(560px, 100%); padding: 12px 16px 14px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.95), rgba(20, 9, 26, 0.95));
+    border: 2px solid var(--cream); border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), 0 10px 30px rgba(0, 0, 0, 0.6); animation: rise 0.4s ease-out; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+  #card[data-kind='wild'] { border-color: var(--wild); }
+  #card header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  #card-name { margin: 0; font: 400 34px/1 var(--display); color: var(--gold); }
+  #card[data-kind='wild'] #card-name { color: var(--wild); }
+  #card-sub { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  #card-text { margin: 6px 0 8px; }
+  #card-rows p { margin: 3px 0; font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+  #card-rows b { color: var(--cream); font-weight: 400; margin-right: 2px; }
+  #card-rows span { padding: 1px 8px; background: rgba(236, 220, 184, 0.12); border-radius: 999px; }
+  #card .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+  #error { position: fixed; inset: auto 16px 16px; padding: 12px; background: #3a0d18; border: 1px solid #ff7a8a; border-radius: 6px; }
+  @media (max-width: 560px) {
+    #tools { max-width: none; left: var(--gutter); top: calc(70px + env(safe-area-inset-top, 0px)); justify-content: flex-start; gap: 4px; }
+    #tools button { min-height: 30px; padding: 4px 8px; font-size: 13px; }
+    #title h1 { font-size: 30px; }
+    #hint { display: none; }
+    .go { font-size: 20px; }
+  }
+</style>
+
+<div id="labels"></div>
+<div id="tapmark"></div>
+<header id="title"><h1>Moonlight in the Aether</h1><p>The Magpie · down the Sable</p></header>
+<nav id="tools" aria-label="View">
+  <button id="btn-map" type="button" aria-pressed="false" title="See the whole map">Map</button>
+  <button id="btn-tune" type="button" title="Change the flying music">♪ Sunstone Wind</button>
+  <button id="btn-sound" type="button">Sound on</button>
+</nav>
+<div id="dock">
+  <section id="card" hidden aria-live="polite">
+    <header><h2 id="card-name"></h2><span id="card-sub"></span></header>
+    <p id="card-text"></p>
+    <div id="card-rows"></div>
+    <div class="row">
+      <button id="btn-close" class="go" type="button">Fly on</button>
+      <button id="btn-go" class="go" type="button"></button>
+      <button id="btn-takeoff" class="go" type="button">Take off</button>
+      <button id="btn-ashore" class="go" type="button" hidden>Go ashore</button>
+    </div>
+  </section>
+  <button id="btn-land" class="go" type="button" hidden>Land</button>
+  <div id="dest">
+    <span>Fly to</span>
+    <button id="go-wickhollow" class="go" type="button">Wickhollow</button>
+    <button id="go-bogmire" class="go" type="button">Bogmire</button>
+  </div>
+  <p id="hint">Tap the map to fly there · arrow keys or WASD to steer · Space to land</p>
+</div>
+
+
+</template>
+
+
+<!-- /PAGE -->
+<script type="module" src="dev/game.js"></script>
+</html>

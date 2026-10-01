@@ -115,7 +115,7 @@ const butt = await thingOnScreen('rain-butt');
 await page.mouse.click(...butt);
 await until(() => window.__game.field.talking?.thing.id === 'rain-butt', null, 200);
 await pageThrough();
-check(await game(() => window.__game.field.items.moonwater === 3), 'Nettie\'s rain-butt gives three moonwater');
+check(await game(() => window.__game.field.bag.moonwater === 3), 'Nettie\'s rain-butt gives three moonwater');
 
 // Back out through the gate, to Nettie's door
 await putAt(775, 800, 0);
@@ -131,7 +131,7 @@ check(outside && back.x < 300 && back.y > 580, `walking out through the gate com
 const lav = await game(() => window.__game.field.things.find((t) => t.herb === 'lavender')?.id);
 const herb = await thingOnScreen(lav);
 await page.mouse.click(...herb);
-const picked = await until(() => window.__game.field.basket.lavender === 1, null, 200);
+const picked = await until(() => window.__game.field.bag.lavender === 1, null, 200);
 check(picked, 'tapping the lavender walks her over, kneels and puts it in the basket');
 check(await game(() => document.getElementById('basket-count').textContent === '1 of 8'), `the basket counts Bogmire's herbs (${await game(() => document.getElementById('basket-count').textContent)})`);
 

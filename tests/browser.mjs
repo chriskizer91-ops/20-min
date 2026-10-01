@@ -47,8 +47,8 @@ check(await game(() => !window.__game.field.talking), 'Space pages through and c
 
 const herb = await game(() => { const g = window.__game; const h = g.field.things.find((t) => t.herb === 'lavender'); const p = h.pos.clone(); p.y += 0.2; const s = g.stage.worldToScreen(p); return [s.x, s.y]; });
 await page.mouse.click(herb[0], herb[1]);
-for (let i = 0; i < 40 && !(await game(() => window.__game.field.basket.lavender)); i++) await wait(250);
-check(await game(() => window.__game.field.basket.lavender === 1), 'tapping a lavender patch walks her over, kneels and puts it in the basket');
+for (let i = 0; i < 40 && !(await game(() => window.__game.field.bag.lavender)); i++) await wait(250);
+check(await game(() => window.__game.field.bag.lavender === 1), 'tapping a lavender patch walks her over, kneels and puts it in the basket');
 
 await page.click('#btn-backstage');
 for (let i = 0; i < 80 && (await game(() => window.__game.stage.reveal.t < 1)); i++) await wait(250);

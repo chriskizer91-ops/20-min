@@ -38,7 +38,7 @@ import {
 import { swapIcons, quillPortraits } from '../assets-swap.js';
 import { pixelIcons } from './icons.js';
 
-const KIND_NAMES = { charm: 'Charm', gear: 'Gear', curio: 'Curio', skiff: "Quill's own swap", herbs: 'Herbs', herb: 'Herb', brew: 'Brew', dud: 'Dud', found: 'Found thing', keep: 'Hers to keep' };
+const KIND_NAMES = { relic: 'Relic', charm: 'Charm', gear: 'Gear', curio: 'Curio', skiff: "Quill's own swap", herbs: 'Herbs', herb: 'Herb', brew: 'Brew', dud: 'Dud', found: 'Found thing', keep: 'Hers to keep' };
 const ANY_NAMES = { bottle: 'any brew or dud', dud: 'any dud', brew: 'any brew', herb: 'any herb' };
 const STATUS_TAGS = { have: 'She has it', done: 'Swapped', short: '' };
 const GROUPS = [['basket', 'Basket'], ['found', 'Found things'], ['worn', 'Charms & gear'], ['curios', 'Curios'], ['kept', 'Hers to keep']];

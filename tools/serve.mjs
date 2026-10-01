@@ -8,6 +8,7 @@ const ctx = await esbuild.context({
     main: 'src/main.js', viewer: 'src/viewer.js', battle: 'src/battle/main.js', bestiary: 'src/bestiary.js', airship: 'src/airship/main.js',
     bogmire: 'src/bogmire.js', title: 'src/title/main.js',
     wickhollow: 'src/wickhollow.js', gloamwood: 'src/gloamwood.js', brewing: 'src/brew/main.js', 'swap-shop': 'src/swap/main.js',
+    game: 'src/game/main.js',
   }).filter(([, file]) => existsSync(file))),
   bundle: true,
   format: 'esm',
@@ -19,4 +20,4 @@ const ctx = await esbuild.context({
 });
 await ctx.watch();
 const { port: p } = await ctx.serve({ servedir: '.', port });
-console.log(`Wickhollow Square: http://localhost:${p}/   The witch up close: http://localhost:${p}/witch.html`);
+console.log(`The game: http://localhost:${p}/game.html   Wickhollow Square: http://localhost:${p}/   The witch up close: http://localhost:${p}/witch.html`);

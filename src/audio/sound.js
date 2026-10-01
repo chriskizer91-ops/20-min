@@ -1,10 +1,11 @@
 // All the game's sound, made in code. Two libraries, both from the New-game repo:
 //   Thareia's sound studio (vendor/thareia-sfx): 100+ effects, each levelled, for battle, magic, places, creatures
 //   Aethermoor's synth (./synth.js): the music tracks (with the Wickhollow lullaby) and the per-speaker dialogue blips
-// sfx(name) plays Thareia's sound of that name if it has one, else the synth's.
+// sfx(name) plays Thareia's sound of that name if it has one, else the synth's. music(track) carries on with a piece
+// that's already playing rather than start it over, so screens that share a piece can each ask for it.
 import { createAudio } from './synth.js';
 import { sfxInit, playSfx, SFX } from '../../vendor/thareia-sfx/sounds.js';
-import { MUSIC, musicPlay, musicStop } from '../../vendor/thareia-sfx/music.js';
+import { MUSIC, musicPlay, musicStop, musicPlaying } from '../../vendor/thareia-sfx/music.js';
 
 const THAREIA = new Set(SFX.map((s) => s.id));
 const PIECES = new Set(MUSIC.map((m) => m.id));
@@ -19,6 +20,7 @@ export function createSound() {
     const t = id?.startsWith('thareia:') ? id.slice(8) : id;
     if (ready && t && PIECES.has(t) && !['victory', 'title'].includes(id)) {
       synth.music(null);
+      if (musicPlaying() === t) return;
       try { musicPlay(t); } catch { /* ignore */ }
     } else {
       try { musicStop(); } catch { /* ignore */ }
@@ -36,6 +38,7 @@ export function createSound() {
     setEnabled(on) { enabled = !!on; synth.setEnabled(on); },
     setMusicEnabled(on) { musicOn = !!on; synth.setMusicEnabled(on); sync(); },
     music(track) { wanted = track; sync(); },
+    get track() { return wanted; },
     duck(a, s) { synth.duck(a, s); },
     sfx(name, opts = {}) {
       if (!enabled) return;

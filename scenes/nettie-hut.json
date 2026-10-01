@@ -176,6 +176,7 @@
   },
   "herbs": [],
   "spawn": {"pixel": [775, 760], "facing": "up"},
+  "footsteps": "step-wood",
   "arrivals": {
     "bogmire-moot-circle": {"pixel": [775, 852], "walk": [775, 770], "facing": "up"}
   },

@@ -150,6 +150,7 @@
     "zone": [[290, 690], [430, 620], [480, 770], [330, 860]]
   },
   "spawn": {"pixel": [150, 930], "facing": "right"},
+  "footsteps": "step-wood",
   "arrivals": {
     "bogmire-moot-circle": {"pixel": [10, 945], "walk": [230, 850], "facing": "right"},
     "murkway": {"pixel": [110, 1016], "walk": [220, 880], "facing": "up"},

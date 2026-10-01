@@ -274,6 +274,7 @@
     ["lavender", 226, 553, 0.5], ["lavender", 697, 729, 0.5]
   ],
   "spawn": {"pixel": [1440, 598], "facing": "left"},
+  "footsteps": "step-wood",
   "arrivals": {
     "nettie-hut": {"pixel": [178, 600], "walk": [236, 632], "facing": "right"},
     "murkway": {"pixel": [808, 1016], "walk": [808, 900], "facing": "up"},

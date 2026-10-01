@@ -131,14 +131,17 @@
   "spawn": { "pixel": [520, 860], "facing": "up" },
 
   "_arrivals": "Where she comes in from the town's other screens (dist/wickhollow.html): up the lane behind Quill's stall from her cottage garden, and up the steps from the riverbank.",
+  "footsteps": "step-stone",
   "arrivals": {
     "cottage-garden": { "pixel": [322, 624], "walk": [430, 652], "facing": "right" },
-    "sable-riverbank": { "pixel": [344, 828], "walk": [440, 800], "facing": "up" }
+    "sable-riverbank": { "pixel": [344, 828], "walk": [440, 800], "facing": "up" },
+    "lantern-path": { "pixel": [1150, 1076], "walk": [1150, 1000], "facing": "up" },
+    "sable-bridge": { "pixel": [1250, 445], "walk": [1180, 500], "facing": "down" }
   },
 
   "exits": [
-    { "name": "the Sable bridge", "zone": [[1204, 426], [1262, 410], [1300, 442], [1244, 472]], "line": "The bridge over the Sable. That's the next screen, and it isn't painted in yet." },
-    { "name": "the lane", "zone": [[1040, 1060], [1276, 1060], [1276, 1086], [1040, 1086]], "line": "The lane down to Witch Way. The woods are for another night." },
+    { "name": "the Sable bridge", "to": "sable-bridge", "zone": [[1204, 426], [1262, 410], [1300, 442], [1244, 472]], "line": "The bridge over the Sable. That's the next screen, and it isn't painted in yet." },
+    { "name": "the lane", "to": "lantern-path", "zone": [[1040, 1060], [1276, 1060], [1276, 1086], [1040, 1086]], "line": "The lane down to Witch Way. The woods are for another night." },
     { "name": "the lane home", "to": "cottage-garden", "zone": [[298, 594], [342, 598], [342, 640], [298, 640]], "line": "The lane behind Quill's stall, home to the cottage." },
     { "name": "the steps down to the river", "to": "sable-riverbank", "zone": [[296, 818], [388, 810], [396, 842], [300, 862]], "line": "The steps down to the river and the old jetty." }
   ]

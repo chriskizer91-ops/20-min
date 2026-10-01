@@ -76,7 +76,7 @@ await page.waitForFunction(() => document.body.classList.contains('ready'), null
 await wait(1500);
 check(await here() === 'lantern-path', 'the game starts on the lantern path');
 check(await game(() => document.getElementById('place-name').textContent === 'The Lantern Path'), 'the place name says The Lantern Path');
-check(await game(() => window.__game.field.items['lantern-oil'] === 1 && /Lantern Oil ×1/.test(document.getElementById('basket').textContent)),
+check(await game(() => window.__game.field.bag['lantern-oil'] === 1 && /Lantern Oil ×1/.test(document.getElementById('basket').textContent)),
   'she starts with one Lantern Oil in her basket');
 const lanterns = await game(() => window.__game.here.data.lanterns.map((l) => l.pixel));
 const darkBefore = [];
@@ -131,7 +131,7 @@ const lily = await game(() => window.__game.field.things.find((t) => t.herb === 
 await putAt(640, 712, -Math.PI / 2);
 await wait(800);
 await page.mouse.click(...(await thingOnScreen(lily)));
-const picked = await until(() => window.__game.field.basket.ember_star_lily === 1, null, 200);
+const picked = await until(() => window.__game.field.bag.ember_star_lily === 1, null, 200);
 check(picked, 'tapping an ember-star lily walks her over, kneels and puts it in the basket');
 check(await game(() => /1 of 10/.test(document.getElementById('basket-count').textContent)), `the basket counts the path's herbs (${await game(() => document.getElementById('basket-count').textContent)})`);
 await shot('gathered');
@@ -140,7 +140,7 @@ await shot('gathered');
 await page.mouse.click(...(await thingOnScreen('crock')));
 await until(() => window.__game.field.talking?.thing.id === 'crock', null, 200);
 await pageThrough();
-check(await game(() => window.__game.field.items.moonwater === 3), 'the wayside crock gives three moonwater');
+check(await game(() => window.__game.field.bag.moonwater === 3), 'the wayside crock gives three moonwater');
 await page.mouse.click(...(await thingOnScreen('kettle')));
 await until(() => window.__game.field.talking?.thing.id === 'kettle', null, 200);
 const kettleLines = [];
@@ -176,7 +176,7 @@ await wait(1500);
 const litAfter = [];
 for (const [x, y] of lanterns) litAfter.push(await brightness(x, y));
 check(litAfter.every((b, i) => b > darkBefore[i] + 40), `the painting's lanterns shine again (${litAfter.map(Math.round).join(', ')})`);
-check(await game(() => window.__game.field.path.silas.lit && window.__game.field.items['lantern-oil'] === 0), "Silas's pole is lit, and the oil is used");
+check(await game(() => window.__game.field.path.silas.lit && !window.__game.field.bag['lantern-oil']), "Silas's pole is lit, and the oil is used");
 await shot('relit');
 // then he goes on: the Owl charm, the flame for the skiff's bow, and the moths in the Hollow
 const thanked = await until(() => window.__game.field.talking?.thing.id === 'silas', null, 300);
@@ -184,7 +184,7 @@ const thanks = [];
 await pageThrough(thanks);
 check(thanked && thanks.some((l) => /Owl charm/.test(l)) && thanks.some((l) => /no wind or wisp can blow it out/.test(l)) && thanks.some((l) => /gather in the Hollow/.test(l)),
   'he gives the Owl charm and a flame for the skiff\'s bow, and says the moths gather in the Hollow');
-check(await game(() => window.__game.field.items['owl-charm'] === 1 && window.__game.field.items['bow-flame'] === 1), 'the Owl charm and the bow-lamp flame are in her basket');
+check(await game(() => window.__game.field.bag['charm-owl'] === 1 && window.__game.field.bag['bow-lamp'] === 1), 'the Owl charm and the bow-lamp flame are in her basket');
 await shot('thanked');
 
 // The bench: rest, and the night is saved

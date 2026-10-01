@@ -72,6 +72,13 @@ export const THINGS = {
   'wickhollow-flame': { kind: 'found', name: RELICS['wickhollow-flame'].name, does: 'Pinched back off a lamp-moth. It wants to go home to its wick.', note: RELICS['wickhollow-flame'].lore },
   'grave-candle': { kind: 'found', name: 'Grave candle', does: 'A stub from the chapel graveyard. Lit with witchfire, it\'s the only flame the moon altar will take.', note: 'Nobody minds me taking a stub if I say thank you.' },
   'bow-lamp': { kind: 'found', name: 'The bow-lamp', does: "Silas's flame, relit with Lantern Oil: a lamp for the skiff's bow that no wind or wisp can blow out.", note: 'Half of Quill\'s swap for the skiff.' },
+  // Relics of the night: Inkblot's tail feather, back from his nest in the Hollow, and what the bosses let go of
+  // (Grip & Claim: a relic is only hers if Inkblot prises it loose). Hers to keep, never Quill's.
+  'inkblots-feather': { kind: 'relic', name: RELICS['inkblots-feather'].name, does: 'Back in his tail where it belongs. His surge, Every Shiny Thing: he tugs at every relic at once.', note: RELICS['inkblots-feather'].lore },
+  dawnbell: { kind: 'relic', name: RELICS.dawnbell.name, does: 'Matins: rung, it mends the party and shakes off what ails them. It comes from a shrine somewhere far north.', note: RELICS.dawnbell.lore },
+  'lamplighters-lantern': { kind: 'relic', name: RELICS['lamplighters-lantern'].name, does: 'Every Lamp Lit: the whole party Warded, and Spooked, Hexed and Charmed shaken off.', note: RELICS['lamplighters-lantern'].lore },
+  'mourning-veil': { kind: 'relic', name: RELICS['mourning-veil'].name, does: 'The Last Lament: every foe Spooked and Staggered.', note: RELICS['mourning-veil'].lore },
+
   // Kept: she never swaps these
   'hag-stone': { kind: 'keep', name: RELICS['hag-stone'].name, does: 'Hag-Sight: look through the hole and see what is really there. Her Full Moon: every foe is Exposed and Hexed.', note: "It's also meant to keep witches away. Rude." },
   moonwater: { kind: 'keep', name: 'Moonwater', does: 'The base of every brew. Thrown raw, 2d6 Tide.', note: 'Well water that held the moon all night.' },

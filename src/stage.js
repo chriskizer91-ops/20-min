@@ -10,13 +10,16 @@ export const LAYER_GLOW = 4;
 //   4. glows (lamps, witchfire) on top
 // The screen is a window onto the painting that scrolls to follow the witch. "Behind the scenes"
 // flies a second camera out of the painter's camera so you can see how the pieces are arranged.
+//
+// Pass `renderer` to share one WebGL renderer (and one canvas) between several stages: the game keeps one stage for
+// the field, one for battles and one for the map, and only the one on screen draws.
 export class Stage {
-  constructor(canvas, { paint, painting, world, cutouts }) {
+  constructor(canvas, { paint, painting, world, cutouts, renderer = null }) {
     this.paint = paint;
     this.world = world;
     this.cutouts = cutouts;
     this.painting = painting;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    this.renderer = renderer ?? new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.autoClear = false;
     this.renderer.setClearColor(0x07050b, 1);
 
@@ -26,6 +29,7 @@ export class Stage {
     this.showGuides = false;
 
     this.focus = new THREE.Vector2(paint.width / 2, paint.height / 2);
+    this.lookAt = null; // a painting pixel to look at instead of wherever the game points the camera (lookAt(), below)
     this.shake = 0;
     this.zoom = 1; // 1 fills the screen with the painting; more moves the camera in (battle sweeps)
     this.zoomTarget = 1;
@@ -152,8 +156,14 @@ export class Stage {
 
   // Scroll so a painting pixel sits in the middle of the screen, as far as the painting's edges allow.
   setFocus(pixel, instant = false) {
-    this.focus.copy(pixel);
-    if (instant) this.scrollTo(pixel, 1);
+    this.focus.copy(this.lookAt ?? pixel);
+    if (instant) this.scrollTo(this.focus, 1);
+  }
+
+  // Lead the camera away from her to a painting pixel for a moment (a flame running from lamp to lamp, a moth rising
+  // out of a tree), then lookAt(null) brings it back to her.
+  look(pixel) {
+    this.lookAt = pixel ? new THREE.Vector2(pixel.x ?? pixel[0], pixel.y ?? pixel[1]) : null;
   }
 
   scrollTo(pixel, amount) {
