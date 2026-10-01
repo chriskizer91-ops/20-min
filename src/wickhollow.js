@@ -10,6 +10,8 @@ import { SQUARE_HERBS } from './data/herbs.js';
 import { createAirship } from './actors/airship.js';
 import { createLampMoth } from './actors/foes.js';
 import { createRosalind } from './actors/rosalind.js';
+import { createQuill } from './actors/quill.js';
+import quillPortrait from '../art/portraits/quill.webp';
 import { toon, part, cyl, taperedTube, onLayer, INK } from './actors/kit.js';
 import { merge } from './actors/party-kit.js';
 
@@ -320,6 +322,8 @@ function buildRiver(field) {
   })), toon('#4a3020'));
   onLayer(stool);
   R.stool = stool;
+  // Mister Quill on it, by his cold skiff (docs/SLICE.md screen 4), blowing on his fingers
+  R.quill = createQuill();
 }
 
 const RIVER = {
@@ -364,11 +368,15 @@ const RIVER = {
     field.addPerson(ros, home, ros.rest);
     if (R.gifted) ros.holdRose(true);
 
-    // Quill's stool: he'll sit here (spots.quill); for now it's empty
+    // Quill's stool, and Quill on it with his back to his cold skiff, watching the path for a customer
     R.stool.position.copy(at(S.quill));
     R.stool.rotation.y = 0.4;
     field.group.add(R.stool);
-    walk.obstacles.push({ x: R.stool.position.x, z: R.stool.position.z, r: 0.22 });
+    const quill = R.quill;
+    quill.rest = headingTo(R.stool.position, at([640, 900]));
+    field.addPerson(quill, R.stool.position.clone(), quill.rest);
+    quill.sit(true, 0.46);
+    walk.obstacles.push({ x: R.stool.position.x, z: R.stool.position.z, r: 0.3 });
 
     field.things.push(
       {
@@ -377,7 +385,11 @@ const RIVER = {
         onLine: () => ros.play('talk'),
         onEnd: () => ros.setMood('calm'),
       },
-      { id: 'quill', name: null, pos: R.stool.position, reach: 0.35, lift: 0.5, lines: LINES.quill, sound: 'rope-creak' },
+      {
+        id: 'quill', name: 'Mister Quill', actor: quill, pos: quill.root.position, portrait: quillPortrait, voice: 3, lines: LINES.quill,
+        onLine: () => quill.play('talk'),
+        onEnd: () => quill.setMood('calm'),
+      },
       { id: 'magpie', name: null, pos: at(S.magpie), reach: 0.4, lift: 1.4, lines: LINES.magpie, sound: 'rope-creak' },
       { id: 'water', name: null, pos: at(S["water's edge"]), reach: 0.4, lift: 1.6, lines: LINES.water, sound: 'chime' },
       { id: 'bench', name: null, pos: at(S.bench), reach: 0.4, lift: 0.4, lines: LINES.bench, sound: 'ui-page' },
@@ -497,9 +509,15 @@ const LINES = {
     first: ['The birdbath. It has caught a moon of its own.'],
     again: ['Still got its moon.'],
   },
+  // Quill sets his swap for the skiff (docs/SLICE.md screen 4, docs/LORE.md "The skiff"); his stall's shop is swap-shop.html
   quill: {
-    first: ["Quill's stool, beside his cold skiff. He isn't on it tonight.", 'His stall in the square says BACK SOON. So does the stool, in its way.'],
-    again: ['Back soon. Everything is a swap, and so is waiting.'],
+    first: [
+      "Evening, dear. Mind the rope. That's my Magpie, cold as a fish since the cold got into my fingers.",
+      "I can't stoke her brazier like this. Look at them. Ten little icicles.",
+      "Everything's a swap, so here's mine: something to warm these hands, and a bow-lamp that won't blow out.",
+      'Bring me both, and she flies for you. Bring her back with the lights in her.',
+    ],
+    again: ['A Warming Balm, dear, and a lamp no wind or wisp can blow out. Then she\'s yours to fly.'],
   },
   magpie: {
     first: [

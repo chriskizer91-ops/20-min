@@ -3,7 +3,7 @@
 // keys, takes the hag stone and two moonwater, rests in the armchair, finds the cauldron, goes out to the garden,
 // gathers a lavender, finds the grey bed (which can't be picked, and whose rot trail Moonlight shows), walks out of the
 // gate to the square (where Hilde, Agnes, Inkblot and the square's herbs are), hears where the lane leads, goes down
-// the steps to the riverbank (the Magpie moored cold, the lamp-moths, Quill's stool), gathers a nightrose, gives it to
+// the steps to the riverbank (the Magpie moored cold, the lamp-moths, Quill on his stool), gathers a nightrose, gives it to
 // Rosalind for the Bell charm, and walks back up to the square. Software rendering runs at a few frames a second, so
 // every wait is generous.
 import { createRequire } from 'node:module';
@@ -174,7 +174,7 @@ check(moths >= 2, `lamp-moths carry their flames down the river (${moths})`);
 check(await until(() => window.__wick.R.moths?.some((m) => m.moth.root.visible), null, 40), 'at least one is on the wing');
 check(await game(() => Array.isArray(window.__game.here.data.spots.quill)), 'the scene names a spot for Quill by his skiff');
 const stool = await talkTo('quill');
-check(stool.met && /Quill's stool/.test(stool.seen), `his stool says he isn't on it tonight ("${stool.seen.slice(0, 50)}...")`);
+check(stool.met && /swap/.test(stool.seen) && /lights in her/.test(stool.seen), `Quill, on his stool by the skiff, sets his swap ("${stool.seen.slice(0, 50)}...")`);
 check(await gather('nightrose'), 'she gathers a nightrose by the jetty');
 const ros = await talkTo('rosalind');
 check(ros.met && /rose/.test(ros.seen), `Rosalind talks about her rose ("${ros.seen.slice(0, 60)}...")`);
