@@ -1,0 +1,102 @@
+{
+  "_about": "Mister Quill's striped stall in Wickhollow square: the swap shop (docs/SLICE.md, optional rooms). The counter runs across the middle with his shelves of curios behind it, the chests and a lantern on the left, the scroll basket and the potted flowers on the right, and the cobbles in front. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/quills-stall.json out.png",
+  "id": "quills-stall",
+  "title": "Quill's Stall",
+  "subtitle": "Wickhollow",
+  "image": "art/backgrounds/quills-stall.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "A close, low shot, the way FF9 shoots its shops. The cobbles double in width from the foot of the counter (y 650, about 65 px a stone) to near the bottom of the painting (y 960, about 135 px), and the tops of the counter, the chests and the crates are seen almost edge-on, so the lens is wide (50 degrees) and looks only 8 degrees down, from about 1.4 m up: eye height. At 110 pixels to the meter the counter comes out 0.93 m high (it reaches her chin) and the painted awning's lower edge 2.3 m up, so under it she stands about as tall as a door; she is 344 px tall at the foot of the counter and 500 px where she walks in. Quill stands 0.3 m behind the counter, on floor the painting hides, and shows from the belt (0.9 m) up.",
+    "fov": 50,
+    "pitch": 8,
+    "ppm": 110
+  },
+  "ambient": {"sky": "#9a86d0", "ground": "#2b1b2e", "hemi": 1.2, "moon": "#d4cdff", "moonlight": 1.1, "moonFrom": [-8, 12, -8]},
+  "walk": [
+    {
+      "name": "cobbles",
+      "points": [
+        [178, 668], [300, 664], [378, 658], [455, 650], [560, 641], [740, 637], [950, 635], [1120, 643], [1150, 668],
+        [1285, 670], [1440, 676], [1446, 690], [1372, 704], [1354, 760], [1352, 830], [1350, 880],
+        [355, 880], [330, 862], [258, 850], [252, 760], [205, 700]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "the counter",
+      "_what": "Hides Quill below the counter top, with the bowls and the goblet in front of him",
+      "base": [[355, 634], [1200, 634]],
+      "outline": [
+        [
+          [355, 634], [355, 452], [585, 450], [588, 432], [598, 418], [640, 414], [690, 418], [700, 410], [712, 404],
+          [722, 412], [724, 448], [1200, 446], [1200, 640]
+        ]
+      ]
+    },
+    {
+      "name": "lantern and crate, left",
+      "base": [[140, 895], [255, 895]],
+      "outline": [
+        [
+          [140, 900], [140, 760], [150, 752], [160, 700], [168, 680], [172, 664], [180, 664], [186, 680], [200, 700],
+          [210, 760], [250, 766], [255, 900]
+        ]
+      ]
+    },
+    {
+      "name": "lavender pot, bottom left",
+      "base": [290, 1020],
+      "outline": [
+        [[210, 1024], [215, 900], [235, 860], [262, 850], [300, 845], [330, 850], [352, 866], [368, 900], [370, 1024]]
+      ]
+    },
+    {
+      "name": "lavender and crate, right",
+      "base": [[1360, 1010], [1536, 1010]],
+      "outline": [
+        [
+          [1352, 1024], [1352, 860], [1360, 840], [1352, 760], [1362, 700], [1380, 684], [1410, 680], [1440, 690],
+          [1460, 720], [1536, 700], [1536, 1024]
+        ]
+      ]
+    }
+  ],
+  "lights": [
+    {"_what": "the hanging lantern, top left", "pixel": [300, 268], "base": [300, 640], "color": "#ffb45e", "intensity": 3.5, "distance": 7, "glow": 0.8},
+    {"_what": "candles on the counter, left", "pixel": [446, 418], "base": [446, 630], "color": "#ffb45e", "intensity": 1.6, "distance": 4, "glow": 0.45},
+    {"_what": "candles on the shelf", "pixel": [684, 258], "base": [684, 600], "color": "#ffb45e", "intensity": 1, "distance": 3, "glow": 0.3},
+    {"_what": "candle on the top shelf", "pixel": [920, 222], "base": [920, 620], "color": "#ffb45e", "intensity": 1.5, "distance": 4, "glow": 0.3},
+    {"_what": "candles on the counter, right", "pixel": [1150, 372], "base": [1150, 630], "color": "#ffb45e", "intensity": 2, "distance": 4.5, "glow": 0.45},
+    {"_what": "candle on the cobbles under the counter", "pixel": [830, 585], "base": [830, 634], "color": "#ffb45e", "intensity": 3, "distance": 4, "glow": 0.4},
+    {"_what": "lantern on the right post", "pixel": [1346, 330], "base": [1346, 668], "color": "#ffb45e", "intensity": 4, "distance": 6, "glow": 0.6},
+    {"_what": "lantern on the crate, right", "pixel": [1318, 462], "base": [1318, 668], "color": "#ffb45e", "intensity": 2.5, "distance": 4.5, "glow": 0.4},
+    {"_what": "the lantern on the crate, left", "pixel": [172, 730], "base": [172, 895], "color": "#ffb45e", "intensity": 5, "distance": 5, "glow": 0.7},
+    {"_what": "the lantern box, far left", "pixel": [96, 690], "base": [96, 780], "color": "#ffb45e", "intensity": 2.5, "distance": 4, "glow": 0.45},
+    {"_what": "lamps on the crate, bottom right", "pixel": [1500, 810], "base": [1500, 1000], "color": "#ffb45e", "intensity": 3, "distance": 5, "glow": 0.5},
+    {"_what": "moonlight, top left", "pixel": [276, 26], "base": [276, 640], "color": "#b8b0ff", "intensity": 1.5, "distance": 8, "glow": 0}
+  ],
+  "spots": {
+    "quill": [652, 620],
+    "sign": [645, 530],
+    "tags": [985, 520],
+    "birdcage": [510, 300],
+    "top hat": [1258, 222],
+    "scrolls": [1205, 540],
+    "spyglass": [1075, 400],
+    "crystal ball": [890, 372],
+    "chests": [310, 600]
+  },
+  "herbs": [],
+  "spawn": {"pixel": [770, 842], "facing": "up"},
+  "enter": {"walk": [835, 770]},
+  "exits": [
+    {
+      "name": "the square",
+      "zone": [[520, 832], [1180, 832], [1180, 880], [520, 880]],
+      "line": "Back that way: the square, the well and Hilde's anvil. Not tonight, not in this demo."
+    }
+  ],
+  "_spots": "Where Quill stands (behind the counter, on floor the painting hides) and the things she can look at: the moon cloth hung from the counter, the tags on everything, Inkblot's birdcage, the spare top hat on the post, the rolled maps, the spyglass, the crystal ball and the chests.",
+  "_herbs": "Nothing to pick here: everything on the stall is a swap."
+}

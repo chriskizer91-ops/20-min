@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Quill's Swap Shop</title>
+<style>
+  /* Quill's stall, the swap shop, with the town pages' look: a moonlit game screen whose HUD borrows the Moonlight
+     Witch's colours (plum hat, cream band, magenta shawl) and Witch Way's two pixel fonts. The shop screen itself
+     brings its own styles (src/swap/ui.js), so it can open on any page. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --floor: #35e6ff;
+    --card: #ff5fd8;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); font-variant-ligatures: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; }
+  body.ready #stage { opacity: 1; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* Where you are, top left, fading after a few seconds (FF9 names every new place) */
+  #place { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none;
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.9); transition: opacity 1.4s; }
+  #place h1 { margin: 0; font: 400 clamp(40px, 7vw, 64px)/0.9 var(--display); color: var(--cream); letter-spacing: 0.02em; }
+  #place p { margin: 4px 0 0 2px; font-size: 15px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+  .gone { opacity: 0 !important; pointer-events: none !important; }
+
+  /* The "!" over her head when there's someone to talk to */
+  #bang { position: fixed; left: 0; top: 0; margin: -44px 0 0 -16px; width: 32px; height: 36px; border: 0; padding: 0 0 4px;
+    background: var(--cream); color: var(--plum); font: 700 22px/32px var(--body); border-radius: 8px;
+    box-shadow: 0 0 0 2px var(--plum), 0 3px 0 2px rgba(0, 0, 0, 0.5); animation: bob 0.9s ease-in-out infinite; }
+  #bang::after { content: ''; position: absolute; left: 11px; bottom: -7px; border: 5px solid transparent; border-top: 6px solid var(--cream); }
+  @keyframes bob { 50% { margin-top: -48px; } }
+
+  #tapmark { position: fixed; left: 0; top: 0; width: 34px; height: 16px; margin: -8px 0 0 -17px; border: 2px solid var(--cream);
+    border-radius: 50%; opacity: 0; pointer-events: none; }
+  #tapmark.on { animation: tap 0.6s ease-out; }
+  @keyframes tap { from { opacity: 0.9; transform: scale(0.4); } to { opacity: 0; transform: scale(1.4); } }
+
+  /* Dialogue */
+  #talk { position: fixed; left: var(--gutter); right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin: 0 auto; max-width: 760px; display: flex; gap: 16px; align-items: flex-start; padding: 16px 20px 18px 16px;
+    background: linear-gradient(180deg, rgba(58, 22, 49, 0.94), rgba(20, 9, 26, 0.95)); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 10px 30px rgba(0, 0, 0, 0.6); cursor: pointer; }
+  #talk-face { width: 96px; height: 96px; flex: none; image-rendering: pixelated; border: 2px solid var(--cream); border-radius: 4px; background: #231a2c; }
+  #talk .words { min-width: 0; flex: 1; }
+  #talk-name { margin: 0 0 4px; font: 400 30px/1 var(--display); color: var(--gold); }
+  #talk-text { margin: 0; font-size: 18px; line-height: 1.45; min-height: 3em; max-width: 60ch; }
+  #talk.plain #talk-text { font-style: italic; color: #e9e0f2; }
+  #talk-more { position: absolute; right: 16px; bottom: 8px; color: var(--cream); font-size: 14px; animation: blink 0.8s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #toast { position: fixed; top: calc(16px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(560px, calc(100% - 32px));
+    margin: 0; padding: 10px 16px; text-align: center; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.6); border-radius: 6px; transition: opacity 0.8s; }
+
+  #satchel { position: fixed; right: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(300px, calc(100% - 32px)); padding: 10px 12px;
+    background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #satchel h2 { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--cream); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  #satchel-count { font: 13px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
+  #satchel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px; }
+  #satchel li { position: relative; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 5px; background: rgba(236, 220, 184, 0.07); }
+  #satchel li img { width: 28px; height: 28px; object-fit: contain; }
+  #satchel li b { position: absolute; right: -2px; bottom: -5px; font: 400 12px var(--body); text-shadow: 0 1px 0 #000, 0 0 3px #000; }
+  #satchel li.fresh { animation: fresh 1.2s ease-out; }
+  #satchel .skiff { margin: 6px 0 0; font-size: 13px; color: var(--gold); }
+  @keyframes fresh { from { transform: scale(1.5); } }
+  body:has(#talk:not([hidden])) #satchel, body.shopping #satchel, body.shopping #hint, body.shopping #bang, body.shopping #place, body.shopping #toast { display: none !important; }
+  #hint { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0; max-width: min(360px, calc(100% - 32px));
+    padding: 8px 12px; font-size: 14px; color: var(--dim); background: var(--panel); border-radius: 6px; transition: opacity 1.2s; pointer-events: none; }
+
+  /* The buttons */
+  #tools { position: fixed; right: var(--gutter); top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: calc(100% - 32px); }
+  #tools button { padding: 7px 12px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #tools button:hover { border-color: var(--cream); }
+  #tools button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
+  #btn-backstage { color: var(--cream); }
+
+  /* Behind the scenes */
+  #backstage { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(400px, calc(100% - 32px));
+    max-height: calc(100% - 120px); overflow: auto; padding: 16px 18px; background: var(--panel); border: 2px solid var(--cream); border-radius: 8px; }
+  #backstage .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  #btn-notes { padding: 2px 0; background: none; border: 0; color: var(--dim); font-size: 13px; text-decoration: underline; }
+  #backstage.folded #notes, #backstage.folded #notes-tip { display: none; }
+  #backstage h2 { margin: 0 0 8px; font: 400 32px/1 var(--display); color: var(--cream); }
+  #backstage ul { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 8px; }
+  #backstage li { display: grid; grid-template-columns: 14px 1fr; gap: 10px; font-size: 14px; line-height: 1.4; color: #e5dcec; }
+  #backstage li b { color: var(--ink); font-weight: 600; }
+  .sw { width: 14px; height: 14px; margin-top: 3px; border-radius: 3px; }
+  .sw.paint { background: linear-gradient(135deg, #7a5aa8, #e79a4a); }
+  .sw.cam { background: var(--gold); }
+  .sw.floor { background: var(--floor); }
+  .sw.card { background: var(--card); }
+  #backstage .small { margin: 0 0 12px; font-size: 13px; color: var(--dim); }
+  #btn-back { padding: 8px 14px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  #labels span { position: absolute; left: 0; top: 0; padding: 3px 8px; font-size: 13px; white-space: nowrap; transform-origin: 0 0;
+    background: rgba(12, 6, 16, 0.85); border-radius: 4px; border-left: 3px solid var(--c); margin: -12px 0 0 -8px; }
+
+  /* Through a door: a short fade to violet, not black (docs/SLICE.md §5) */
+  #fade { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.45s ease-in;
+    background: radial-gradient(ellipse at 50% 45%, #3b1a52, #160a22 75%); }
+  #fade.on { opacity: 1; transition: opacity 0.45s ease-out; }
+  body:not(.ready) #fade { opacity: 1; transition: none; }
+
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; }
+
+  body.backstage #hint, body.backstage #place, body.backstage #satchel { display: none; }
+  @media (max-width: 560px) {
+    #place { top: calc(96px + env(safe-area-inset-top, 0px)); }
+    #satchel { left: var(--gutter); width: auto; padding: 8px 10px; }
+    #satchel h2 { font-size: 20px; margin-bottom: 4px; }
+    #satchel ul { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+    #satchel li { flex: none; width: 30px; height: 30px; } #satchel li img { width: 25px; height: 25px; }
+    #hint { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
+    #talk { gap: 12px; padding: 12px 14px 16px 12px; }
+    #talk-face { width: 64px; height: 64px; }
+    #talk-name { font-size: 26px; }
+    #talk-text { font-size: 16px; }
+    #tools button { padding: 6px 10px; font-size: 13px; }
+    body.backstage #tools #btn-layers, body.backstage #tools #btn-pixels { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { #bang, #talk-more { animation: none; } #fade, #fade.on { transition-duration: 0.15s; } }
+</style>
+
+<canvas id="stage" aria-label="Mister Quill's striped stall at night, hung with curios and lit by candles, with the Moonlight Witch"></canvas>
+
+<header id="place"><h1 id="place-name">Quill's Stall</h1><p id="place-sub">Wickhollow</p></header>
+<nav id="tools" aria-label="View">
+  <button id="btn-backstage" aria-pressed="false" title="Fly the camera out to see how the scene is built (B)">Behind the scenes</button>
+  <button id="btn-layers" aria-pressed="false" title="Show the floor and the cut-outs (L)">Layers</button>
+  <button id="btn-pixels" title="How chunky the 3D characters are drawn">Pixels off</button>
+  <button id="btn-sound" aria-pressed="true">Sound on</button>
+</nav>
+<button id="bang" hidden aria-label="Talk">!</button>
+<div id="tapmark"></div>
+<p id="hint">Arrow keys or WASD to walk. Space to talk. Or click anywhere.</p>
+<p id="toast" hidden></p>
+<section id="satchel" hidden aria-live="polite"><h2>Her basket <span id="satchel-count"></span></h2><ul id="satchel-list"></ul><p class="skiff" id="satchel-skiff" hidden>The Magpie is hers to fly.</p></section>
+
+<section id="talk" hidden aria-live="polite">
+  <img id="talk-face" alt="">
+  <div class="words"><h2 id="talk-name"></h2><p id="talk-text"></p></div>
+  <span id="talk-more" hidden>▼</span>
+</section>
+
+<aside id="backstage" hidden>
+  <div class="head"><h2>Behind the scenes</h2><button id="btn-notes" aria-expanded="true">Hide notes</button></div>
+  <ul id="notes">
+    <li><i class="sw paint"></i><span><b>The painting</b> is one flat picture, hung up behind everything. Nothing in it is 3D.</span></li>
+    <li><i class="sw cam"></i><span><b>The painter's camera.</b> The 3D camera sits where the painter "stood", so 3D things line up with the brush strokes.</span></li>
+    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the cobbles in front of the stall. Quill stands behind the counter, on floor the painting never shows.</span></li>
+    <li><i class="sw card"></i><span><b>Cut-outs</b> are pieces of the painting stood up at their own depth. The counter is one: it hides Quill below the belt, and the lantern and the lavender hide her when she walks behind them.</span></li>
+  </ul>
+  <p class="small" id="notes-tip">Drag to look around, scroll or pinch to zoom. You can keep walking with the keys.</p>
+  <button id="btn-back">Back to the game</button>
+</aside>
+<div id="labels" hidden>
+  <span data-spot="painting" style="--c: #e79a4a">The painting</span>
+  <span data-spot="camera" style="--c: var(--gold)">Painter's camera</span>
+  <span data-spot="floor" style="--c: var(--floor)">Walkmesh</span>
+  <span data-spot="counter" style="--c: var(--card)">Cut-out: the counter</span>
+  <span data-spot="lantern" style="--c: var(--card)">Cut-out: the lantern and its crate</span>
+</div>
+<div id="fade" aria-hidden="true"></div>
+<p id="error" hidden></p>
+<!-- /PAGE -->
+<script type="module" src="dev/swap-shop.js"></script>
+</html>

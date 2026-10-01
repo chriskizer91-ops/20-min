@@ -1,0 +1,175 @@
+// Little pixel icons for the things in the swap shop with no painted icon: Quill's gear and two of his curios, and
+// two of her found things. Each is a 16x16 grid of letters, one colour per letter ('.' is clear), turned into an
+// SVG data: URL (like the moonwater icon in src/field.js), so they cost nothing to ship and stay crisp at any size.
+
+const PALETTE = {
+  k: '#24141e', // ink outline
+  l: '#4a2e30', L: '#6e4a46', c: '#d8cfe8', g: '#5f7a58', // gloves: leather, light leather, fen lace, fen green
+  b: '#6a4430', B: '#3e2618', M: '#6f9a4a', y: '#e2b85a', // boots: leather, sole, moss, buckle
+  s: '#6e7c9c', S: '#a8b8d0', r: '#8fd8ff', // focus: stone, light stone, rune glow
+  o: '#b8743a', O: '#e8a860', p: '#5fa08a', // amulet: copper, light copper, patina
+  A: '#a8650e', a: '#e0962a', h: '#fff0b0', m: '#3a2410', // amber: dark, amber, highlight, the midge
+  Y: '#c8923e', Z: '#f0c870', d: '#7a5420', G: '#bfe0ff', // brass, light brass, dark brass, glass
+  V: '#8a4cf0', v: '#c9a2ff', w: '#ffffff', // witchfire violet, pale violet, white heart
+  n: '#3a2c48', // lamp glass, dark
+};
+
+const ART = {
+  'willowmurk-gloves': [
+    '................',
+    '.....k.k.k......',
+    '....kLkLkLk.....',
+    '....kLkLkLkk....',
+    '....kLkLkLkLk...',
+    '....klllllkLk...',
+    '..kkklllllllk...',
+    '.kLLkllllllk....',
+    '.kLLLklllllk....',
+    '..kLLlllllk.....',
+    '...kklllllk.....',
+    '....kcccck......',
+    '....kcgcgk......',
+    '....kcccck......',
+    '.....kkkk.......',
+    '................',
+  ],
+  'mossbound-boots': [
+    '................',
+    '....kkkkkk......',
+    '....kMMMMk......',
+    '....kbMbbk......',
+    '....kbbbbk......',
+    '....kkyykk......',
+    '....kbbbbk......',
+    '....kbbbbk......',
+    '....kbbbbkk.....',
+    '....kbbbbbbkk...',
+    '...kbbMbbbbbbk..',
+    '...kbbbbbbbbbbk.',
+    '...kBBBBBBBBBBk.',
+    '....kkkkkkkkkk..',
+    '................',
+    '................',
+  ],
+  'veilkissed-focus': [
+    '................',
+    '.......kk.......',
+    '......k..k......',
+    '.....k....k.....',
+    '.....k....k.....',
+    '....kkkkkkkk....',
+    '...ksSSsssssk...',
+    '..ksSsrrrsssk...',
+    '..ksSrsssrssk...',
+    '..kssrrrrrssk...',
+    '..ksssrssssssk..',
+    '..kssssrsssssk..',
+    '...ksssssssssk..',
+    '....kkkkkkkkk...',
+    '................',
+    '................',
+  ],
+  'eldergrown-amulet': [
+    '................',
+    '......kkkk......',
+    '.....k....k.....',
+    '.....k....k.....',
+    '......kkkk......',
+    '.......kk.......',
+    '.....kkkkkk.....',
+    '....kooOOook....',
+    '...kooOppOook...',
+    '...koOppppOok...',
+    '...kooOppOook...',
+    '....kooooook....',
+    '.....kkkkkk.....',
+    '................',
+    '................',
+    '................',
+  ],
+  'bog-amber': [
+    '................',
+    '.......kk.......',
+    '......kAAk......',
+    '.....kAaaAk.....',
+    '....kAahaaAk....',
+    '....kAhaaaAk....',
+    '...kAaaaaaaAk...',
+    '...kAaamaaaAk...',
+    '...kAaaaaaaAk...',
+    '...kAaaaaaaAk...',
+    '....kAaaaaAk....',
+    '.....kAAAAk.....',
+    '......kkkk......',
+    '................',
+    '................',
+    '................',
+  ],
+  'brass-spyglass': [
+    '................',
+    '............kk..',
+    '...........kZYk.',
+    '..........kZYYk.',
+    '.........kZYYk..',
+    '........kkYYk...',
+    '.......kZYYkk...',
+    '......kZYYdk....',
+    '.....kkYYdk.....',
+    '....kZYYdk......',
+    '...kZYYdk.......',
+    '..kGYYdk........',
+    '..kGGdk.........',
+    '...kkk..........',
+    '................',
+    '................',
+  ],
+  'wickhollow-flame': [
+    '................',
+    '.......k........',
+    '......kVk.......',
+    '......kVk.......',
+    '.....kVvVk......',
+    '.....kVvVk......',
+    '....kVvwvVk.....',
+    '....kVvwvVk.....',
+    '...kVVvwvVVk....',
+    '...kVvvwvvVk....',
+    '...kVvwwwvVk....',
+    '....kVvwvVk.....',
+    '.....kVVVk......',
+    '......kkk.......',
+    '................',
+    '................',
+  ],
+  'bow-lamp': [
+    '.......kk.......',
+    '......k..k......',
+    '......k..k......',
+    '.....kkkkkk.....',
+    '....kYZYYZYk....',
+    '.....knnnnk.....',
+    '.....knVVnk.....',
+    '.....kVvvVk.....',
+    '.....kVwwVk.....',
+    '.....kVwwVk.....',
+    '.....knVVnk.....',
+    '....kYZYYZYk....',
+    '.....kdddk......',
+    '......kkk.......',
+    '................',
+    '................',
+  ],
+};
+
+function svgIcon(rows) {
+  let rects = '';
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const c = PALETTE[row[x]];
+      if (c) rects += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${c}"/>`;
+    }
+  });
+  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">${rects}</svg>`)}`;
+}
+
+export const pixelIcons = Object.fromEntries(Object.entries(ART).map(([id, rows]) => [id, svgIcon(rows)]));
