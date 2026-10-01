@@ -3,10 +3,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- PAGE -->
-<title>Bogmire</title>
+<title>Wickhollow</title>
 <style>
-  /* Bogmire's two screens, with the square's look: a moonlit game screen whose HUD borrows the Moonlight
-     Witch's colours (plum hat, cream band, magenta shawl) and Witch Way's two pixel fonts. */
+  /* Wickhollow's four screens (her cottage, her garden, the well square and the Sable riverbank), with the square's
+     look: a moonlit game screen whose HUD borrows the Moonlight Witch's colours (plum hat, cream band, magenta shawl)
+     and Witch Way's two pixel fonts. */
   :root {
     color-scheme: dark;
     --night: #07050b;
@@ -155,9 +156,9 @@
   @media (prefers-reduced-motion: reduce) { #bang, #talk-more, #encounter { animation: none; } #fade, #fade.on { transition-duration: 0.15s; } }
 </style>
 
-<canvas id="stage" aria-label="Bogmire at night: plank streets on stilts round a fire, and the fen beyond, with the Moonlight Witch"></canvas>
+<canvas id="stage" aria-label="Wickhollow at night: the witch's cottage, her garden, the well square and the riverbank, with the Moonlight Witch"></canvas>
 
-<header id="place"><h1 id="place-name">Bogmire</h1><p id="place-sub">The Moot-Circle</p></header>
+<header id="place"><h1 id="place-name">Wickhollow</h1><p id="place-sub">The Cottage</p></header>
 <nav id="tools" aria-label="View">
   <button id="btn-backstage" aria-pressed="false" title="Fly the camera out to see how the scene is built (B)">Behind the scenes</button>
   <button id="btn-layers" aria-pressed="false" title="Show the floor and the cut-outs (L)">Layers</button>
@@ -192,7 +193,7 @@
   <ul id="notes">
     <li><i class="sw paint"></i><span><b>The painting</b> is one flat picture, hung up behind everything. Nothing in it is 3D.</span></li>
     <li><i class="sw cam"></i><span><b>The painter's camera.</b> The 3D camera sits where the painter "stood", so 3D things line up with the brush strokes.</span></li>
-    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the planks, not the water. She can only stand on it, and it climbs the moot-hall steps.</span></li>
+    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the boards, the path and the cobbles. She can only stand on it.</span></li>
     <li><i class="sw card"></i><span><b>Cut-outs</b> are pieces of the painting stood up at their own depth. When she walks behind one, it covers her.</span></li>
   </ul>
   <p class="small" id="notes-tip">Drag to look around, scroll or pinch to zoom. You can keep walking with the keys.</p>
@@ -202,16 +203,15 @@
   <span data-spot="painting" style="--c: #e79a4a">The painting</span>
   <span data-spot="camera" style="--c: var(--gold)">Painter's camera</span>
   <span data-spot="floor" style="--c: var(--floor)">Walkmesh</span>
-  <span data-spot="fire" style="--c: var(--card)">Cut-out: the fire ring</span>
-  <span data-spot="lamp" style="--c: var(--card)">Cut-out: a lamp and its planter</span>
-  <span data-spot="cauldron" style="--c: var(--card)">Cut-out: the hearth</span>
-  <span data-spot="gate" style="--c: var(--card)">Cut-out: the gate</span>
-  <span data-spot="rail" style="--c: var(--card)">Cut-out: a rail</span>
-  <span data-spot="fog" style="--c: #c3c8dc">Fog: 3D, over the painting</span>
-  <span data-spot="bench" style="--c: #dcd6ff">The rest point</span>
+  <span data-spot="well" style="--c: var(--card)">Cut-out: the well</span>
+  <span data-spot="lamp" style="--c: var(--card)">Cut-out: a lamp post</span>
+  <span data-spot="gatepost" style="--c: var(--card)">Cut-out: a gate post</span>
+  <span data-spot="fence" style="--c: var(--card)">Cut-out: the fence and flowers</span>
+  <span data-spot="reeds" style="--c: var(--card)">Cut-out: the reeds</span>
+  <span data-spot="skiff" style="--c: #b88af0">3D: the Magpie, moored</span>
 </div>
 <div id="fade" aria-hidden="true"></div>
 <p id="error" hidden></p>
 <!-- /PAGE -->
-<script type="module" src="dev/bogmire.js"></script>
+<script type="module" src="dev/wickhollow.js"></script>
 </html>

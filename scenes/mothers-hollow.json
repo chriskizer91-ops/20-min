@@ -1,0 +1,169 @@
+{
+  "_about": "Mother's Hollow: a plank jetty winding up through lily pads and black willows to a sunken house with every window lit, where the Lantern Mother waits on the step (docs/SLICE.md screen 13). No herbs grow here. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/mothers-hollow.json out.png",
+  "id": "mothers-hollow",
+  "title": "Mother's Hollow",
+  "subtitle": "Bogmire's fen",
+  "image": "art/backgrounds/mothers-hollow.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "A low, close view up the jetty to the house: the planks at the bottom are huge and the door is small, so the camera looks 24 degrees down through a 36 degree lens. At 72 pixels to the meter she is about 190 px tall at the bottom of the jetty and a little over door height on the step, and the Lantern Mother, drawn at 0.9 of her bestiary size, stands just under her own door.",
+    "fov": 36,
+    "pitch": 24,
+    "ppm": 72
+  },
+  "ambient": {
+    "sky": "#7a6ad0",
+    "ground": "#24162a",
+    "hemi": 1.2,
+    "moon": "#d4cdff",
+    "moonlight": 1.2,
+    "moonFrom": [-3, 12, -12]
+  },
+  "walk": [
+    {
+      "name": "the jetty",
+      "points": [
+        [600, 1024], [618, 950], [632, 880], [648, 800], [690, 760], [700, 700], [725, 655], [790, 615], [805, 580],
+        [800, 530], [770, 490], [700, 462], [640, 440], [600, 420], [610, 400], [700, 392], [860, 392], [900, 440],
+        [950, 480], [1000, 520], [1020, 560], [1020, 610], [990, 660], [960, 700], [925, 750], [925, 820],
+        [935, 900], [960, 1024]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "the big lantern post, bottom left",
+      "base": [600, 895],
+      "outline": [
+        [
+          [556, 900], [556, 640], [566, 622], [588, 604], [600, 584], [612, 604], [634, 622], [644, 640], [644, 900]
+        ]
+      ]
+    },
+    {
+      "name": "posts on the jetty's right",
+      "base": [[930, 880], [1040, 1010]],
+      "outline": [
+        [[914, 890], [914, 762], [938, 748], [962, 762], [962, 890]],
+        [[1004, 1024], [1004, 800], [1036, 786], [1070, 800], [1070, 1024]]
+      ]
+    },
+    {
+      "name": "post on the jetty's left",
+      "base": [716, 700],
+      "outline": [
+        [[692, 706], [692, 604], [716, 592], [742, 604], [742, 706]]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "lantern on the big post, bottom left",
+      "pixel": [598, 690],
+      "base": [600, 890],
+      "color": "#ffb45e",
+      "intensity": 6,
+      "distance": 6,
+      "glow": 0.9
+    },
+    {
+      "_what": "lantern on the post by the bend",
+      "pixel": [1050, 520],
+      "base": [1050, 610],
+      "color": "#ffb45e",
+      "intensity": 5,
+      "distance": 5,
+      "glow": 0.8
+    },
+    {
+      "_what": "lantern on the jetty",
+      "pixel": [776, 428],
+      "base": [776, 470],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "lantern by the steps",
+      "pixel": [660, 318],
+      "base": [662, 380],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "lantern at the door, left",
+      "pixel": [722, 246],
+      "base": [722, 330],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "lantern at the door, right",
+      "pixel": [890, 215],
+      "base": [890, 330],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "the door's window",
+      "pixel": [845, 240],
+      "base": [845, 330],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.4
+    },
+    {
+      "_what": "the big window, violet",
+      "pixel": [1060, 295],
+      "base": [1060, 380],
+      "color": "#d58cff",
+      "intensity": 4,
+      "distance": 6,
+      "glow": 0.5
+    },
+    {
+      "_what": "lantern in the willow, left",
+      "pixel": [236, 110],
+      "base": [236, 560],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "lantern in the willow, right",
+      "pixel": [1448, 290],
+      "base": [1448, 600],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 4,
+      "glow": 0.5
+    }
+  ],
+  "spots": {"lantern mother": [785, 374, 0.2], "jetty": [790, 760], "house": [905, 362], "lantern": [600, 870]},
+  "lanternMother": {
+    "_about": "She is drawn about 2.4 m tall; a little smaller here, so she stands under her own door.",
+    "scale": 0.9
+  },
+  "herbs": [],
+  "spawn": {"pixel": [790, 940], "facing": "up"},
+  "arrivals": {
+    "long-boardwalk": {"pixel": [790, 1016], "walk": [790, 900], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "the Long Boardwalk",
+      "to": "long-boardwalk",
+      "zone": [[602, 990], [956, 990], [960, 1024], [600, 1024]],
+      "line": "Back to the Long Boardwalk."
+    }
+  ]
+}

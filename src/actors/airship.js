@@ -69,7 +69,9 @@ function atlas() {
 const painted = (opts = {}) => new THREE.MeshToonMaterial({ map: atlas(), emissive: 0xffffff, emissiveMap: atlas(), emissiveIntensity: 0.12, ...opts });
 const cardMat = (opts = {}) => painted({ alphaTest: 0.5, side: THREE.DoubleSide, ...opts });
 
-export function createAirship() {
+// lit: false leaves her cold, as she sits at the jetty before the witch lights the brazier (docs/SLICE.md, screen 4):
+// the crystals and the lanterns dark, no glows, no lights, and no motes.
+export function createAirship({ lit = true } = {}) {
   const root = new THREE.Group();
   root.name = 'the-magpie';
   const ship = joint(root, [0, 0, 0], 'ship'); // banks and bobs
@@ -149,10 +151,10 @@ export function createAirship() {
   const stove = [[0.001, DECK_Y], [0.3, DECK_Y], [0.33, 0.0], [0.33, 0.33], [0.31, 0.42], [0.26, 0.55], [0.17, 0.66], [0.12, 0.73], [0.11, 0.76], [0.11, 1.08], [0.001, 1.08]];
   const stoveGeo = new THREE.LatheGeometry(stove.map(([r, y]) => new THREE.Vector2(r, y)), 20);
   planarUV(stoveGeo, 'furnace', (x, y) => [1133 + x * SIDE_PPM, 340 - (y - DECK_Y) * SIDE_PPM]);
-  part(array, stoveGeo, painted({ emissiveIntensity: 0.3 }));
+  part(array, stoveGeo, painted({ emissiveIntensity: lit ? 0.3 : 0.06 }));
   const grate = new THREE.PointLight('#ff9a3a', 2, 3, 2);
   grate.position.set(0, 0.2, 0.4);
-  array.add(grate);
+  if (lit) array.add(grate);
   // The copper flue beside it
   part(array, taperedTube([[-0.45, DECK_Y, -0.35], [-0.45, 0.85, -0.35], [-0.42, 1.0, -0.2], [-0.2, 1.02, -0.08]], 0.06, 0.06, 12, 8), toon(COPPER));
 
@@ -163,7 +165,7 @@ export function createAirship() {
   const crystalGeo = new THREE.LatheGeometry(unit.map(([r, y]) => new THREE.Vector2(r, y)), 6).toNonIndexed();
   crystalGeo.computeVertexNormals(); // faceted: each facet catches the light on its own
   planarUV(crystalGeo, 'crystal', (x, y) => [1122 + x * 50, 158 - y * 138]);
-  const crystalMat = painted({ emissiveIntensity: 0.75 });
+  const crystalMat = painted(lit ? { emissiveIntensity: 0.75 } : { emissiveIntensity: 0.05, color: 0x645e78 }); // cold: dull and dark
   const cupGeo = new THREE.LatheGeometry([[0.05, -0.1], [0.12, -0.04], [0.2, 0.02], [0.26, 0.1], [0.28, 0.16]].map(([r, y]) => new THREE.Vector2(r, y)), 12);
   const crystals = [];
   const ROW = [[0, -0.8, 1.3, 0.72], [-0.78, 0, 1.2, 0.66], [0, 0, 1.55, 1.25], [0.78, 0, 1.2, 0.66], [0, 0.8, 1.3, 0.72]];
@@ -179,16 +181,15 @@ export function createAirship() {
     array.add(c);
     const glow = glowSprite('#ffc45a', 1.3 * s, 0.5);
     glow.position.set(x, h + 0.45 * s, z);
-    array.add(glow);
     // Lit with witchfire, each has a violet heart
     const heart = glowSprite('#b25cff', 0.5 * s, 0.9);
     heart.position.set(x, h + 0.4 * s, z);
-    array.add(heart);
+    if (lit) array.add(glow, heart);
     crystals.push({ c, glow, heart, s, phase: Math.random() * 6, top: [x, h + 0.5 * s, z] });
   }
   const sunLight = new THREE.PointLight('#ffb44a', 6, 10, 2);
   sunLight.position.set(0, 1.9, 0);
-  array.add(sunLight);
+  if (lit) array.add(sunLight);
 
   // ---------------------------------------------------------------- sail-wings
   // As in the sheet's top view, each sail hangs off a spar along the ship's side and reaches out to a tip. The tips
@@ -279,7 +280,7 @@ export function createAirship() {
     for (const g of [a, b]) setRectUV(g, ...rectOf('lantern'));
     return [a, b];
   })();
-  const lanternMat = cardMat({ emissiveIntensity: 0.6 });
+  const lanternMat = cardMat(lit ? { emissiveIntensity: 0.6 } : { emissiveIntensity: 0.05, color: 0x8a8296 });
   const lanterns = [];
   const hang = [[0, keelY(2.2) + 0.12, 2.2], [0, rimY(STERN) + 0.55, STERN - 0.12]];
   for (const side of [-1, 1]) hang.push([side * 1.3, 0.78, 1.2], [side * 1.3, 0.22, -1.05]);
@@ -287,7 +288,7 @@ export function createAirship() {
     const l = joint(ship, [x, y, z]);
     for (const g of lanternGeos) l.add(new THREE.Mesh(g, lanternMat));
     const g = glowSprite('#ffb45e', 0.8, 0.55);
-    l.add(g);
+    if (lit) l.add(g);
     lanterns.push(g);
   }
   part(ship, cyl(0.025, 0.03, 0.55, 5), toon(BRASS), { pos: [0, rimY(STERN) + 0.2, STERN - 0.12], ink: false });
@@ -354,14 +355,14 @@ export function createAirship() {
         c.glow.scale.setScalar(1.3 * c.s * pulse);
         c.heart.material.opacity = 0.75 + Math.sin(t * 3.1 + c.phase) * 0.2;
       }
-      crystalMat.emissiveIntensity = 0.7 + Math.sin(t * 2.4) * 0.12;
+      if (lit) crystalMat.emissiveIntensity = 0.7 + Math.sin(t * 2.4) * 0.12;
       sunLight.intensity = 6 * (0.9 + Math.sin(t * 2.4) * 0.1);
       grate.intensity = 2 * (0.85 + Math.sin(t * 9) * 0.08 + Math.sin(t * 13.7) * 0.07);
       for (const [i, g] of lanterns.entries()) g.material.opacity = 0.55 + Math.sin(t * 7 + i * 2) * 0.06;
 
       // Motes: a few a second from the crystals, more when she's moving
       root.updateMatrixWorld();
-      emit += dt * (12 + cruise * 34);
+      if (lit) emit += dt * (12 + cruise * 34);
       while (emit > 1 && motes.length < moteMax) {
         emit--;
         const c = crystals[Math.floor(Math.random() * crystals.length)];

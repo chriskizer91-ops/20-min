@@ -1,0 +1,178 @@
+{
+  "_about": "The Long Boardwalk: planks on stilts from the bottom left, up to a wide landing with barrels and a bench under a lamp-post (the last dry landing before Mother's Hollow, a rest point), then on and away to the top right into the mist. Every lamp-post burns a violet flame borrowed from Wickhollow (docs/SLICE.md screen 12). Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/long-boardwalk.json out.png",
+  "id": "long-boardwalk",
+  "title": "The Long Boardwalk",
+  "subtitle": "Bogmire's fen",
+  "image": "art/backgrounds/long-boardwalk.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "The boardwalk runs away to a horizon off the top of the painting, but its rail posts shrink only a little from the bottom left to the landing, so the camera looks 28 degrees down through a 34 degree lens. At 62 pixels to the meter the rope rail comes out a little under a meter, the boardwalk about two and a half meters wide, the barrels and the bench at knee and hip height, and the lamp-posts about three meters; she stands about 115 px tall at the bottom left and 90 on the landing.",
+    "fov": 34,
+    "pitch": 28,
+    "ppm": 62
+  },
+  "ambient": {
+    "sky": "#8a7ad8",
+    "ground": "#2b1b2e",
+    "hemi": 1.3,
+    "moon": "#d4cdff",
+    "moonlight": 1.3,
+    "moonFrom": [-2, 12, -12]
+  },
+  "walk": [
+    {
+      "name": "the boardwalk and the landing",
+      "points": [
+        [0, 1024], [0, 885], [136, 818], [218, 757], [368, 682], [464, 634], [575, 572], [661, 524], [712, 497],
+        [722, 452], [738, 412], [790, 404], [829, 386], [900, 366], [990, 340], [1075, 292], [1132, 268],
+        [1236, 222], [1286, 200], [1321, 184], [1350, 172], [1366, 188], [1336, 226], [1286, 247], [1236, 276],
+        [1179, 311], [1121, 338], [1110, 372], [1080, 430], [960, 485], [850, 515], [738, 585], [613, 670],
+        [473, 745], [327, 840], [260, 940], [209, 1024]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "lamp-post, bottom left",
+      "base": [132, 815],
+      "outline": [
+        [
+          [112, 820], [112, 606], [124, 598], [196, 606], [198, 618], [188, 622], [196, 708], [150, 708], [150, 820]
+        ]
+      ]
+    },
+    {
+      "name": "the far rail",
+      "base": [[136, 815], [600, 560]],
+      "_about": "posts and rope along the far edge: the Willow-Wight and a Chorister stand behind it in the water",
+      "outline": [
+        [
+          [112, 840], [150, 812], [205, 760], [205, 690], [240, 684], [245, 752], [355, 684], [355, 604], [385, 600],
+          [388, 676], [455, 636], [458, 452], [482, 452], [484, 626], [565, 578], [565, 505], [595, 505], [598, 568],
+          [575, 590], [470, 648], [372, 700], [236, 776], [150, 836]
+        ]
+      ]
+    },
+    {
+      "name": "the near rail",
+      "base": [[327, 845], [738, 590]],
+      "outline": [
+        [[316, 852], [316, 786], [332, 778], [350, 786], [350, 850]],
+        [[474, 762], [474, 700], [492, 692], [512, 700], [512, 762]],
+        [[608, 690], [608, 632], [624, 624], [642, 632], [642, 690]],
+        [[734, 600], [734, 548], [748, 540], [762, 548], [762, 600]]
+      ]
+    },
+    {
+      "name": "posts on the landing's edge",
+      "base": [[850, 515], [1090, 425]],
+      "outline": [
+        [[838, 520], [838, 458], [852, 450], [868, 458], [868, 520]],
+        [[944, 500], [944, 446], [958, 440], [974, 446], [974, 500]],
+        [[1062, 462], [1062, 402], [1076, 396], [1090, 402], [1090, 462]]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "violet lamp, bottom left",
+      "pixel": [172, 676],
+      "base": [136, 815],
+      "color": "#cf7dff",
+      "intensity": 6,
+      "distance": 6,
+      "glow": 0.9
+    },
+    {
+      "_what": "violet lamp by the reeds",
+      "pixel": [505, 508],
+      "base": [468, 630],
+      "color": "#cf7dff",
+      "intensity": 6,
+      "distance": 6,
+      "glow": 0.9
+    },
+    {
+      "_what": "violet lamp over the bench",
+      "pixel": [770, 318],
+      "base": [742, 412],
+      "color": "#cf7dff",
+      "intensity": 5,
+      "distance": 5,
+      "glow": 0.8
+    },
+    {
+      "_what": "violet lamp on the landing, far side",
+      "pixel": [1018, 262],
+      "base": [990, 342],
+      "color": "#cf7dff",
+      "intensity": 5,
+      "distance": 6,
+      "glow": 0.8
+    },
+    {
+      "_what": "violet lamp, far boardwalk",
+      "pixel": [1205, 172],
+      "base": [1186, 262],
+      "color": "#cf7dff",
+      "intensity": 4,
+      "distance": 6,
+      "glow": 0.7
+    },
+    {
+      "_what": "violet lamp, into the mist",
+      "pixel": [1370, 100],
+      "base": [1356, 176],
+      "color": "#cf7dff",
+      "intensity": 3,
+      "distance": 5,
+      "glow": 0.6
+    },
+    {
+      "_what": "violet lamp, into the mist, right",
+      "pixel": [1472, 104],
+      "base": [1468, 160],
+      "color": "#cf7dff",
+      "intensity": 3,
+      "distance": 5,
+      "glow": 0.5
+    }
+  ],
+  "spots": {"bench": [788, 392], "bench, in front": [790, 420], "violet lamp": [468, 628], "boat": [1150, 478, -0.4]},
+  "herbs": [["silver_mugwort", 80, 800, -0.5], ["silver_mugwort", 478, 588, -0.5], ["silver_mugwort", 985, 318, -0.4]],
+  "fight": {
+    "_about": "B5: the Willow-Wight stands in the water off the far rail, a Drowned Chorister floats on either side. Walking into the zone across the boardwalk (or tapping one) shows the encounter card; after it she walks on to the landing.",
+    "id": "B5",
+    "foes": [
+      ["willow-wight", 250, 690, -0.6, 400, 760], ["drowned-chorister", 360, 610, -0.5, 400, 760],
+      ["drowned-chorister", 545, 780, -0.5, 400, 720]
+    ],
+    "zone": [[290, 690], [430, 620], [480, 770], [330, 860]]
+  },
+  "spawn": {"pixel": [150, 930], "facing": "right"},
+  "arrivals": {
+    "bogmire-moot-circle": {"pixel": [10, 945], "walk": [230, 850], "facing": "right"},
+    "murkway": {"pixel": [110, 1016], "walk": [220, 880], "facing": "up"},
+    "mothers-hollow": {"pixel": [1340, 190], "walk": [1250, 250], "facing": "left"}
+  },
+  "exits": [
+    {
+      "name": "Bogmire",
+      "to": "bogmire-moot-circle",
+      "zone": [[0, 885], [32, 870], [32, 992], [0, 1000]],
+      "line": "Back along the boardwalk to Bogmire's mast."
+    },
+    {
+      "name": "the Murkway",
+      "to": "murkway",
+      "zone": [[0, 1000], [40, 992], [216, 992], [209, 1024], [0, 1024]],
+      "line": "Down off the boardwalk to the Murkway."
+    },
+    {
+      "name": "Mother's Hollow",
+      "to": "mothers-hollow",
+      "zone": [[1318, 176], [1350, 164], [1372, 186], [1344, 210]],
+      "line": "On into the mist, to Mother's Hollow."
+    }
+  ]
+}

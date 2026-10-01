@@ -1,0 +1,176 @@
+{
+  "_about": "The lantern path in the Gloamwood (docs/SLICE.md screen 5), Witch Way's own painting (witch_game_assets/backgrounds/lantern_path.webp). She comes down from Wickhollow's square at the top right, down the cobbles past the waterfall, over the footbridge, and along to the junction where Silas keeps his wayside kettle, his bench and his garden. The Sable bridge is off the bottom; the stepping stones off the bottom left. The five painted lanterns start dark (see lanterns). Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/lantern-path.json out.png",
+  "id": "lantern-path",
+  "title": "The Lantern Path",
+  "subtitle": "The Gloamwood",
+  "image": "art/backgrounds/lantern-path.webp",
+  "size": [1448, 1086],
+  "camera": {
+    "_about": "A 3/4 view of a forest floor, looking down more steeply than Bogmire: the cobbles are about 0.6 as tall as they are wide at the footbridge, and 1.8 times as wide at the bottom as at the top of the path, which a camera 32 degrees down through a 30 degree lens gives. The painting's own props disagree a little (the lamp post by the junction is twice the height of the one at the top), so at 76 pixels to the meter those come out 2.6 and 1.9 m, the path is 2.5 m wide all the way, and she stands about 93 px tall at the top of the path, 120 on the footbridge and 130 by Silas's post.",
+    "fov": 30,
+    "pitch": 32,
+    "ppm": 76
+  },
+  "ambient": {"sky": "#8b80d8", "ground": "#2b1b2e", "hemi": 1.3, "moon": "#d4cdff", "moonlight": 1.35, "moonFrom": [-8, 12, -8]},
+  "walk": [
+    {
+      "name": "the path",
+      "_what": "One outline round the whole path, so there are no seams: the top where it comes down from the square, the waterfall bend, the footbridge, the junction by Silas's post, the nook by the stump and the moth-bower's mushrooms, and down to the bottom edge behind the bushes. Traced from Witch Way's own walk areas for this painting (game/data/scenes.json, lantern_path), joined into one.",
+      "points": [
+        [1100, 186], [1252, 186], [1256, 212], [1245, 232], [1228, 262], [1214, 300], [1216, 336], [1236, 388],
+        [1232, 420], [1206, 442], [1200, 468], [1172, 500], [1138, 540], [1116, 562], [1100, 600], [1085, 628],
+        [1058, 652], [1036, 674], [990, 686], [948, 684],
+        [928, 690], [790, 718], [712, 718],
+        [690, 730], [560, 738], [520, 762], [440, 784],
+        [424, 830], [405, 862], [380, 900], [366, 950], [372, 995], [612, 1000], [615, 1086],
+        [0, 1086], [0, 985], [90, 952], [160, 900], [186, 876], [210, 866], [210, 790], [210, 716],
+        [204, 668], [180, 670], [132, 656], [128, 614], [192, 594], [192, 584], [240, 576], [270, 560], [274, 534],
+        [310, 536], [368, 532], [385, 510], [450, 502], [484, 522], [476, 556], [425, 570], [400, 590], [330, 600],
+        [316, 620], [314, 700], [365, 708], [447, 702], [470, 670], [560, 668], [700, 672],
+        [860, 634], [945, 628],
+        [965, 612], [1000, 590], [1040, 560], [1045, 500], [1062, 462], [1070, 440], [1092, 420], [1085, 395],
+        [1058, 360], [1045, 335], [1042, 315], [1085, 300], [1098, 285], [1098, 232], [1085, 212]
+      ],
+      "holes": [
+        {"ellipse": [706, 676, 11, 6], "segments": 8, "_what": "footbridge post, far left"},
+        {"ellipse": [778, 708, 11, 6], "segments": 8, "_what": "footbridge post, near left"},
+        {"ellipse": [860, 630, 11, 6], "segments": 8, "_what": "footbridge post, far right"},
+        {"ellipse": [928, 682, 12, 6], "segments": 8, "_what": "footbridge post, near right"}
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "Silas's lamp post, by the junction",
+      "base": [185, 872],
+      "outline": [
+        [[166, 876], [166, 664], [172, 652], [190, 652], [196, 664], [196, 690], [236, 690], [240, 700], [226, 706],
+         [238, 716], [240, 750], [234, 758], [220, 762], [204, 756], [196, 750], [196, 876]]
+      ]
+    },
+    {
+      "name": "footbridge, near rail",
+      "base": [[776, 710], [930, 684]],
+      "outline": [
+        [[766, 714], [766, 664], [774, 656], [786, 656], [790, 668], [830, 680], [870, 668], [914, 640], [918, 626],
+         [928, 620], [940, 626], [942, 692], [920, 694], [916, 660], [872, 684], [834, 694], [790, 684], [790, 714]]
+      ]
+    },
+    {
+      "name": "the lamp post at the top",
+      "base": [1272, 230],
+      "outline": [
+        [[1262, 234], [1262, 150], [1250, 146], [1238, 150], [1236, 184], [1246, 190], [1262, 186], [1262, 132],
+         [1268, 122], [1280, 122], [1286, 134], [1284, 234]]
+      ]
+    },
+    {
+      "name": "stump and basket, top",
+      "base": [[1008, 292], [1100, 280]],
+      "outline": [
+        [[1008, 294], [1010, 262], [1020, 240], [1036, 232], [1052, 238], [1058, 230], [1076, 226], [1098, 232],
+         [1102, 276], [1086, 286], [1060, 296]]
+      ]
+    },
+    {
+      "name": "stump and basket in the nook",
+      "base": [[240, 518], [368, 530]],
+      "outline": [
+        [[240, 512], [242, 470], [262, 460], [300, 458], [318, 468], [322, 480], [336, 476], [346, 468], [358, 476],
+         [366, 492], [366, 530], [340, 534], [310, 528], [270, 522]]
+      ]
+    },
+    {
+      "name": "the moth-bower's mushrooms",
+      "base": [100, 630],
+      "outline": [
+        [[66, 606], [76, 590], [96, 580], [120, 584], [130, 598], [124, 612], [142, 614], [146, 626], [136, 640],
+         [112, 642], [96, 632], [82, 624], [70, 616]]
+      ]
+    },
+    {
+      "name": "the bushes along the bottom",
+      "base": [[0, 1080], [620, 1080]],
+      "outline": [
+        [[96, 1086], [104, 1040], [120, 1020], [150, 1012], [180, 1030], [210, 1008], [240, 1000], [262, 978],
+         [290, 972], [306, 990], [330, 1010], [360, 1030], [400, 1022], [430, 1036], [470, 1030], [500, 1046],
+         [530, 1052], [560, 1066], [590, 1072], [620, 1086]]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "the moth-bower's mushrooms: a soft violet",
+      "pixel": [98, 598],
+      "base": [100, 630],
+      "color": "#b07aff",
+      "intensity": 1.6,
+      "distance": 3,
+      "glow": 0.55
+    },
+    {
+      "_what": "the mushrooms under the right-hand tree",
+      "pixel": [1336, 868],
+      "base": [1336, 900],
+      "color": "#b07aff",
+      "intensity": 1.2,
+      "distance": 2.5,
+      "glow": 0.45
+    }
+  ],
+  "lanterns": [
+    {"_what": "the post at the top, by the way to the square", "pixel": [1251, 164], "base": [1272, 230], "glass": [1236, 140, 1266, 184], "halo": 150},
+    {"_what": "hanging in the great tree at the top", "pixel": [966, 110], "base": [966, 262], "glass": [944, 78, 990, 136], "halo": 170},
+    {"_what": "hanging in the tree on the right", "pixel": [1222, 708], "base": [1222, 800], "glass": [1194, 672, 1248, 744], "halo": 200},
+    {"_what": "hanging in the tree by the nook", "pixel": [175, 368], "base": [175, 560], "glass": [154, 338, 196, 398], "halo": 190},
+    {"_what": "Silas's own, on the post by the junction", "pixel": [218, 730], "base": [185, 872], "glass": [197, 698, 240, 754], "halo": 260}
+  ],
+  "spots": {
+    "silas": [300, 842],
+    "kettle": [488, 776],
+    "crock": [548, 758],
+    "bench": [400, 748],
+    "mandrake": [988, 646],
+    "glowcap": [1046, 600],
+    "mandrake aside": [1104, 694],
+    "glowcap aside": [952, 592],
+    "inkblot": [1150, 330],
+    "waterfall": [760, 400],
+    "garden": [120, 900],
+    "footbridge": [815, 676],
+    "encounter": [1030, 560]
+  },
+  "herbs": [
+    ["witchs_bells", 262, 556], ["witchs_bells", 1234, 290],
+    ["ember_star_lily", 412, 516], ["ember_star_lily", 596, 742],
+    ["silver_mugwort", 612, 668], ["silver_mugwort", 984, 690]
+  ],
+  "garden": [
+    ["lavender", 150, 912], ["lavender", 96, 950], ["bogwick", 216, 884], ["wisp_sprout", 58, 972]
+  ],
+  "spawn": {"pixel": [1176, 232], "facing": "down"},
+  "arrivals": {
+    "sable-bridge": {"pixel": [480, 1076], "walk": [470, 990], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "the square",
+      "zone": [[1100, 186], [1252, 186], [1248, 208], [1100, 208]],
+      "line": "Back up the path to Wickhollow square. Not yet: the lights went the other way."
+    },
+    {
+      "name": "the stepping stones",
+      "zone": [[0, 1056], [300, 1056], [300, 1086], [0, 1086]],
+      "line": "Down to the stepping stones and the pond. Not tonight."
+    },
+    {
+      "name": "the Sable bridge",
+      "to": "sable-bridge",
+      "zone": [[330, 1056], [615, 1056], [615, 1086], [330, 1086]],
+      "line": "Down to the Sable bridge. I'll ask Silas where the lights go first."
+    }
+  ],
+  "_herbs": "herbs: on the path (LORE.md §8): witch's bells by the painted foxgloves, ember-star lilies among the red star-flowers, silver mugwort by the stream. garden: Silas's garden, which grows out of season, in the bed by his post: lavender, bogwick and wisp-sprout. [kind, x, y] on the ground.",
+  "_lanterns": "The five painted lanterns, which start dark and light one by one when Silas relights his pole: pixel (the glass), base (the ground under it), glass (the box whose bright warm pixels are painted dark), halo (how far round it the painting's warm lamplight is cooled while it's out).",
+  "_spots": "Where the cast stands: Silas by his post, his wayside kettle, crock and bench, B1's Hollowed Mandrake and Glowcap on the path above the footbridge (and where they step aside to), Inkblot, and the waterfall and footbridge to look at."
+}

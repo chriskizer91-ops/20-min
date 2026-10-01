@@ -1,0 +1,118 @@
+{
+  "_about": "The Sable riverbank, below Wickhollow (Witch Way's own painting): a cobbled towpath curving along the bank, the old jetty where the Magpie is moored, a stone bench, the leaning willow, and the stone bridge upstream in the distance. Lamp-moths carry violet flames down the river. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/sable-riverbank.json out.png",
+  "id": "sable-riverbank",
+  "title": "Wickhollow",
+  "subtitle": "The Sable Riverbank",
+  "image": "art/backgrounds/sable-riverbank.webp",
+  "size": [1448, 1086],
+  "footsteps": "step-stone",
+  "camera": {
+    "_about": "Witch Way's painter looks down on the bank from high up, like the square, but with more of the river running away to the far shore. The lamp posts shrink from about 150 px at the bottom left to 110 px at the right, and ripples on the water are ellipses about 0.3 as tall as wide, so the camera looks 28 degrees down through a 28 degree lens. At 74 pixels to the meter she is about 120 px tall on the path, a little shorter than the lamp posts, and the stone bench comes out 1.6 m long.",
+    "fov": 28,
+    "pitch": 28,
+    "ppm": 74
+  },
+  "ambient": {"sky": "#7f74d8", "ground": "#1f1830", "hemi": 1.25, "moon": "#d4cdff", "moonlight": 1.5, "moonFrom": [8, 12, -10]},
+  "water": -0.45,
+  "_water": "The river's surface, in meters below the path: the Magpie floats on it, and what's under it is hidden.",
+  "walk": [
+    {
+      "name": "towpath",
+      "points": [
+        [0, 1086], [0, 1008], [45, 992], [100, 955], [155, 928], [210, 895], [250, 862], [274, 800], [266, 720],
+        [254, 640], [260, 592], [302, 580], [350, 590], [372, 650], [410, 718], [456, 744], [520, 730],
+        [584, 702], [600, 690],
+        [600, 668], [648, 592], [750, 580], [700, 686],
+        [730, 700], [800, 702], [900, 706], [1000, 712], [1050, 728], [1180, 730], [1210, 734], [1240, 728],
+        [1300, 700], [1322, 684], [1340, 624], [1380, 576], [1448, 542],
+        [1448, 690], [1400, 716], [1300, 760], [1200, 798], [1100, 818], [900, 826], [700, 832], [600, 846],
+        [520, 872], [430, 932], [410, 956], [325, 976], [215, 996], [196, 1086]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "rope fence, bottom",
+      "base": [[325, 980], [410, 962]],
+      "outline": [
+        [[304, 985], [304, 930], [314, 920], [336, 918], [346, 928], [346, 948], [396, 928], [396, 912], [406, 902],
+         [424, 904], [428, 916], [428, 966], [410, 968], [346, 962], [346, 985]]
+      ]
+    },
+    {
+      "name": "lamp post, bottom left",
+      "base": [50, 976],
+      "outline": [
+        [[30, 986], [30, 812], [40, 798], [62, 796], [70, 808], [96, 814], [112, 836], [112, 876], [104, 888], [86, 890],
+         [72, 878], [72, 986]]
+      ]
+    },
+    {
+      "name": "jetty posts",
+      "base": [[592, 670], [708, 698]],
+      "outline": [
+        [[584, 672], [584, 634], [592, 624], [602, 628], [604, 672]],
+        [[694, 700], [694, 648], [704, 638], [718, 642], [722, 700]]
+      ]
+    },
+    {
+      "name": "reeds and grass by the jetty",
+      "base": [[760, 702], [1060, 712]],
+      "outline": [
+        [[722, 700], [726, 672], [744, 648], [760, 612], [772, 640], [790, 628], [812, 646], [836, 640], [858, 652],
+         [884, 636], [912, 628], [940, 634], [960, 612], [984, 596], [990, 556], [1000, 590], [1012, 552],
+         [1022, 580], [1034, 556], [1044, 590], [1062, 604], [1062, 712], [900, 708]]
+      ]
+    },
+    {
+      "name": "lamp post, right",
+      "base": [1424, 742],
+      "outline": [
+        [[1392, 700], [1394, 612], [1404, 596], [1420, 588], [1436, 596], [1448, 600], [1448, 760], [1406, 760], [1406, 700]]
+      ]
+    }
+  ],
+  "lights": [
+    {"_what": "lamp, bottom left", "pixel": [86, 866], "base": [50, 976], "color": "#ffb45e", "intensity": 5, "distance": 6, "glow": 0.55},
+    {"_what": "lamp, right", "pixel": [1414, 628], "base": [1424, 742], "color": "#ffb45e", "intensity": 5, "distance": 6, "glow": 0.55},
+    {"_what": "lamp by the bench", "pixel": [1216, 662], "base": [1222, 732], "color": "#ffb45e", "intensity": 3, "distance": 4.5, "glow": 0.4},
+    {"_what": "lamp up the bank", "pixel": [1392, 428], "base": [1400, 482], "color": "#ffb45e", "intensity": 3, "distance": 5, "glow": 0.4}
+  ],
+  "spots": {
+    "quill": [770, 712],
+    "magpie": [720, 604],
+    "magpie mooring": [912, 556],
+    "rosalind": [1010, 736],
+    "bench": [1114, 736],
+    "willow": [300, 590],
+    "water's edge": [860, 706]
+  },
+  "_spots": "quill: where Quill sits by his skiff, at the foot of the jetty. magpie: the jetty's end, where she stands to look at the skiff; magpie mooring: the skiff's middle on the water, off the jetty's end. Rosalind waits by the bench; the willow is at the top of the little path; water's edge: where she watches the lamp-moths go by.",
+  "moths": [
+    {"from": [1560, 610, 1.4], "via": [920, 470, 2.4], "to": [200, 252, 1.1], "seconds": 17, "delay": 0},
+    {"from": [1540, 420, 2.2], "via": [800, 380, 2.8], "to": [110, 262, 1.3], "seconds": 20, "delay": 7},
+    {"from": [1580, 700, 1.2], "via": [1000, 560, 1.9], "to": [290, 290, 1.0], "seconds": 16, "delay": 13}
+  ],
+  "_moths": "Lamp-moths over the water, carrying violet flames downriver toward the bridge: each flies a curve from one painting pixel, past another, to a third, at that many meters above the water, and comes round again.",
+  "herbs": [
+    ["nightrose", 540, 716], ["nightrose", 836, 708], ["nightrose", 1178, 742]
+  ],
+  "_herbs": "Nightrose along the bank by the jetty (LORE.md §8), where the path meets the grass.",
+  "spawn": {"pixel": [300, 900], "facing": "right"},
+  "arrivals": {
+    "wickhollow-square": {"pixel": [80, 1060], "walk": [240, 920], "facing": "right"}
+  },
+  "exits": [
+    {
+      "name": "the square",
+      "to": "wickhollow-square",
+      "zone": [[0, 1000], [44, 994], [200, 1040], [198, 1086], [0, 1086]],
+      "line": "Up the steps to the square."
+    },
+    {
+      "name": "the towpath",
+      "zone": [[1418, 548], [1448, 544], [1448, 692], [1418, 700]],
+      "line": "The towpath follows the Sable down the valley. By road it's days to the fen. By skiff, a moonlit minute."
+    }
+  ]
+}

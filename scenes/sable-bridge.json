@@ -1,0 +1,71 @@
+{
+  "_about": "The stone bridge over the Sable (docs/SLICE.md screen 6), on the way from the lantern path to the Hollow: she comes up onto it at the bottom left, crosses past the wayside shrine with its candles, and the far end runs on into the twisted grove at the top right, where the Sour Wisps crowd. Lamp-moths carry stolen lights away under the arches. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/sable-bridge.json out.png",
+  "id": "sable-bridge",
+  "title": "The Sable Bridge",
+  "subtitle": "The Gloamwood",
+  "image": "art/backgrounds/sable-bridge.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "A strong 3/4 view down the length of the bridge: the cobbles at the bottom left are two and a half times the size of those at the far end, which takes a wide lens (40 degrees) looking 30 degrees down. At 85 pixels to the meter the deck is a steady 3.1 to 3.4 m between its walls all the way along, the bridge 18 m long, the two lamp posts 3.3 and 3.6 m, and she stands 165 px tall where she comes up onto it, 130 in the middle and 93 at the far end.",
+    "fov": 40,
+    "pitch": 30,
+    "ppm": 85
+  },
+  "ambient": {"sky": "#8b80d8", "ground": "#2b1b2e", "hemi": 1.25, "moon": "#d4cdff", "moonlight": 1.35, "moonFrom": [-4, 12, -10]},
+  "walk": [
+    {
+      "name": "the bridge",
+      "_what": "The deck between its two walls, from where the path comes up onto it at the bottom left to where it runs on into the grove at the top right. The near wall hides her feet when she walks right up to it (see its cut-out).",
+      "points": [
+        [0, 1024], [0, 756], [130, 712], [250, 684], [330, 618], [450, 580], [600, 530], [760, 454], [880, 402],
+        [1000, 344], [1120, 302], [1230, 264], [1300, 236], [1400, 196], [1536, 166],
+        [1536, 262], [1480, 272], [1336, 346], [1200, 420], [1100, 472], [1000, 524], [900, 570], [800, 614],
+        [700, 668], [600, 712], [480, 792], [380, 876], [350, 940], [334, 1024]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "the bridge's near wall",
+      "base": [[360, 900], [1490, 272]],
+      "outline": [
+        [[320, 1024], [338, 902], [350, 864], [368, 852], [390, 860], [480, 784], [580, 714], [592, 690], [610, 680], [628, 688],
+         [700, 652], [800, 598], [900, 552], [1000, 508], [1040, 482], [1060, 464], [1082, 466], [1094, 478], [1200, 408],
+         [1336, 330], [1468, 264], [1480, 248], [1500, 242], [1516, 256], [1536, 258], [1536, 330], [1480, 334], [1336, 398],
+         [1200, 470], [1100, 526], [1000, 580], [900, 628], [800, 684], [700, 742], [600, 794], [480, 872], [410, 940], [404, 1024]]
+      ]
+    }
+  ],
+  "lights": [
+    {"_what": "the lamp at the near end", "pixel": [240, 455], "base": [213, 667], "color": "#ffb45e", "intensity": 7, "distance": 7, "glow": 1.1},
+    {"_what": "the lamp at the far end", "pixel": [1294, 76], "base": [1262, 230], "color": "#ffb45e", "intensity": 6, "distance": 7, "glow": 0.9},
+    {"_what": "the shrine's candles", "pixel": [668, 470], "base": [668, 520], "color": "#ffc070", "intensity": 2.5, "distance": 3.5, "glow": 0.6}
+  ],
+  "spots": {
+    "wisps": [[1390, 206], [1450, 222], [1508, 190]],
+    "wisps away": [[1420, 60], [1480, 40], [1530, 80]],
+    "shrine": [668, 520],
+    "lamp-moths": [
+      {"from": [1250, 1024, -2.6], "to": [905, 800, -2.6], "_what": "in from the near water, under the left arch"},
+      {"from": [1536, 760, -2.6], "to": [1345, 530, -2.6], "_what": "in from the right, under the far arch"}
+    ]
+  },
+  "spawn": {"pixel": [180, 960], "facing": "up"},
+  "arrivals": {
+    "lantern-path": {"pixel": [150, 1010], "walk": [230, 900], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "the lantern path",
+      "to": "lantern-path",
+      "zone": [[0, 1000], [334, 1000], [334, 1024], [0, 1024]],
+      "line": "Back down to the lantern path."
+    },
+    {
+      "name": "the Hollow",
+      "zone": [[1508, 166], [1536, 166], [1536, 262], [1508, 262]],
+      "line": "On through the twisted grove, to the Hollow, where the moths gather. (The Hollow is another screen.)"
+    }
+  ],
+  "_spots": "wisps: three Sour Wisps crowding the twisted grove where the bridge runs into it (B2), and where they drift off to. lamp-moths: two flight lines over the water (the third number is the water's height below the deck, in meters), each ending in the dark under an arch, where the moth and its stolen light fade away."
+}

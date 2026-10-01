@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- PAGE -->
+<title>Pick Your Poison</title>
+<style>
+  /* Brewing at her cottage hearth: Witch Way's "Pick Your Poison", in the square's and Bogmire's look. The cauldron
+     screen itself (src/brew/ui.js) brings its own windows; this page adds her basket, her moonwater, what she has
+     brewed, and buttons for the grimoire, the sound and starting again. */
+  :root {
+    color-scheme: dark;
+    --night: #07050b;
+    --panel: rgba(24, 12, 30, 0.9);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #b9a9c4;
+    --magenta: #c63d83;
+    --gold: #e2bd67;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 16px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .pyp { opacity: 0; transition: opacity 0.8s; }
+  body.ready .pyp { opacity: 1; }
+
+  /* The page's own HUD sits over the cauldron screen, and steps aside for its card and its grimoire */
+  #hud { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+  #hud > * { pointer-events: auto; }
+  body:has(.pyp-card:not([hidden])) #hud, body:has(.pyp-grimoire:not([hidden])) #hud { visibility: hidden; }
+  body:has(.pyp-basket:not([hidden])) #basket { display: none; }
+
+  #tools { position: fixed; right: var(--gutter); top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: calc(100% - 32px); }
+  #tools button { padding: 7px 12px; font-size: 14px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; }
+  #tools button:hover { border-color: var(--cream); }
+  #tools button[aria-pressed='true'] { background: var(--magenta); border-color: var(--cream); color: #fff; }
+  #btn-basket { display: none; }
+
+  /* Her basket, her moonwater and what she has brewed tonight */
+  #basket { position: fixed; right: var(--gutter); top: calc(66px + env(safe-area-inset-top, 0px)); width: 236px; max-height: calc(100% - 100px); overflow: auto;
+    padding: 10px 12px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 8px; }
+  #basket h2 { margin: 0 0 6px; font: 400 24px/1 var(--display); color: var(--cream); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  #basket h2 small { font: 13px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
+  #basket h2.brewed { margin-top: 12px; }
+  #basket ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+  #basket li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  #basket li img { width: 28px; height: 28px; image-rendering: pixelated; flex: none; }
+  #basket li span { flex: 1; }
+  #basket li.water { color: #cfe0ff; }
+  #basket li.fresh { color: var(--gold); animation: fresh 1.2s ease-out; }
+  #basket li.none { color: var(--dim); font-style: italic; }
+  @keyframes fresh { from { transform: translateX(-6px); } }
+
+  #reopen { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 12px 20px; font-size: 17px;
+    background: var(--magenta); border: 2px solid var(--cream); border-radius: 8px; color: #fff; z-index: 70; }
+  #away { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 45%, #3b1a52, #160a22 75%); display: grid; place-items: center; text-align: center; }
+  #away p { margin: 0 24px; max-width: 30ch; font: 400 34px/1.1 var(--display); color: var(--cream); }
+  #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; z-index: 80; }
+
+  @media (max-width: 700px) {
+    .pyp-title h2 { font-size: 30px !important; }
+    .pyp-title p { display: none; }
+    #tools { top: calc(50px + env(safe-area-inset-top, 0px)); left: var(--gutter); right: var(--gutter); justify-content: flex-start; gap: 6px; }
+    #tools button { padding: 5px 9px; font-size: 13px; }
+    #btn-basket { display: inline-block; }
+    #basket { display: none; top: calc(90px + env(safe-area-inset-top, 0px)); right: auto; left: var(--gutter); width: min(260px, calc(100% - 32px)); max-height: 50%; }
+    body.show-basket #basket { display: block; }
+  }
+  @media (max-width: 380px) { #btn-again { display: none; } }
+  @media (max-height: 520px) {
+    #btn-basket { display: inline-block; }
+    #basket { display: none; max-height: calc(100% - 80px); }
+    body.show-basket #basket { display: block; }
+  }
+</style>
+
+<div id="away" hidden><p>She has stepped away from the pot. The witchfire waits.</p></div>
+<div id="hud">
+  <nav id="tools" aria-label="Page">
+    <button id="btn-basket" aria-pressed="false" aria-controls="basket">Basket</button>
+    <button id="btn-grimoire">Grimoire</button>
+    <button id="btn-sound" aria-pressed="true">Sound on</button>
+    <button id="btn-again" title="Start the night again: a full basket and eight moonwater">Start over</button>
+  </nav>
+  <section id="basket" aria-live="polite" aria-label="Her basket">
+    <h2>Her basket <small id="basket-count"></small></h2>
+    <ul id="basket-herbs"></ul>
+    <h2 class="brewed">Brewed <small id="brewed-count"></small></h2>
+    <ul id="basket-brews"></ul>
+  </section>
+  <button id="reopen" hidden>Back to the cauldron</button>
+</div>
+<p id="error" hidden></p>
+<!-- /PAGE -->
+<script type="module" src="dev/brewing.js"></script>
+</html>

@@ -3,10 +3,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- PAGE -->
-<title>Bogmire</title>
+<title>The Gloamwood</title>
 <style>
-  /* Bogmire's two screens, with the square's look: a moonlit game screen whose HUD borrows the Moonlight
-     Witch's colours (plum hat, cream band, magenta shawl) and Witch Way's two pixel fonts. */
+  /* The Gloamwood, Wickhollow's wild places, with Bogmire's look: a moonlit game screen whose HUD borrows the
+     Moonlight Witch's colours (plum hat, cream band, magenta shawl) and Witch Way's two pixel fonts. */
   :root {
     color-scheme: dark;
     --night: #07050b;
@@ -102,6 +102,7 @@
   .sw.cam { background: var(--gold); }
   .sw.floor { background: var(--floor); }
   .sw.card { background: var(--card); }
+  .sw.lamp { background: radial-gradient(circle, #fff2c0, #ff9a3a 60%, #7a3a10); }
   #backstage .small { margin: 0 0 12px; font-size: 13px; color: var(--dim); }
   #btn-back { padding: 8px 14px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
 
@@ -115,31 +116,6 @@
   #fade.on { opacity: 1; transition: opacity 0.45s ease-out; }
   body:not(.ready) #fade { opacity: 1; transition: none; }
 
-  /* Out on the fen: the Hag-Sight button (a stone with a hole in it), the view through the hag stone, and the
-     encounter card that stands in for each fight (the fights are in the battle demo) */
-  #btn-hagsight { position: fixed; left: var(--gutter); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 8px;
-    padding: 8px 14px 8px 12px; font-size: 15px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; color: var(--cream); }
-  #btn-hagsight::before { content: ''; width: 16px; height: 16px; border: 4px solid #9fb0a6; border-radius: 50% 45% 50% 40%; }
-  #btn-hagsight[aria-pressed='true'] { background: #2c5244; border-color: #b8ffd8; color: #fff; }
-  body:has(#talk:not([hidden])) #btn-hagsight, body.backstage #btn-hagsight { display: none; }
-  #hagstone { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s;
-    background: radial-gradient(ellipse 70% 75% at 50% 50%, transparent 60%, rgba(16, 40, 30, 0.45) 82%, rgba(6, 14, 12, 0.85)); }
-  body.hagsight #hagstone { opacity: 1; }
-  #encounter { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px);
-    overflow: auto; padding: 18px 20px 20px; background: linear-gradient(180deg, rgba(58, 22, 49, 0.96), rgba(20, 9, 26, 0.97)); border: 2px solid var(--cream);
-    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 12px 40px rgba(0, 0, 0, 0.7); animation: card-in 0.35s ease-out; }
-  #enc-kicker { margin: 0; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
-  #enc-name { margin: 2px 0 12px; font: 400 42px/1 var(--display); color: var(--cream); }
-  #enc-foes { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
-  #enc-foes li { display: grid; gap: 2px; padding-left: 12px; border-left: 3px solid var(--magenta); }
-  #enc-foes b { font-weight: 600; }
-  #enc-foes span, .enc-demo { font-size: 14px; color: var(--dim); }
-  #enc-note { margin: 0 0 8px; font-size: 14px; color: #e5dcec; }
-  .enc-demo { margin: 0 0 16px; }
-  .enc-demo a { color: var(--gold); }
-  #enc-go { padding: 9px 20px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; }
-  @keyframes card-in { from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); } }
-
   #error { position: fixed; left: var(--gutter); right: var(--gutter); top: 16px; margin: 0; padding: 12px 16px; background: #3a0f1f; border-radius: 6px; }
 
   body.backstage #hint, body.backstage #place { display: none; }
@@ -152,12 +128,32 @@
     #tools button { padding: 6px 10px; font-size: 13px; }
     body.backstage #tools #btn-layers, body.backstage #tools #btn-pixels { display: none; }
   }
+
+  /* An encounter card: who stands in the way, and where the fight is (it isn't wired in here) */
+  #encounter { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px));
+    max-height: calc(100% - 32px); overflow: auto; padding: 18px 20px 20px; text-align: center;
+    background: linear-gradient(180deg, rgba(58, 22, 49, 0.97), rgba(20, 9, 26, 0.97)); border: 2px solid var(--cream); border-radius: 10px;
+    box-shadow: inset 0 0 0 3px var(--plum), inset 0 0 0 4px rgba(236, 220, 184, 0.35), 0 16px 40px rgba(0, 0, 0, 0.7); animation: deal 0.45s ease-out; }
+  @keyframes deal { from { opacity: 0; transform: translate(-50%, -44%) rotate(-2deg); } }
+  #encounter .tag { display: inline-block; margin: 0 0 6px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px;
+    color: var(--gold); font-size: 13px; letter-spacing: 0.14em; }
+  #encounter h2 { margin: 0 0 8px; font: 400 40px/1 var(--display); color: var(--cream); }
+  #enc-text { margin: 0 0 10px; font-size: 18px; }
+  #enc-foes { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; color: var(--dim); }
+  #enc-foes li::before { content: '✦ '; color: var(--magenta); }
+  #enc-note { margin: 0 0 14px; font-size: 14px; color: var(--dim); }
+  #encounter .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  #enc-go { padding: 9px 18px; background: var(--magenta); border: 1px solid var(--cream); border-radius: 6px; color: #fff; font-size: 16px; }
+  #enc-battle { color: var(--cream); font-size: 14px; }
+  body:has(#encounter:not([hidden])) #basket, body:has(#encounter:not([hidden])) #hint { display: none; }
+  /* She starts with something in her basket, so the hint makes room for it */
+  body:has(#basket:not([hidden])) #hint { max-width: min(360px, calc(100% - 248px)); }
   @media (prefers-reduced-motion: reduce) { #bang, #talk-more, #encounter { animation: none; } #fade, #fade.on { transition-duration: 0.15s; } }
 </style>
 
-<canvas id="stage" aria-label="Bogmire at night: plank streets on stilts round a fire, and the fen beyond, with the Moonlight Witch"></canvas>
+<canvas id="stage" aria-label="The lantern path in the Gloamwood at night: a cobbled path past a waterfall and over a footbridge, with the Moonlight Witch"></canvas>
 
-<header id="place"><h1 id="place-name">Bogmire</h1><p id="place-sub">The Moot-Circle</p></header>
+<header id="place"><h1 id="place-name">The Lantern Path</h1><p id="place-sub">The Gloamwood</p></header>
 <nav id="tools" aria-label="View">
   <button id="btn-backstage" aria-pressed="false" title="Fly the camera out to see how the scene is built (B)">Behind the scenes</button>
   <button id="btn-layers" aria-pressed="false" title="Show the floor and the cut-outs (L)">Layers</button>
@@ -170,21 +166,19 @@
 <p id="toast" hidden></p>
 <section id="basket" hidden aria-live="polite"><h2>Basket <span id="basket-count"></span></h2><ul id="basket-list"></ul></section>
 
+<section id="encounter" hidden role="dialog" aria-modal="true" aria-labelledby="enc-title">
+  <p class="tag" id="enc-tag">B1</p>
+  <h2 id="enc-title">The Lantern Path</h2>
+  <p id="enc-text"></p>
+  <ul id="enc-foes"></ul>
+  <p id="enc-note"></p>
+  <div class="row"><button id="enc-go">Let her pass</button><a id="enc-battle" href="hollow-battle.html#B1" target="_blank" rel="noopener">The fight, in the battle demo</a></div>
+</section>
+
 <section id="talk" hidden aria-live="polite">
   <img id="talk-face" alt="">
   <div class="words"><h2 id="talk-name"></h2><p id="talk-text"></p></div>
   <span id="talk-more" hidden>▼</span>
-</section>
-
-<div id="hagstone" aria-hidden="true"></div>
-<button id="btn-hagsight" hidden aria-pressed="false" title="Look through the hag stone: in the fog, it shows which planks hold (H)">Hag-Sight</button>
-<section id="encounter" hidden role="dialog" aria-modal="true" aria-labelledby="enc-name">
-  <p id="enc-kicker"></p>
-  <h2 id="enc-name"></h2>
-  <ul id="enc-foes"></ul>
-  <p id="enc-note"></p>
-  <p class="enc-demo">The fight is in the battle demo: <a id="enc-link" href="hollow-battle.html" target="_blank" rel="noopener">play it there</a>.</p>
-  <button id="enc-go">Carry on</button>
 </section>
 
 <aside id="backstage" hidden>
@@ -192,8 +186,9 @@
   <ul id="notes">
     <li><i class="sw paint"></i><span><b>The painting</b> is one flat picture, hung up behind everything. Nothing in it is 3D.</span></li>
     <li><i class="sw cam"></i><span><b>The painter's camera.</b> The 3D camera sits where the painter "stood", so 3D things line up with the brush strokes.</span></li>
-    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the planks, not the water. She can only stand on it, and it climbs the moot-hall steps.</span></li>
+    <li><i class="sw floor"></i><span><b>The walkmesh</b> is an invisible floor traced over the cobbles and the footbridge, not the stream. She can only stand on it.</span></li>
     <li><i class="sw card"></i><span><b>Cut-outs</b> are pieces of the painting stood up at their own depth. When she walks behind one, it covers her.</span></li>
+    <li><i class="sw lamp"></i><span><b>The lanterns</b> are painted lit. While they're out, the page paints their glass dark and cools their light on the path, and paints it back when they're relit.</span></li>
   </ul>
   <p class="small" id="notes-tip">Drag to look around, scroll or pinch to zoom. You can keep walking with the keys.</p>
   <button id="btn-back">Back to the game</button>
@@ -202,16 +197,12 @@
   <span data-spot="painting" style="--c: #e79a4a">The painting</span>
   <span data-spot="camera" style="--c: var(--gold)">Painter's camera</span>
   <span data-spot="floor" style="--c: var(--floor)">Walkmesh</span>
-  <span data-spot="fire" style="--c: var(--card)">Cut-out: the fire ring</span>
-  <span data-spot="lamp" style="--c: var(--card)">Cut-out: a lamp and its planter</span>
-  <span data-spot="cauldron" style="--c: var(--card)">Cut-out: the hearth</span>
-  <span data-spot="gate" style="--c: var(--card)">Cut-out: the gate</span>
-  <span data-spot="rail" style="--c: var(--card)">Cut-out: a rail</span>
-  <span data-spot="fog" style="--c: #c3c8dc">Fog: 3D, over the painting</span>
-  <span data-spot="bench" style="--c: #dcd6ff">The rest point</span>
+  <span data-spot="post" style="--c: var(--card)">Cut-out: Silas's lamp post</span>
+  <span data-spot="rail" style="--c: var(--card)">Cut-out: the footbridge rail</span>
+  <span data-spot="arch" style="--c: var(--card)">Cut-out: the bridge wall</span>
 </div>
 <div id="fade" aria-hidden="true"></div>
 <p id="error" hidden></p>
 <!-- /PAGE -->
-<script type="module" src="dev/bogmire.js"></script>
+<script type="module" src="dev/gloamwood.js"></script>
 </html>

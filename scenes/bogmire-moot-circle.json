@@ -275,7 +275,9 @@
   ],
   "spawn": {"pixel": [1440, 598], "facing": "left"},
   "arrivals": {
-    "nettie-hut": {"pixel": [178, 600], "walk": [236, 632], "facing": "right"}
+    "nettie-hut": {"pixel": [178, 600], "walk": [236, 632], "facing": "right"},
+    "murkway": {"pixel": [808, 1016], "walk": [808, 900], "facing": "up"},
+    "long-boardwalk": {"pixel": [1528, 592], "walk": [1440, 598], "facing": "left"}
   },
   "exits": [
     {
@@ -286,8 +288,9 @@
     },
     {
       "name": "the Murkway",
-      "zone": [[572, 1004], [1045, 1004], [1045, 1024], [572, 1024]],
-      "line": "Down the pier to the Murkway: planks over black pools. Not without someone who knows which planks hold."
+      "to": "murkway",
+      "zone": [[580, 986], [1040, 986], [1045, 1024], [572, 1024]],
+      "line": "Down the pier to the Murkway: planks over black pools."
     },
     {
       "name": "the west street",
@@ -296,8 +299,9 @@
     },
     {
       "name": "the Long Boardwalk",
-      "zone": [[1514, 552], [1536, 552], [1536, 630], [1514, 630]],
-      "line": "Past the mast, the Long Boardwalk runs out into the mist. Keep to the lamps, and count them. Another night."
+      "to": "long-boardwalk",
+      "zone": [[1500, 552], [1536, 552], [1536, 630], [1500, 632]],
+      "line": "Past the mast, the Long Boardwalk runs out into the mist. Keep to the lamps, and count them."
     }
   ],
   "_herbs": "Herbs she can gather: [kind, x, y] on the planks, or [kind, x, y, height] for one growing in a planter (the pixel is where the plant shows). Bogwick in the lamp-pole planters, silver mugwort at the plank edges, lavender in Nettie's door barrel and the pier's planter (LORE.md \u00a78).",

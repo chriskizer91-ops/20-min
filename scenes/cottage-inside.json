@@ -1,0 +1,63 @@
+{
+  "_about": "Inside the witch's cottage, in Wickhollow: the hearth and her cauldron at the back, her worktable under the round window on the left, the armchair on the right, the stairs going up on the far left, and the front door in the right-hand wall. The opening cut-scene ends here. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/cottage-inside.json out.png",
+  "id": "cottage-inside",
+  "title": "Wickhollow",
+  "subtitle": "The Cottage",
+  "image": "art/backgrounds/cottage-inside.webp",
+  "size": [1536, 1024],
+  "footsteps": "step-wood",
+  "camera": {
+    "_about": "A close room, seen from above the door. The round rug is an ellipse about 0.40 as tall as it is wide at y 680, and the hearth's stone ring about 0.29 at y 420; a camera 19.5 degrees down through a 26 degree lens gives both. At 160 pixels to the meter she stands about 400 px tall at the front door (the door is about 420) and about 235 px by the hearth, and the cauldron comes out a little over a meter across.",
+    "fov": 26,
+    "pitch": 19.5,
+    "ppm": 160
+  },
+  "ambient": {"sky": "#b07a58", "ground": "#2a1610", "hemi": 1.15, "moon": "#b8b0ff", "moonlight": 0.55, "moonFrom": [-6, 5, -4]},
+  "walk": [
+    {
+      "name": "floorboards",
+      "points": [
+        [230, 1024], [222, 975], [300, 978], [378, 966], [405, 918], [452, 905], [458, 830], [452, 772],
+        [440, 692], [362, 622], [244, 594], [182, 588], [214, 568], [236, 548], [404, 544], [416, 508],
+        [516, 504], [530, 478], [606, 476], [622, 490], [760, 496], [880, 488], [915, 474], [1000, 470],
+        [1036, 476], [1040, 528], [1102, 548], [1186, 566], [1250, 566], [1262, 584], [1292, 594],
+        [1290, 770], [1226, 778], [1214, 886], [1300, 904], [1350, 928], [1440, 962], [1490, 1024]
+      ]
+    }
+  ],
+  "layers": [],
+  "lights": [
+    {"_what": "the hearth", "pixel": [762, 392], "base": [762, 470], "color": "#ff8a2a", "intensity": 14, "distance": 9, "glow": 1.4},
+    {"_what": "candles on the worktable", "pixel": [330, 318], "base": [300, 470], "color": "#ffb45e", "intensity": 3, "distance": 4.5, "glow": 0.4},
+    {"_what": "candle on the little table by the stairs", "pixel": [246, 650], "base": [250, 740], "color": "#ffb45e", "intensity": 2.5, "distance": 4, "glow": 0.35},
+    {"_what": "lantern by the door", "pixel": [1330, 662], "base": [1300, 780], "color": "#ffb45e", "intensity": 3.5, "distance": 5, "glow": 0.45},
+    {"_what": "hanging lantern", "pixel": [1350, 132], "base": [1350, 560], "color": "#ffb45e", "intensity": 2.5, "distance": 5, "glow": 0.4},
+    {"_what": "candle on the floor by the door", "pixel": [1222, 852], "base": [1222, 868], "color": "#ffb45e", "intensity": 1.5, "distance": 3, "glow": 0.25},
+    {"_what": "candles on the shelves", "pixel": [1036, 272], "base": [1036, 452], "color": "#ffb45e", "intensity": 2, "distance": 4, "glow": 0.3},
+    {"_what": "candle by the armchair", "pixel": [1296, 410], "base": [1300, 572], "color": "#ffb45e", "intensity": 2, "distance": 3.5, "glow": 0.3},
+    {"_what": "moonlight at the round window", "pixel": [450, 152], "base": [450, 480], "color": "#9f9aff", "intensity": 1.5, "distance": 5, "glow": 0}
+  ],
+  "spots": {
+    "armchair": [1122, 556],
+    "cauldron": [762, 492],
+    "round window": [468, 512],
+    "worktable": [300, 552],
+    "chest": [292, 972],
+    "broom": [560, 482]
+  },
+  "_spots": "What she can look at: the armchair (her rest and save point), the cauldron (id 'cauldron', where the brewing screen will open), the round window (the spot is on the floor under it; its tap target is lifted up to the glass), her worktable (the hag stone), the chest at the foot of the stairs (two moonwater) and her broom.",
+  "herbs": [],
+  "_herbs": "Nothing to pick in here: the bunches hanging from the beams are already dried.",
+  "spawn": {"pixel": [800, 650], "facing": "down"},
+  "arrivals": {
+    "cottage-garden": {"pixel": [1396, 986], "walk": [1180, 905], "facing": "left"}
+  },
+  "exits": [
+    {
+      "name": "the garden",
+      "to": "cottage-garden",
+      "zone": [[1330, 952], [1446, 958], [1496, 1024], [1330, 1024]],
+      "line": "Out to the garden."
+    }
+  ]
+}

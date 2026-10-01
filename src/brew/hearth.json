@@ -1,0 +1,57 @@
+{
+  "_about": "The brewing screen at her cottage: the cottage-inside painting framed on its hearth. She has taken the great pot down off its chain (art/brews/cottage-hearth.webp is the painting with the hanging pot, its bail and most of its chain painted out: inpainted, with stone courses drawn back in) and brews on the boards in front of the fire, the classic way: the witch behind the cauldron, facing us, with witchfire burning on the bare boards under it (\"Witchfire burns nothing that belongs\"). Every position is in painting pixels (x right, y down). Check with: python3 tools/overlay.py src/brew/hearth.json out.png",
+  "id": "cottage-hearth",
+  "title": "Pick Your Poison",
+  "subtitle": "Her cottage, at the hearth",
+  "image": "art/brews/cottage-hearth.webp",
+  "size": [1536, 1024],
+  "camera": {
+    "_about": "The same painter as Nettie's hut (scenes/nettie-hut.json), and the same camera. The round rug's sides are about 0.39 as tall as they are wide at y 680, and the hearth's stone ring about 0.23 at y 430; a camera 16.5 degrees down through a 38 degree lens gives both. At 150 pixels to the meter the stool is 0.55 m tall and the ring's front wall 0.5 m. She stands at the foot of the ring, 1.68 m and about 240 px tall (her hat's tip reaches the fireplace's lintel), and the cauldron in front of her is 0.7 m across and comes up to the middle of her thigh: seen from the front, its lip is level with her belt.",
+    "fov": 38,
+    "pitch": 16.5,
+    "ppm": 150
+  },
+  "ambient": {"sky": "#b07a58", "ground": "#2a1610", "hemi": 1.1, "moon": "#b8b0ff", "moonlight": 0.55, "moonFrom": [-6, 5, -2]},
+  "frame": {
+    "_about": "The part of the painting the brewing screen shows: the whole fireplace, from the lantern on the left shelf to the pans on the right, and the boards in front. The screen fits this box and fills out round it.",
+    "box": [572, 150, 960, 585]
+  },
+  "spots": {
+    "_about": "witch: where she stands, at the foot of the stone ring, facing us. cauldron: the middle of its base, on the boards 0.6 m in front of her; cauldronScale: its size (0.74 makes it 0.7 m across and 0.6 m tall).",
+    "witch": [766, 490],
+    "cauldron": [766, 516, 0],
+    "cauldronScale": 0.74
+  },
+  "walk": [
+    {
+      "name": "the boards in front of the hearth",
+      "points": [[420, 488], [590, 474], [700, 484], [830, 484], [975, 474], [1110, 488], [1150, 600], [390, 600]],
+      "holes": []
+    }
+  ],
+  "layers": [],
+  "lights": [
+    {"_what": "the hearth fire, behind her", "pixel": [766, 395], "base": [766, 440], "color": "#ff8a2a", "intensity": 9, "distance": 6, "glow": 0},
+    {"_what": "candle on the left shelf", "pixel": [617, 298], "base": [617, 470], "color": "#ffb45e", "intensity": 2, "distance": 3.5, "glow": 0.25},
+    {
+      "_what": "lantern on the left shelf",
+      "pixel": [640, 268],
+      "base": [640, 470],
+      "color": "#ffb45e",
+      "intensity": 1.5,
+      "distance": 3.5,
+      "glow": 0.25
+    },
+    {"_what": "lantern on the right", "pixel": [1003, 258], "base": [1003, 470], "color": "#ffb45e", "intensity": 1.5, "distance": 3.5, "glow": 0.25},
+    {
+      "_what": "moonlight from the round window",
+      "pixel": [450, 170],
+      "base": [450, 470],
+      "color": "#9f9aff",
+      "intensity": 1.2,
+      "distance": 5,
+      "glow": 0
+    }
+  ],
+  "spawn": {"pixel": [766, 490], "facing": "down"}
+}

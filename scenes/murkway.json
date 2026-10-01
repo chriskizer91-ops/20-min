@@ -1,0 +1,233 @@
+{
+  "_about": "The Murkway, out of the bottom of Bogmire's pier: a dirt path climbing from the bottom left to an old graveyard gate at the top right, a plank bridge down across the black pool, and a boardwalk on stilts that leaves by the dead tree on the right for the Long Boardwalk. Thareia's graveyard path at night (docs/SLICE.md screen 11). Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/murkway.json out.png",
+  "id": "murkway",
+  "title": "The Murkway",
+  "subtitle": "Bogmire's fen",
+  "image": "art/backgrounds/graveyard-path.webp",
+  "size": [1448, 1086],
+  "camera": {
+    "_about": "Thareia's path is painted from fairly high, but the painted posts stay upright and their fronts show, so the camera looks 32 degrees down through a 32 degree lens. At 70 pixels to the meter the fence posts by the bottom of the path come out about 1.2 m, she stands a little taller than them (about 125 px there, 110 on the bridge, 100 by the graveyard steps), the path is about two and a half meters wide, and the gate's pillars come out about 3 m.",
+    "fov": 32,
+    "pitch": 32,
+    "ppm": 70
+  },
+  "ambient": {
+    "sky": "#7d86c8",
+    "ground": "#1f1c26",
+    "hemi": 1.25,
+    "moon": "#d4d8ff",
+    "moonlight": 1.45,
+    "moonFrom": [-9, 12, -7]
+  },
+  "walk": [
+    {
+      "name": "the path, the bridge and the planks",
+      "points": [
+        [0, 1086], [0, 880], [60, 860], [130, 820], [200, 790], [240, 745], [250, 700], [270, 650], [330, 600],
+        [390, 560], [440, 525], [500, 500], [560, 470], [620, 440], [700, 410], [780, 385], [860, 355], [940, 325],
+        [1000, 300], [1060, 280], [1120, 272], [1160, 272], [1240, 275], [1230, 300], [1200, 330], [1170, 360],
+        [1150, 398], [1200, 405], [1250, 413], [1300, 420], [1318, 440], [1315, 468], [1250, 462], [1195, 456],
+        [1193, 540], [1182, 620], [1172, 700], [1162, 762], [1146, 812], [1114, 846], [1030, 852], [990, 815],
+        [930, 772], [868, 728], [808, 672], [748, 622], [728, 600], [700, 598], [640, 605], [600, 620], [560, 660],
+        [530, 720], [480, 780], [450, 835], [367, 878], [300, 935], [255, 985], [205, 1012], [145, 1040],
+        [130, 1086]
+      ],
+      "holes": [
+        [
+          [850, 590], [905, 625], [975, 675], [1030, 715], [1058, 742], [1080, 768], [1100, 748], [1114, 700],
+          [1122, 620], [1126, 540], [1129, 470], [1140, 448], [1090, 432], [1000, 445], [960, 455], [900, 480],
+          [840, 520], [820, 560]
+        ]
+      ]
+    },
+    {
+      "name": "the steps up to the gate",
+      "points": [[1160, 272, 0], [1240, 275, 0], [1228, 218, 0.9], [1172, 216, 0.9]]
+    }
+  ],
+  "layers": [
+    {
+      "name": "fence, bottom left",
+      "base": [[145, 1035], [280, 962]],
+      "outline": [
+        [
+          [128, 1040], [128, 965], [160, 955], [190, 940], [222, 912], [228, 903], [262, 903], [268, 910],
+          [292, 905], [292, 962], [262, 995], [215, 1014], [160, 1038]
+        ]
+      ]
+    },
+    {
+      "name": "fence, lower right of the path",
+      "base": [[367, 878], [460, 834]],
+      "outline": [
+        [
+          [358, 882], [358, 805], [372, 796], [395, 784], [438, 754], [464, 752], [468, 832], [440, 848], [400, 866]
+        ]
+      ]
+    },
+    {
+      "name": "the bridge, near rail",
+      "base": [[740, 625], [988, 826]],
+      "outline": [
+        [[733, 632], [733, 582], [740, 576], [750, 578], [752, 632]],
+        [[804, 694], [804, 640], [812, 634], [822, 638], [824, 694]],
+        [[852, 738], [852, 698], [862, 692], [874, 696], [876, 738]],
+        [[920, 782], [920, 738], [930, 732], [940, 736], [942, 782]],
+        [[968, 826], [968, 786], [978, 780], [988, 784], [990, 826]]
+      ],
+      "_about": "Just the posts: the low fog lies over the bridge, and a cut-out covers whatever 3D is behind it, fog included."
+    },
+    {
+      "name": "rune stone in the pool",
+      "base": [1218, 676],
+      "outline": [
+        [[1186, 682], [1186, 562], [1200, 540], [1225, 533], [1246, 548], [1254, 682]]
+      ]
+    }
+  ],
+  "lights": [
+    {
+      "_what": "candles at the wayside shrine",
+      "pixel": [405, 470],
+      "base": [405, 505],
+      "color": "#ffb45e",
+      "intensity": 3,
+      "distance": 4,
+      "glow": 0.5
+    },
+    {
+      "_what": "candle on the shrine step",
+      "pixel": [470, 488],
+      "base": [470, 505],
+      "color": "#ffb45e",
+      "intensity": 2,
+      "distance": 3,
+      "glow": 0.35
+    },
+    {
+      "_what": "lamp on the gate, left",
+      "pixel": [1163, 150],
+      "base": [1165, 218],
+      "color": "#ffb45e",
+      "intensity": 4,
+      "distance": 5,
+      "glow": 0.6
+    },
+    {
+      "_what": "lamp on the gate, right",
+      "pixel": [1296, 152],
+      "base": [1296, 218],
+      "color": "#ffb45e",
+      "intensity": 4,
+      "distance": 5,
+      "glow": 0.6
+    },
+    {
+      "_what": "rune on the stone in the pool",
+      "pixel": [1212, 598],
+      "base": [1218, 676],
+      "color": "#7dffb0",
+      "intensity": 1.4,
+      "distance": 3,
+      "glow": 0.45
+    },
+    {
+      "_what": "rune on the small grave",
+      "pixel": [1302, 610],
+      "base": [1310, 648],
+      "color": "#7dffb0",
+      "intensity": 1.0,
+      "distance": 2.5,
+      "glow": 0.35
+    },
+    {
+      "_what": "rune on the stone by the bridge",
+      "pixel": [772, 840],
+      "base": [760, 905],
+      "color": "#7dffb0",
+      "intensity": 1.4,
+      "distance": 3,
+      "glow": 0.45
+    },
+    {
+      "_what": "rune on the stone, bottom right",
+      "pixel": [1322, 832],
+      "base": [1322, 895],
+      "color": "#7dffb0",
+      "intensity": 1.2,
+      "distance": 3,
+      "glow": 0.4
+    },
+    {
+      "_what": "rune on the stone above the path",
+      "pixel": [700, 330],
+      "base": [700, 395],
+      "color": "#7dffb0",
+      "intensity": 1.0,
+      "distance": 3,
+      "glow": 0.35
+    }
+  ],
+  "spots": {"shrine": [405, 505], "rune stone": [1212, 668]},
+  "hollowed": [
+    ["bogwick", 470, 545], ["silver_mugwort", 300, 860], ["bogwick", 1118, 842, -0.1],
+    ["silver_mugwort", 1195, 600, -0.1], ["bogwick", 1255, 452]
+  ],
+  "fight": {
+    "_about": "B4: a Hollowed Boglurcher and two Hollowed Mire Leeches on the high path. Walking into the zone (or tapping one) shows the encounter card. The planks through the fog are the way round them.",
+    "id": "B4",
+    "foes": [
+      ["boglurcher", 940, 410, 0, 600, 600], ["mire-leech", 860, 445, 0, 600, 600],
+      ["mire-leech", 1020, 385, 0, 600, 600]
+    ],
+    "zone": [
+      [800, 372], [1060, 280], [1160, 272], [1168, 330], [1150, 398], [1140, 448], [1090, 432], [1000, 445],
+      [900, 480], [840, 525], [800, 470]
+    ]
+  },
+  "lowPath": {
+    "_about": "The low path, under fog: the painted bridge (it holds), then planks laid on through the pool to the stilts. Planks that hold are part of the walkmesh; the rest are only drawn, and Hag-Sight shows which is which. fog: puffs [x, y, radius in m]. near: standing still in here brings Hag-Sight up by itself.",
+    "bridge": [[790, 600], [930, 700], [1050, 822]],
+    "planks": [
+      {"from": [1100, 822], "to": [1130, 765], "holds": true},
+      {"from": [1134, 756], "to": [1148, 698], "holds": true},
+      {"from": [1150, 690], "to": [1157, 622], "holds": true},
+      {"from": [1158, 614], "to": [1164, 545], "holds": true},
+      {"from": [1165, 537], "to": [1167, 470], "holds": true},
+      {"from": [1112, 834], "to": [1192, 866], "holds": false},
+      {"from": [1155, 705], "to": [1228, 730], "holds": false},
+      {"from": [1142, 662], "to": [1078, 702], "holds": false},
+      {"from": [1170, 502], "to": [1242, 516], "holds": false}
+    ],
+    "fog": [
+      [800, 625, 1.3], [870, 670, 1.4], [940, 720, 1.4], [1010, 770, 1.4], [1070, 822, 1.3], [1120, 760, 1.3],
+      [1150, 680, 1.2], [1160, 600, 1.2], [1170, 520, 1.1], [1200, 830, 1.4], [1230, 720, 1.2], [1000, 680, 1.1],
+      [1060, 640, 1.0], [1240, 560, 1.0], [960, 820, 1.2]
+    ],
+    "near": [[700, 560], [880, 560], [1100, 690], [1110, 440], [1230, 440], [1240, 870], [1000, 890], [700, 650]]
+  },
+  "spawn": {"pixel": [120, 960], "facing": "up"},
+  "arrivals": {
+    "bogmire-moot-circle": {"pixel": [60, 1070], "walk": [150, 960], "facing": "up"},
+    "long-boardwalk": {"pixel": [1300, 442], "walk": [1220, 432], "facing": "left"}
+  },
+  "exits": [
+    {
+      "name": "Bogmire",
+      "to": "bogmire-moot-circle",
+      "zone": [[0, 1040], [135, 1060], [130, 1086], [0, 1086]],
+      "line": "Back up the pier to Bogmire."
+    },
+    {
+      "name": "the Long Boardwalk",
+      "to": "long-boardwalk",
+      "zone": [[1296, 418], [1320, 438], [1318, 470], [1294, 466]],
+      "line": "Along the stilts to the Long Boardwalk."
+    },
+    {
+      "name": "the old fen graves",
+      "zone": [[1172, 216], [1228, 218], [1232, 236], [1168, 234]],
+      "line": "The old fen graves, behind a gate rusted shut. They're sleeping. I won't knock."
+    }
+  ]
+}

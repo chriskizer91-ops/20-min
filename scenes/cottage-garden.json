@@ -1,0 +1,95 @@
+{
+  "_about": "The witch's cottage garden, in Wickhollow, where the gathering tutorial happens: the cottage and its round window at the back, the stepping-stone path down from the door to the gate between two lantern posts, raised beds under glass on the left, the bench and woodpile on the right, and the village's lights far off through the trees. One lavender bed, behind the fence on the right of the gate, has gone grey. Every position is in painting pixels (x right, y down) plus, for the floor, a height in meters. Check changes with: python3 tools/overlay.py scenes/cottage-garden.json out.png",
+  "id": "cottage-garden",
+  "title": "Wickhollow",
+  "subtitle": "The Cottage Garden",
+  "image": "art/backgrounds/cottage-outside.webp",
+  "size": [1536, 1024],
+  "footsteps": "step-grass",
+  "camera": {
+    "_about": "A wide, low view with a strong perspective: the cottage door (about 140 px, 2 m) is less than half the size of the gate's lantern posts, so the horizon sits near y 250, where the village lights are. The stepping stones are ellipses about 0.35 as tall as wide at the gate and 0.25 near the door, which a camera 8.5 degrees down through a 32 degree lens gives. At 70 pixels to the meter she stands about 120 px tall at the door, just under its lintel, and about 280 px at the gate, a head over its picket fence.",
+    "fov": 32,
+    "pitch": 8.5,
+    "ppm": 70
+  },
+  "ambient": {"sky": "#8b80d8", "ground": "#2b1b2e", "hemi": 1.3, "moon": "#d4cdff", "moonlight": 1.3, "moonFrom": [-8, 12, -6]},
+  "walk": [
+    {
+      "name": "garden",
+      "points": [
+        [796, 1024], [770, 905], [766, 802], [744, 712], [700, 664], [652, 628], [604, 610], [540, 598],
+        [548, 574], [604, 572], [690, 566], [694, 514], [760, 510], [850, 528], [944, 532], [972, 540],
+        [982, 508], [1124, 508], [1136, 546], [1170, 562], [1232, 588], [1300, 584], [1348, 580],
+        [1344, 612], [1300, 636], [1252, 658], [1134, 692], [1072, 722], [1062, 800], [1058, 905], [1046, 1024]
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "gate post and lantern, left",
+      "base": [734, 896],
+      "outline": [
+        [[706, 900], [706, 790], [712, 776], [704, 764], [706, 692], [714, 670], [728, 656], [730, 640], [744, 638],
+         [748, 656], [760, 668], [768, 690], [768, 764], [760, 778], [764, 790], [764, 900]]
+      ]
+    },
+    {
+      "name": "gate post and lantern, right",
+      "base": [1090, 898],
+      "outline": [
+        [[1060, 902], [1060, 800], [1068, 786], [1062, 772], [1064, 704], [1072, 684], [1084, 672], [1088, 660],
+         [1100, 660], [1104, 674], [1116, 686], [1124, 706], [1124, 772], [1116, 786], [1122, 800], [1122, 902]]
+      ]
+    },
+    {
+      "name": "fence and flowers, right of the gate",
+      "base": [[1124, 860], [1536, 830]],
+      "outline": [
+        [[1122, 890], [1122, 745], [1150, 728], [1176, 736], [1200, 734], [1236, 742], [1262, 700], [1296, 648],
+         [1330, 600], [1370, 580], [1410, 596], [1450, 570], [1500, 580], [1536, 590], [1536, 860]]
+      ]
+    }
+  ],
+  "lights": [
+    {"_what": "lantern on the left gate post", "pixel": [732, 716], "base": [734, 896], "color": "#ffb45e", "intensity": 4, "distance": 5, "glow": 0.55},
+    {"_what": "lantern on the right gate post", "pixel": [1092, 732], "base": [1090, 898], "color": "#ffb45e", "intensity": 4, "distance": 5, "glow": 0.55},
+    {"_what": "lantern by the door", "pixel": [972, 332], "base": [975, 508], "color": "#ffb45e", "intensity": 4, "distance": 6, "glow": 0.5},
+    {"_what": "lantern by the round window", "pixel": [652, 292], "base": [652, 480], "color": "#ffb45e", "intensity": 3, "distance": 5, "glow": 0.45},
+    {"_what": "lantern by the birdbath", "pixel": [545, 462], "base": [548, 530], "color": "#ffb45e", "intensity": 2, "distance": 3.5, "glow": 0.35},
+    {"_what": "lantern on the bench", "pixel": [1238, 462], "base": [1240, 548], "color": "#ffb45e", "intensity": 2.5, "distance": 4, "glow": 0.35},
+    {"_what": "lantern in the woodshed", "pixel": [1420, 432], "base": [1420, 540], "color": "#ffb45e", "intensity": 2, "distance": 4, "glow": 0.35},
+    {"_what": "the round window", "pixel": [800, 330], "base": [800, 520], "color": "#ffa24a", "intensity": 3, "distance": 5, "glow": 0}
+  ],
+  "spots": {
+    "grey bed": [1188, 712],
+    "birdbath": [572, 572]
+  },
+  "_spots": "The grey lavender bed (its lavender shows over the fence right of the gate; the rot trail runs from it down the path and out of the gate) and the birdbath.",
+  "herbs": [
+    ["lavender", 684, 476, 0.5], ["lavender", 1150, 662],
+    ["moonpetal", 902, 500, 0.35], ["moonpetal", 622, 612],
+    ["witchs_bells", 1284, 598], ["witchs_bells", 776, 536]
+  ],
+  "_herbs": "Herbs she can gather: [kind, x, y] on the grass, or [kind, x, y, height] for one growing in a pot or planter (the pixel is where the plant shows). Lavender in the barrel by the round window and a clump by the gate, next to the grey bed, moonpetal in the planter under the window and by the birdbath, and witch's bells (her foxgloves) by the lupins and the path (LORE.md §8).",
+  "rot trail": [[1170, 716], [1118, 736], [1068, 770], [1010, 812], [972, 860], [944, 920], [918, 984], [900, 1040]],
+  "_rot trail": "Where the rot came in: from the grey bed down the path and out of the gate, toward the Gloamwood. Moonlight shows it.",
+  "spawn": {"pixel": [920, 900], "facing": "up"},
+  "arrivals": {
+    "cottage-inside": {"pixel": [1054, 522], "walk": [1030, 600], "facing": "down"},
+    "wickhollow-square": {"pixel": [920, 1004], "walk": [920, 900], "facing": "up"}
+  },
+  "exits": [
+    {
+      "name": "the cottage",
+      "to": "cottage-inside",
+      "zone": [[988, 508], [1120, 508], [1126, 526], [984, 530]],
+      "line": "Home."
+    },
+    {
+      "name": "the square",
+      "to": "wickhollow-square",
+      "zone": [[796, 996], [1048, 996], [1046, 1024], [796, 1024]],
+      "line": "Out of the gate and up the lane to the square."
+    }
+  ]
+}

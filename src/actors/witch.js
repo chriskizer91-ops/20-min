@@ -5,6 +5,7 @@ import {
 } from './kit.js';
 import { faces, fx as fxArt } from '../assets.js';
 import { buildAthame, Trail, buildRune, buildMoonRing, buildVeil, buildBottle } from './witch-moves.js';
+import { holdOrientation } from './party-kit.js';
 
 // The Moonlight Witch, from Follow Me Down Witch Way's LORE.md: "a tall plum hat with cream horns and a
 // chain of silver charms, round glasses, long wavy hair, a sheer purple veil and shawl stitched with gold, a
@@ -96,6 +97,7 @@ export function createWitch() {
   // The athame, sheathed on her right hip; drawn into her right hand to cut herbs, trace runes and dash
   const athame = buildAthame(hips, armR.wrist);
   const bottle = buildBottle(armL.wrist);
+  const spoon = buildSpoon(armL.wrist); // her long cauldron spoon, out only while she stirs
 
   // Witchfire, the violet flame in her left hand (art/fx/witchfire.webp, eight frames)
   const fire = new THREE.Group();
@@ -207,10 +209,13 @@ export function createWitch() {
   let mood = 'calm';
   let downed = false;
   const ACTIONS = {
-    harvest: 1.7, cast: 1.3, throw: 0.9, moonlight: 1.8, rune: 1.7, dash: 1.1, brew: 1.4, veil: 1.6,
+    harvest: 1.7, cast: 1.3, throw: 0.9, moonlight: 1.8, rune: 1.7, dash: 1.1, brew: 1.4, veil: 1.6, stir: 2.4,
     cheer: 1.0, hurt: 0.5, ko: 1.2, rise: 0.8,
   };
   const ss = THREE.MathUtils.smoothstep;
+  const win = (k, a, b, soft) => ss(k, a, a + soft) * (1 - ss(k, b - soft, b));
+  const lerp = THREE.MathUtils.lerp;
+  const spoonQ = new THREE.Quaternion(), spoonE = new THREE.Euler();
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
 
   const api = {
@@ -221,7 +226,8 @@ export function createWitch() {
     setMood(m) { mood = m; face.show(m); },
     // Moves: harvest (kneel, cut with the athame, pick), cast (raise the witchfire), throw (fling it), moonlight
     // (a ring of silver light at her feet), rune (trace Witch Way's sign in the air with the athame), dash (the
-    // athame lunge from the showcase art), brew (drink one), veil (draw her veil and turn), cheer, hurt, ko, rise.
+    // athame lunge from the showcase art), brew (drink one), veil (draw her veil and turn), stir (a cauldron, with her
+    // long wooden spoon, round and round in front of her), cheer, hurt, ko, rise.
     // onHit fires at the moment it lands.
     moves: Object.keys(ACTIONS),
     play(name, onHit, opts = {}) {
@@ -392,6 +398,30 @@ export function createWitch() {
             hitAt(0.6);
             break;
           }
+          case 'stir': {
+            // Her long wooden spoon comes out into her left hand (the witchfire waits), she leans over the pot in
+            // front of her and stirs it round, watching it, then shakes the spoon off and puts it away.
+            const on = win(k, 0.04, 0.96, 0.12);
+            const round = ss(k, 0.1, 0.9) * Math.PI * 2 * 2.5;
+            spoon.visible = k > 0.03 && k < 0.97;
+            flame.visible = !spoon.visible;
+            fireLight.intensity = spoon.visible ? 0 : fireLight.intensity;
+            // her fist goes out over the middle of the pot and draws circles there
+            armL.shoulder.rotation.x = lerp(armL.shoulder.rotation.x, -1.12 - Math.sin(round) * 0.2, on);
+            armL.shoulder.rotation.z = lerp(armL.shoulder.rotation.z, -0.12 + Math.cos(round) * 0.16, on);
+            armL.elbow.rotation.x = lerp(armL.elbow.rotation.x, -0.25 + Math.sin(round) * 0.12, on);
+            torso.rotation.x += on * 0.16;
+            torso.rotation.y += on * (0.1 + Math.cos(round) * 0.05);
+            hips.rotation.y += on * Math.cos(round) * 0.03;
+            head.rotation.x = on * 0.24;
+            // the spoon stays upright in her fist, leaning a little into the pot, whatever her arm is doing
+            spoonQ.setFromEuler(spoonE.set(-0.18 + Math.sin(round) * 0.12, 0, Math.cos(round) * 0.12));
+            holdOrientation(spoon, root, spoonQ);
+            // a flick at the end, to shake it off
+            if (k > 0.9) spoon.rotateX(Math.sin((k - 0.9) * 60) * 0.12);
+            hitAt(0.5);
+            break;
+          }
           case 'veil': {
             // Her sheer purple veil falls around her as she turns once.
             veil.set(ss(k, 0, 0.25) * (1 - ss(k, 0.8, 1)));
@@ -428,6 +458,7 @@ export function createWitch() {
           flame.scale.set(0.13, 0.13 * (341 / 128), 1);
           flame.visible = true;
           bottle.visible = false;
+          spoon.visible = false;
           body.position.set(0, 0, 0);
           body.rotation.y = 0;
           shadow.position.z = 0;
@@ -457,7 +488,7 @@ export function createWitch() {
       if ((nextLook -= dt) < 0) { lookTarget = moving > 0.1 ? 0 : (Math.random() - 0.5) * 1.0; nextLook = 1.5 + Math.random() * 3; }
       look += (lookTarget * (1 - moving) - look) * (1 - Math.exp(-dt * 5));
       head.rotation.y = look - torso.rotation.y * 0.8;
-      if (!action || !['brew', 'ko', 'rise'].includes(action.name)) head.rotation.x = downed ? 0.5 : -torso.rotation.x * 0.6 - 0.04;
+      if (!action || !['brew', 'ko', 'rise', 'stir'].includes(action.name)) head.rotation.x = downed ? 0.5 : -torso.rotation.x * 0.6 - 0.04;
       if ((blinkT -= dt) < 0) blinkT = 2.2 + Math.random() * 3;
       if (action?.name !== 'hurt') face.show(blinkT < 0.13 && mood !== 'happy' ? 'blink' : downed ? 'blink' : mood);
 
@@ -541,6 +572,20 @@ function sampleCorner(img) {
   g.drawImage(img, 4, 4, 1, 1, 0, 0, 1, 1);
   const [r, gg, b] = g.getImageData(0, 0, 1, 1).data;
   return `rgb(${r},${gg},${b})`;
+}
+
+// ---------------------------------------------------------------- her cauldron spoon
+
+// A long wooden spoon for the cauldron: a wooden handle with a dark grip, and a deep bowl at the end. Held in her fist
+// near the top, so most of it reaches down into the pot.
+function buildSpoon(wrist) {
+  const spoon = joint(wrist, [0, -0.035, 0.012], 'spoon');
+  const wood = toon('#9a6a3e'), dark = toon('#5a3a26');
+  part(spoon, cyl(0.012, 0.014, 0.5, 7), wood, { pos: [0, -0.16, 0] });
+  part(spoon, cyl(0.016, 0.016, 0.09, 7), dark, { pos: [0, 0.07, 0], ink: false });
+  part(spoon, sphere(0.045, 10, 7), wood, { pos: [0, -0.43, 0.01], scale: [0.85, 1.35, 0.5] });
+  spoon.visible = false;
+  return spoon;
 }
 
 // ---------------------------------------------------------------- cloth and wicker, painted in code
