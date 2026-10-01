@@ -8,7 +8,7 @@
 //     she follows down the valley, flickering through their four frames;
 //   - golden motes (the same sheet's bottom row) streaming back from the crystals in her brazier.
 // With reduced motion the painting holds still and nothing drifts or twinkles.
-import { move } from './screen.js';
+import { move, drawable } from './screen.js';
 
 const W = 1672, H = 941;
 
@@ -146,12 +146,14 @@ export function createTitleShot({ painting, clouds, lights, reduced }) {
       const f = framing(v.vw, v.vh);
       const m = move(v.vw, v.vh, W, H, f, f, 0);
       ctx.setTransform(m.s * v.dpr, 0, 0, m.s * v.dpr, m.ox * v.dpr, m.oy * v.dpr);
-      ctx.drawImage(painting, 0, 0, W, H);
+      if (drawable(painting)) ctx.drawImage(painting, 0, 0, W, H);
+      // (a picture that didn't load leaves its part out: the rest of the title still shows)
+      const hasClouds = drawable(clouds), hasLights = drawable(lights);
 
       // Clouds, with the skiff cut out of them
       cg.globalCompositeOperation = 'source-over';
       cg.clearRect(0, 0, cloudLayer.width, cloudLayer.height);
-      for (const p of puffs) {
+      for (const p of hasClouds ? puffs : []) {
         cg.globalAlpha = p.alpha;
         const w = p.w * CLOUD_SCALE;
         cg.drawImage(clouds, p.cell * 256, 0, 256, 256, (p.x - p.w / 2) * CLOUD_SCALE, (p.y - p.w / 2) * CLOUD_SCALE, w, w);
@@ -177,14 +179,14 @@ export function createTitleShot({ painting, clouds, lights, reduced }) {
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = alpha * p.fade;
         const frame = reduced ? 0 : Math.floor(time * 8 + fl.lane * 1.7) % 4;
-        ctx.drawImage(lights, frame * 128, 0, 128, 128, p.x - p.size / 2, p.y - p.size * 0.62, p.size, p.size);
+        if (hasLights) ctx.drawImage(lights, frame * 128, 0, 128, 128, p.x - p.size / 2, p.y - p.size * 0.62, p.size, p.size);
         ctx.globalCompositeOperation = 'lighter';
       }
       for (const mo of motes) {
         const k = mo.age / mo.life;
         ctx.globalAlpha = alpha * Math.sin(Math.PI * k) * 0.9;
         if (mo.frame === 0) ctx.drawImage(gold, mo.x - mo.size * 0.6, mo.y - mo.size * 0.6, mo.size * 1.2, mo.size * 1.2);
-        ctx.drawImage(lights, mo.frame * 128, 128, 128, 128, mo.x - mo.size / 2, mo.y - mo.size / 2, mo.size, mo.size);
+        if (hasLights) ctx.drawImage(lights, mo.frame * 128, 128, 128, 128, mo.x - mo.size / 2, mo.y - mo.size / 2, mo.size, mo.size);
       }
     },
   };

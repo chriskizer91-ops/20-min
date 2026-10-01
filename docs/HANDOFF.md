@@ -19,7 +19,7 @@ An FF9-style browser game, 20-40 minutes long. A 3D witch walks over painted bac
 
 ## Where things stand
 
-The pieces were built as separate demos, and are now **joined into one game**: `game.html`, built to `dist/game/` (a page and a folder of art: the whole night's art is about 13 MB, and written into the page as text it would make a page of about 20 MB, over the 16 MB a one-file page can be). Title → the Opening → the cottage → … → B6 and Lights Out → the Ending → the title again, with Continue. Every fight is real, the party's HP/MP/XP carry over, brews come from the cauldron, and the night saves. `tests/browser-game.mjs` plays it through.
+The pieces were built as separate demos, and are now **joined into one game**: `game.html`, built to `dist/game.html`, one file of about 15 MB with every painting in it. (At full quality the paintings would make it about 20 MB, over the 16 MB a published page can be, so `tools/compact-art.py` makes the game's copies a little smaller first; the demos keep the originals. A first try published the art as separate files beside the page, and the user's phone viewer didn't load them.) Title → the Opening → the cottage → … → B6 and Lights Out → the Ending → the title again, with Continue. Every fight is real, the party's HP/MP/XP carry over, brews come from the cauldron, and the night saves. `tests/browser-game.mjs` plays it through.
 
 The demos still build and pass their tests: they're the same code (the areas and the modes), each with its own small host.
 
@@ -31,14 +31,14 @@ The demos still build and pass their tests: they're the same code (the areas and
 - **Commits:** end every commit message with the two trailer lines the session gives you. Put no model names in commits. Don't open a PR unless asked.
 - **Stop hook:** it wants a clean tree. Commit work-in-progress snapshots when it asks, after checking that the pages bundle and `npm test` passes.
 - **The user:** likes building in pieces. They get demos and the game as published Artifacts; republish the same file path to keep the link.
-- **Publishing the game:** `dist/game/index.fragment.html` as the page, with every file under `dist/game/art/` as supporting files (`files`, with `root: 'dist/game'`), so the page's `./art/...` URLs resolve.
+- **Publishing the game:** `dist/game.fragment.html`, one file like the demos. Keep it under 16 MB: `node tools/build.mjs game` prints its size and says if it's over. Don't go back to art as separate files beside the page: the user's phone viewer didn't load them (the title broke).
 - **Publishing brewing:** `dist/brewing.fragment.html` is rejected by the Artifact publisher as a "review page". The cause wasn't found, so it's unpublished; everything else publishes fine.
 
 ## The game and the demos
 
 | Page | Entry | Published |
 |---|---|---|
-| **the game** (`game.html` → `dist/game/`) | `src/game/main.js` | https://claude.ai/artifact/6zKY7KkP7PjqCqy9iL9E5y |
+| **the game** (`game.html` → `dist/game.html`) | `src/game/main.js` | https://claude.ai/artifact/6zKY7KkP7PjqCqy9iL9E5y |
 | wickhollow-square | `src/main.js` | https://claude.ai/artifact/UjsFYHW6Ya4fxZ47v7UkmF |
 | wickhollow (cottage, garden, square, riverbank) | `src/wickhollow.js` | https://claude.ai/artifact/NqMRUtUrb3LkPGYbC2wbQ7 |
 | gloamwood (lantern path, Sable bridge) | `src/gloamwood.js` | https://claude.ai/artifact/GBSaFwnFj8pzvJVkrxqBoC |
@@ -54,10 +54,10 @@ The demos still build and pass their tests: they're the same code (the areas and
 ## Commands
 
 ```
-node tools/build.mjs [name]        # build the game and all demos, or one ('game' writes game.html first, then dist/game/)
+node tools/build.mjs [name]        # build the game and all demos, or one ('game' writes game.html, compacts the paintings, then dist/game.html)
 node tools/serve.mjs               # dev server with live rebuild: http://localhost:8000/game.html is the game
 npm test                           # rule tests: scenes, balance, brewing, swaps, the game's state (+ vendor: node --test vendor/aethermoor/test/*.test.mjs)
-node tests/browser-game.mjs        # the whole game, title to ending (serves dist/game/ itself; about 15 minutes)
+node tests/browser-game.mjs        # the whole game, title to ending (serves dist/game.html itself; 10-15 minutes)
 node tests/browser.mjs             # square + battles + airship; also browser-{wickhollow,gloamwood,bogmire,fen,brewing,swap-shop,title}.mjs
 node tools/shot.mjs out.png --page <name> --size 1280x800 --wait 2500 --eval "js"   # screenshot a demo
 python3 tools/overlay.py scenes/<file>.json out.png                                 # check a scene's floor and cut-outs by eye

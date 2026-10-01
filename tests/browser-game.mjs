@@ -1,5 +1,5 @@
 // Plays the whole built game in headless Chromium: node tests/browser-game.mjs (run `node tools/build.mjs game` first).
-// It serves dist/game/ over http (the game loads its art as files), then plays the night through, mostly by its test
+// It serves dist/game.html over http (as it's played when published), then plays the night through, mostly by its test
 // handle (window.__play) so it needn't walk every step: the title and New game, the Opening, the cottage (the hag
 // stone, the moonwater, a rest), the garden, a Heartsease Tonic at her own cauldron, Inkblot joining in the square,
 // Hilde's Horseshoe charm, B1 on the lantern path (a real fight, won), Silas and his flame, the bridge by Wisp-Calm,
@@ -10,23 +10,21 @@
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
 let playwright;
 try { playwright = require('playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 
-// ---------------------------------------------------------------- dist/game over http
-const ROOT = resolve('dist/game');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.webp': 'image/webp', '.png': 'image/png', '.ttf': 'font/ttf' };
+// ---------------------------------------------------------------- dist/game.html over http
+// (one file: every picture is inside it, so anything else it asks for is a mistake, and fails)
+const PAGE = resolve('dist/game.html');
+const asked = [];
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = join(ROOT, path === '/' ? 'index.html' : path);
-  try {
-    const body = await readFile(file);
-    res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
-    res.end(body);
-  } catch { res.writeHead(404); res.end(); }
+  if (path !== '/') { asked.push(path); res.writeHead(404); res.end(); return; }
+  res.writeHead(200, { 'content-type': 'text/html' });
+  res.end(await readFile(PAGE));
 });
 await new Promise((r) => server.listen(0, r));
 const url = `http://localhost:${server.address().port}/`;
@@ -348,6 +346,7 @@ const epilogue = await talkTo('lantern-mother-home');
 check(/got home/.test(epilogue ?? ''), `the Lantern Mother sits with her tea ("${(epilogue ?? '').slice(0, 60)}...")`);
 check(await game(() => window.__play.state.flags.lightsHome), 'the lights have gone home');
 
+check(!asked.length, `the page asked for nothing beside itself${asked.length ? `: ${asked.slice(0, 5).join(', ')}` : ''}`);
 check(!errors.length, `no errors in the console${errors.length ? `: ${errors.slice(0, 5).join(' / ')}` : ''}`);
 await browser.close();
 server.close();

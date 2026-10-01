@@ -9,7 +9,7 @@ now the pieces are joined into one game, `game.html`.
 
 ## The game
 
-**`dist/game/`** is the whole night, title to ending (docs/SLICE.md §1 and §3):
+**`dist/game.html`** is the whole night, title to ending (docs/SLICE.md §1 and §3), in one file like the demos:
 
 - **The title** and **the Opening**: Wickhollow's lanterns go out, one a night, and float down the Sable.
 - **Wickhollow**: her cottage (the hag stone, two moonwater, her armchair to rest in, her cauldron), the garden
@@ -30,9 +30,10 @@ swaps or wins, and **Continue** on the title picks it up (after the Ending too: 
 Lantern Mother sits with her cold tea). **Menu** (or M) shows the party, what she keeps about her, and a line on what
 to do next.
 
-To play it, serve it: `npm run serve` and open http://localhost:8000/game.html, or `node tools/build.mjs game` and
-serve `dist/game/` with any static server. (It can't be double-clicked like the demos: it's a page and a folder of
-art, about 15 MB in all, and browsers won't hand art from `file://` to WebGL.)
+To play it, open `dist/game.html` in a browser, or `npm run serve` and open http://localhost:8000/game.html to play
+from source. It's about 15 MB: every painting of the night is written into it. At full quality they'd make it about
+20 MB, over the 16 MB a published page can be, so the build first makes the paintings a little smaller
+(`tools/compact-art.py`, which needs Python's Pillow); the demos keep the originals.
 
 ## The demos
 
@@ -131,7 +132,7 @@ following the "no recorded songs" decision in Thareia's notes.
 
 | Folder | What it holds |
 |---|---|
-| `dist/` | the built demos (`wickhollow-square.html` and the rest, each with a copy without the `<html>` wrapper for hosts that add their own), and `dist/game/`, the whole game: `index.html` and its `art/` |
+| `dist/` | the built pages: `game.html`, the whole game, and the demos (`wickhollow-square.html` and the rest), each with a copy without the `<html>` wrapper for hosts that add their own |
 | `src/` | the engine and the game: `areas/` (the places), `game/` (the night and the game), `battle/`, `airship/`, `title/`, `brew/`, `swap/`, `actors/` (the models) |
 | `scenes/` | one JSON file per painted screen: the camera, the walkmesh, the cut-outs, the lights and the exits |
 | `art/` | paintings (`backgrounds/`, `battle/`, `stills/`, `map/`), dialogue portraits, face sheets, effects and pixel fonts: from *Follow Me Down Witch Way*, Thareia, and art batches 1 and 2 (`docs/art-requests/`) |

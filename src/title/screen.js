@@ -28,6 +28,9 @@ export function move(vw, vh, w, h, from, to, k) {
 // Slow at both ends, like a camera on a dolly
 export const ease = (k) => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, k)));
 
+// A picture that has loaded (one that failed is left out, rather than stopping the page)
+export const drawable = (img) => !!img && img.complete !== false && img.naturalWidth !== 0;
+
 // A painting under a camera move lasting `dur` seconds from `t0`. With reduced motion it holds the end framing.
 export function stillShot(img, info, from, to, t0, dur, reduced) {
   return {
@@ -36,7 +39,13 @@ export function stillShot(img, info, from, to, t0, dur, reduced) {
       const k = reduced ? 1 : ease((now - t0) / dur);
       const m = move(v.vw, v.vh, info.w, info.h, from, to, k);
       ctx.setTransform(m.s * v.dpr, 0, 0, m.s * v.dpr, m.ox * v.dpr, m.oy * v.dpr);
-      ctx.drawImage(img, 0, 0, info.w, info.h);
+      if (!drawable(img)) return;
+      if (info.top == null) ctx.drawImage(img, 0, 0, info.w, info.h);
+      else {
+        // a strip of a taller painting (in its own pixels, however big the picture itself is)
+        const k = img.naturalWidth / info.w;
+        ctx.drawImage(img, 0, info.top * k, img.naturalWidth, info.h * k, 0, 0, info.w, info.h);
+      }
     },
   };
 }

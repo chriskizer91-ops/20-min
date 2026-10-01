@@ -1,14 +1,14 @@
-// Build each demo into one HTML file you can double-click: node tools/build.mjs
+// Build each page into one HTML file you can double-click: node tools/build.mjs [name]
 //   dist/<name>.html           the page, everything inlined (art, fonts, code)
 //   dist/<name>.fragment.html  the same page without <html>/<head>/<body>, for hosts that add their own
-// The whole game is too big for one file (every painting of the night), so it's a page and a folder of art beside it:
-//   dist/game/index.html       the page and its code; the paintings, portraits and fonts load from dist/game/art/
-//   dist/game/index.fragment.html   (as above)
-// Serve dist/game/ over http to play it (npm run serve has it at /game.html; the browser won't load art from file://
-// into WebGL). game.html itself is written first, by tools/game-page.mjs.
+// The whole game (dist/game.html) holds every painting of the night. At full quality that's over the 16 MB a published
+// page can be, so its paintings are first made a little smaller by tools/compact-art.py (Pillow), into
+// node_modules/.cache/compact-art/, and the game reads those copies; the demos use the originals. game.html itself is
+// written first, by tools/game-page.mjs.
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { gamePage } from './game-page.mjs';
 
 export const PAGES = [
@@ -23,8 +23,21 @@ export const PAGES = [
   { html: 'gloamwood.html', entry: 'src/gloamwood.js', name: 'gloamwood' },
   { html: 'brewing.html', entry: 'src/brew/main.js', name: 'brewing' },
   { html: 'swap-shop.html', entry: 'src/swap/main.js', name: 'swap-shop' },
-  { html: 'game.html', entry: 'src/game/main.js', name: 'game', files: true },
+  { html: 'game.html', entry: 'src/game/main.js', name: 'game', compact: true },
 ];
+const LIMIT = 16e6; // the most a published page can be
+
+// The game's paintings come from the compact copies, where there are any
+const COMPACT = 'node_modules/.cache/compact-art';
+const compactArt = {
+  name: 'compact-art',
+  setup(build) {
+    build.onLoad({ filter: /\.webp$/ }, (args) => {
+      const small = join(COMPACT, relative(process.cwd(), args.path));
+      return { contents: readFileSync(existsSync(small) ? small : args.path), loader: 'dataurl' };
+    });
+  },
+};
 
 const only = process.argv[2];
 mkdirSync('dist', { recursive: true });
@@ -32,7 +45,9 @@ if (!only || only === 'game') gamePage();
 for (const page of PAGES) {
   if (only && page.name !== only) continue;
   if (!existsSync(page.html) || !existsSync(page.entry)) { if (only) console.log(`${page.name}: ${page.html} or ${page.entry} doesn't exist yet`); continue; }
-  const out = page.files ? `dist/${page.name}` : 'dist';
+  if (page.compact) {
+    try { execFileSync('python3', ['tools/compact-art.py'], { stdio: 'inherit' }); } catch { console.log('compact-art: not run (python3 and Pillow are needed); using the full-size art'); }
+  }
   const result = await esbuild.build({
     entryPoints: [page.entry],
     bundle: true,
@@ -41,21 +56,10 @@ for (const page of PAGES) {
     write: false,
     target: 'es2020',
     legalComments: 'none',
-    ...(page.files
-      ? { outdir: out, outbase: '.', assetNames: '[dir]/[name]', loader: { '.webp': 'file', '.png': 'file', '.ttf': 'dataurl' } } // (the two pixel fonts ride in the page)
-      : { loader: { '.webp': 'dataurl', '.png': 'dataurl', '.ttf': 'dataurl' } }),
+    loader: { '.webp': 'dataurl', '.png': 'dataurl', '.ttf': 'dataurl' },
+    plugins: page.compact ? [compactArt] : [],
   });
-  if (page.files) {
-    rmSync(out, { recursive: true, force: true });
-    for (const f of result.outputFiles) {
-      if (f.path.endsWith('.js')) continue;
-      mkdirSync(dirname(f.path), { recursive: true });
-      writeFileSync(f.path, f.contents);
-    }
-  }
-  // (a one-file page's code comes back as esbuild's <stdout>; the game's beside its art, as a .js)
-  const code = page.files ? result.outputFiles.find((f) => f.path.endsWith('.js')) : result.outputFiles[0];
-  const js = code.text.replace(/<\/script/gi, '<\\/script');
+  const js = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
   const html = readFileSync(page.html, 'utf8');
   const body = html.slice(html.indexOf('<!-- PAGE -->') + 13, html.indexOf('<!-- /PAGE -->')).trim();
   const script = `<script>${js}</script>`;
@@ -67,10 +71,8 @@ ${body}
 ${script}
 </html>
 `;
-  const file = page.files ? `${out}/index` : `dist/${page.name}`;
-  mkdirSync(out, { recursive: true });
-  writeFileSync(`${file}.html`, full);
-  writeFileSync(`${file}.fragment.html`, `${body}\n${script}\n`);
-  const art = page.files ? `, with ${result.outputFiles.length - 1} files of art (${(result.outputFiles.reduce((a, f) => a + (f.path.endsWith('.js') ? 0 : f.contents.length), 0) / 1e6).toFixed(1)} MB)` : '';
-  console.log(`${file}.html  ${(full.length / 1e6).toFixed(2)} MB${art}`);
+  writeFileSync(`dist/${page.name}.html`, full);
+  writeFileSync(`dist/${page.name}.fragment.html`, `${body}\n${script}\n`);
+  const size = Buffer.byteLength(full);
+  console.log(`dist/${page.name}.html  ${(size / 1e6).toFixed(2)} MB${size > LIMIT ? `  (over the ${LIMIT / 1e6} MB a published page can be)` : ''}`);
 }

@@ -1,7 +1,8 @@
 // Every picture the title page shows, imported here rather than through src/assets.js so the page carries only
 // what it uses (the build turns each import into a data: URL inside dist/title.html, a third bigger as base64).
 // Most paintings come from art/title/, lighter copies baked by src/title/bake-art.py, to keep the page under
-// 6 MB; the title painting is the original.
+// 6 MB; the title painting is the original, and the two field screens are the field's own paintings (the game
+// carries those anyway), framed to 16:9.
 import title from '../../art/stills/title-skiff-over-valley.webp';
 import moonrise from '../../art/title/moonrise.webp';
 import squareFromTheWell from '../../art/title/square-from-the-well.webp';
@@ -12,8 +13,8 @@ import misthollowSank from '../../art/title/the-night-misthollow-sank.webp';
 import witchfireCauldron from '../../art/title/witchfire-cauldron.webp';
 import lightsGoHome from '../../art/title/lights-go-home.webp';
 import twoLamplighters from '../../art/title/two-lamplighters.webp';
-import nettieHut from '../../art/title/nettie-hut-inside.webp';
-import bogmireMast from '../../art/title/bogmire-moot-circle.webp';
+import nettieHut from '../../art/backgrounds/nettie-hut-inside.webp';
+import bogmireMast from '../../art/backgrounds/bogmire-moot-circle.webp';
 import clouds from '../../art/title/night-clouds-puffy.webp';
 import lights from '../../art/fx/drifting-lights.webp';
 import witchCalm from '../../art/portraits/witch-calm.webp';
@@ -28,7 +29,9 @@ import jacquard from '../../art/fonts/Jacquard12-Regular.ttf';
 import pixelify from '../../art/fonts/PixelifySans[wght].ttf';
 
 // The paintings, with their size in pixels (the camera moves are worked out in painting pixels, before the
-// picture has loaded). The two field screens are 3:2 paintings cropped to 16:9 by the bake.
+// picture has loaded). The two field screens are 3:2 paintings shown as a 16:9 strip, `top` rows down: Nettie's
+// hut keeps its rafters and loses some of the fence along the bottom; Bogmire keeps the top of the mooring mast and
+// loses the near boardwalk.
 export const STILLS = {
   title: { src: title, w: 1672, h: 941 },
   moonrise: { src: moonrise, w: 1672, h: 941 },
@@ -40,8 +43,8 @@ export const STILLS = {
   'witchfire-cauldron': { src: witchfireCauldron, w: 1672, h: 941 },
   'lights-go-home': { src: lightsGoHome, w: 1672, h: 941 },
   'two-lamplighters': { src: twoLamplighters, w: 1672, h: 941 },
-  'nettie-hut': { src: nettieHut, w: 1536, h: 864 },
-  'bogmire-mast': { src: bogmireMast, w: 1536, h: 864 },
+  'nettie-hut': { src: nettieHut, w: 1536, h: 864, top: 40 },
+  'bogmire-mast': { src: bogmireMast, w: 1536, h: 864, top: 0 },
 };
 
 // clouds: the three puffy night clouds in a row of 256 px cells; lights: top row four frames of a violet flame,
