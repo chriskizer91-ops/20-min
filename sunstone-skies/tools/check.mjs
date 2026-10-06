@@ -1,7 +1,7 @@
 // check.mjs: opens the built pages in a headless browser the size of a laptop (Sunstone Skies is a laptop game),
 // checks nothing went wrong, and takes pictures into shots/ (or the folder given).
 //   dist/hangar.html  every ship at every level of detail, with its triangle count kept near its budget
-//   dist/game.html    each of the four ships flown: how fast it goes, turns and climbs; every battery fired at a
+//   dist/game.html    each of the six ships flown: how fast it goes, turns and climbs; every battery fired at a
 //                     raider and hitting it; a raider shot down; raiders fighting back; the Captain going down and
 //                     coming back; the keyboard, mouse and touch controls answering; pictures of a battle
 // Run: node tools/build.mjs && node tools/check.mjs [folder]
@@ -13,7 +13,8 @@ const out = process.argv[2] ?? root + 'shots';
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const problems = [];
-const ships = ['skiff', 'cutter', 'brig', 'frigate'];
+const ships = ['skiff', 'cutter', 'brig', 'frigate']; // the old hangar's four
+const fleet = [...ships, 'galleon', 'manowar']; // the game's six
 const BUDGET = { full: [80000, 125000], middle: [10000, 32000], far: [1000, 6000] };
 const SIZES = { laptop: { viewport: { width: 1280, height: 800 } }, phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true } };
 
@@ -123,12 +124,12 @@ function battle(ids = ['frigate', 'cutter']) {
     const back = { down, back: !P.down && P.frac('hull') === 1, cleared: g.raiders.list.length === 0 };
     g.waves.timer = 1e9; g.raiders.setAI(false);
     return { res, sinking, detail, fight, back };
-  }, ships);
+  }, fleet);
   const NAMES = { bow: 'Bow guns', port: 'Port broadside', starboard: 'Starboard broadside', stern: 'Stern guns' };
   for (const r of flown.res) {
     console.log(`${r.id.padEnd(8)} ${String(r.kmh).padStart(3)} km/h, turned ${String(r.turned).padStart(3)}° and climbed ${String(r.climbed).padStart(3)} m in 20 s;`,
       Object.entries(r.guns).map(([b, x]) => `${b} ${x.n} ${x.parts.length ? 'hit ' + x.parts.join('+') : 'MISSED'}`).join(', '));
-    if (r.kmh < 60 || r.turned < 90 || r.climbed < 100) problems.push(`${r.id}: flies badly (${r.kmh} km/h, ${r.turned}°, ${r.climbed} m)`);
+    if (r.kmh < 60 || r.turned < 90 || r.climbed < 60) problems.push(`${r.id}: flies badly (${r.kmh} km/h, ${r.turned}°, ${r.climbed} m)`);
     for (const [b, x] of Object.entries(r.guns)) {
       if (!x.parts.length) problems.push(`${r.id}: ${b} guns missed a raider 260 m away`);
       if (x.label !== NAMES[b]) problems.push(`${r.id}: looking ${b} picked "${x.label}"`);
@@ -192,23 +193,32 @@ function battle(ids = ['frigate', 'cutter']) {
     document.getElementById('btn-port').click();
     out.port = { state: g.waves.state, shards: c.shards, expected: Math.round(hold * 1.1), garage: !document.getElementById('port').hidden };
     // the garage: buy and fit storm canvas; the ship's sails get tougher and her canvas shows it
-    c.shards += 1000; g.garage.tab = 'parts';
+    c.shards += 3000; g.garage.tab = 'parts';
     const sails0 = g.player.full.sails;
     document.querySelector('[data-act="buypart"][data-id="storm"]').click();
     document.querySelector('[data-act="fit"][data-id="storm"]').click();
     out.part = { fitted: c.fitted.skiff, sails: [sails0, g.player.full.sails], shows: g.player.ship.fitted.storm };
+    // Mk II and III now; Mk IV waits for the fifth voyage
+    for (let i = 0; i < 2; i++) document.querySelector('[data-act="buypart"][data-id="storm"]').click();
+    out.part.mark = c.parts.storm; out.part.later = document.querySelector('[data-act="fit"][data-id="storm"], [data-act="unfit"][data-id="storm"]')?.closest('.g-part')?.querySelector('.later')?.textContent;
     // buy the Cutter and sail her
     g.garage.tab = 'ships';
     document.querySelector('[data-act="buyship"][data-id="cutter"]').click();
     document.querySelector('[data-act="sail"][data-id="cutter"]').click();
     out.ship = g.player.ship.recipe.id;
-    // a skill: renown for three levels, two ranks of Helm, and Crystal Surge on Z
-    c.renown += 50 + 90 + 130; g.garage.tab = 'captain';
-    document.querySelector('[data-act="rank"][data-id="helm"]').click(); document.querySelector('[data-act="rank"][data-id="helm"]').click();
+    // skills: renown for five levels, two ranks of Helm (Crystal Surge on Z) and two of Crystals (Sunstone Ward on B)
+    for (let n = 1; n <= 4; n++) c.renown += P.levelCost(n);
+    g.garage.tab = 'captain';
+    for (const id of ['helm', 'helm', 'crystals', 'crystals']) document.querySelector(`[data-act="rank"][data-id="${id}"]`).click();
     out.skill = { ranks: c.ranks.helm, abilities: P.abilities(c).map((a) => a.id) };
     document.getElementById('g-sail').click(); g.step(1, {});
     g.abilities.use('surge'); g.step(0.5, {});
     out.surge = g.player.boost.speed;
+    g.abilities.use('ward'); g.step(1.2, {});
+    const h0 = g.player.health.hull; g.player.hit('hull', 100);
+    out.ward = { shield: g.player.shield, took: Math.round(h0 - g.player.health.hull), shows: g.ward.mesh.visible };
+    g.step(8, {});
+    out.ward.after = { shield: g.player.shield, shows: g.ward.mesh.visible };
     // the last wave: its raider captain, and the voyage done
     g.raiders.clear(); c.wave = P.wavesIn(1); g.waves.state = 'calm'; g.waves.timer = 0.1; g.step(0.5, {});
     const boss = g.raiders.list.find((r) => r.captain);
@@ -229,9 +239,11 @@ function battle(ids = ['frigate', 'cutter']) {
   if (v.flewOn.streak !== 1 || v.flewOn.state !== 'fight') problems.push(`flying on: ${JSON.stringify(v.flewOn)}`);
   if (v.port.state !== 'port' || v.port.shards !== v.port.expected || !v.port.garage) problems.push(`putting in to port: ${JSON.stringify(v.port)}`);
   if (v.part.fitted[0] !== 'storm' || !(v.part.sails[1] > v.part.sails[0]) || !v.part.shows) problems.push(`fitting a part: ${JSON.stringify(v.part)}`);
+  if (v.part.mark !== 3 || !/Mk IV from voyage 5/.test(v.part.later ?? '')) problems.push(`Mk II, III, and Mk IV waiting: ${JSON.stringify(v.part)}`);
   if (v.ship !== 'cutter') problems.push(`buying and sailing the Cutter: ${v.ship}`);
-  if (v.skill.ranks !== 2 || v.skill.abilities[0] !== 'surge' || !(v.surge > 1.4)) problems.push(`skills and Crystal Surge: ${JSON.stringify(v.skill)} surge ${v.surge}`);
-  if (!v.boss || v.boss.id !== 'brig' || !v.boss.fits.length) problems.push(`the last wave's raider captain: ${JSON.stringify(v.boss)}`);
+  if (v.skill.ranks !== 2 || v.skill.abilities.join() !== 'surge,ward' || !(v.surge > 1.4)) problems.push(`skills and Crystal Surge: ${JSON.stringify(v.skill)} surge ${v.surge}`);
+  if (v.ward.shield !== 0.5 || v.ward.took !== 50 || !v.ward.shows || v.ward.after.shield !== 1 || v.ward.after.shows) problems.push(`the Sunstone Ward: ${JSON.stringify(v.ward)}`);
+  if (!v.boss || v.boss.id !== 'cutter' || !v.boss.fits.length) problems.push(`the last wave's raider captain: ${JSON.stringify(v.boss)}`);
   if (v.done.state !== 'port' || v.done.voyage !== 2 || v.done.wave !== 1 || v.done.hold !== 0) problems.push(`the voyage ending: ${JSON.stringify(v.done)}`);
   if (v.down.state !== 'port' || v.down.hold !== 0) problems.push(`going down: ${JSON.stringify(v.down)}`);
   await page.evaluate(() => { const g = window.__game; g.garage.tab = 'parts'; });

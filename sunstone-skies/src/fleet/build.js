@@ -15,11 +15,11 @@ import { commonShapes, bow } from '../ship/parts.js';
 import { clamp, lerp, smooth, triangles, lathe } from '../ship/kit.js';
 import { RigBatch, rigState, CHANNELS } from './rig.js';
 import { COLOURS } from './materials.js';
-import { makeHull, buildHull, brass, channels, stern, quarterGalleries, windows, vents, armour } from './hull.js';
+import { makeHull, buildHull, brass, channels, stern, quarterGalleries, windows, vents, armour, strakesOf } from './hull.js';
 import { guns } from './guns.js';
 import { furnaces, conduits } from './crystals.js';
 import { masts, bowsprit } from './rigging.js';
-import { deck, rails, boats, bowWork, lanterns, fins, rudder } from './fittings.js';
+import { deck, rails, boats, bowWork, lanterns, fins, rudder, bigWork } from './fittings.js';
 
 // The levelled-up ships are drawn finer than the game's old ones: full detail is about twice their budget, since only the
 // ship you fly (or one right alongside) is ever drawn at full
@@ -123,7 +123,9 @@ function emberPoints(geo, U) {
 export function fleetModel(R, level, fart, colours = COLOURS.captain) {
   const q = detailFor(level, R);
   R.kit ??= 1;
-  R.tiles = { planks: [4.67, 0.81], deck: [2.65, 0.72], band: [4.93, 0.61] };
+  // the paint's tiles; the big ships' planks and plates are drawn a little larger (fleetTile), as on the game's own
+  const ts = R.fleetTile ?? 1;
+  R.tiles = { planks: [4.67 * ts, 0.81 * ts], plates: [9.6 * ts, 2.1 * ts], deck: [2.65 * ts, 0.72 * ts], band: [4.93, 0.61] };
   R.railScale = clamp(R.length / 25, 0.55, 1.2);
   // rings get more sides the bigger they are, so the crowns' halos and the tops' rims stay round
   const S = { ...commonShapes(q), rects: fart.rects,
@@ -145,6 +147,7 @@ export function fleetModel(R, level, fart, colours = COLOURS.captain) {
   if (R.bowsprit) bowsprit(hull, batch, R, q, S, glows);
   bow(hull, batch, { ...R, bowsprit: null }, q, S, glows);
   bowWork(hull, batch, R, q, S);
+  bigWork(hull, batch, R, q, S, glows);
   fins(hull, batch, R, q, S);
   rudder(hull, batch, R, q, S);
   lanterns(hull, batch, R, q, S, glows);
@@ -162,7 +165,9 @@ export function fleetModel(R, level, fart, colours = COLOURS.captain) {
 export function fleetShip(model, fart, { fits, motion = true } = {}) {
   const { R, level, q, hull, lights } = model;
   const inst = fart.instance(model.colours);
-  inst.U.uStrake.value.set(R.strake?.[0] ?? 0, R.strake?.[1] ?? 0, R.strake ? 1 : 0, 0);
+  const [s1, s2] = strakesOf(R);
+  inst.U.uStrake.value.set(s1?.[0] ?? 0, s1?.[1] ?? 0, s1 ? 1 : 0, 0);
+  inst.U.uStrake2.value.set(s2?.[0] ?? 0, s2?.[1] ?? 0, s2 ? 1 : 0, 0);
   const U = inst.U;
   const root = new THREE.Group(); root.name = R.name;
   const body = new THREE.Group(); root.add(body);

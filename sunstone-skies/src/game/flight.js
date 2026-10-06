@@ -23,6 +23,7 @@ export function makeFlyer(ship, stats, start, pace = 1, mods = {}) {
   const full = { hull: stats.hull, sails: stats.sails, crystals: stats.crystals };
   const s = {
     ship, stats, H, full, health: { ...full }, mods: {}, boost: { speed: 1, turn: 1, accel: 1 },
+    shield: 1, // what share of a hit's damage gets through (the Sunstone Ward lowers it)
     pos: start.pos.clone(), heading: start.heading, speed: H.vmax * 0.45 * pace, sail: 0.5, vy: 0, turn: 0, climb: 0,
     velocity: new THREE.Vector3(),
     down: null, // how it's going down, once it is: 'hull' or 'crystals', and for how long
@@ -46,7 +47,7 @@ export function makeFlyer(ship, stats, start, pace = 1, mods = {}) {
   s.repair = (k) => { for (const p in full) s.health[p] = Math.min(full[p], s.health[p] + full[p] * k); };
   s.hit = (part, damage) => {
     if (s.down) return;
-    s.health[part] = Math.max(0, s.health[part] - damage);
+    s.health[part] = Math.max(0, s.health[part] - damage * s.shield);
     if (s.health.hull <= 0) s.down = { why: 'hull', t: 0, roll: Math.random() < 0.5 ? -1 : 1 };
     else if (s.health.crystals <= 0) s.down = { why: 'crystals', t: 0, roll: Math.random() < 0.5 ? -1 : 1 };
   };

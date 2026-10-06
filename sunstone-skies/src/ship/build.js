@@ -18,7 +18,7 @@ export const LEVELS = {
 
 // Small ships spend their triangles on finer detail and big ones spread theirs further, so every ship comes out
 // near the same budget at full (tuned with the counts tools/check.mjs prints)
-const FINE = { skiff: 2.0, cutter: 1.62, brig: 1.14, frigate: 0.74 };
+const FINE = { skiff: 2.0, cutter: 1.62, brig: 1.14, frigate: 0.74, galleon: 0.56, manowar: 0.31 };
 
 function detailFor(level, R) {
   const q = { ...LEVELS[level], level };
@@ -114,7 +114,7 @@ export function shipMotion(R, body, rudders) {
 export function buildShip(R, level, art) {
   const q = detailFor(level, R);
   const ts = R.tileScale ?? 1;
-  R.tiles = { planks: [4.67 * ts, 0.81 * ts], deck: [2.65 * ts, 0.72 * ts], band: [4.93 * Math.max(0.6, ts), 0.61] };
+  R.tiles = { planks: [4.67 * ts, 0.81 * ts], plates: [9.6 * ts, 2.1 * ts], deck: [2.65 * ts, 0.72 * ts], band: [4.93 * Math.max(0.6, ts), 0.61] };
   R.railScale = clamp(R.length / 25, 0.55, 1.2);
   const S = { ...commonShapes(q), rects: art.rects };
   const hull = makeHull(R);

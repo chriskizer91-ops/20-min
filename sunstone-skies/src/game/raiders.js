@@ -1,9 +1,10 @@
-// raiders.js: the raiders, the Captain's enemies. They fly the same four levelled-up classes as the Captain (Skiff,
-// Cutter, Brig, Frigate), drawn at full, middle or far detail by how big they look, and they fly by the same rules
-// (flight.js). Raiders are easy to tell apart: rust-red sails and strake, darker planks, crimson pennants with a
+// raiders.js: the raiders, the Captain's enemies. They fly the same six levelled-up classes as the Captain (Skiff,
+// Cutter, Brig, Frigate, Galleon, Man-o'-war), drawn at full, middle or far detail by how big they look (the Galleon and
+// the Man-o'-war at most at middle), and they fly by the same rules (flight.js). Raiders are easy to tell apart: rust-red sails and strake, darker planks, crimson pennants with a
 // black hoist. Their sails, gun lids and guns work like the Captain's, and their damage shows.
 //   Skiffs and Cutters chase: they come at the Captain bow-first, fire their bow guns, and break away when close.
-//   Brigs and Frigates fight broadside: they come alongside at a few hundred metres and fire whole sides.
+//   Brigs, Frigates, Galleons and Men-o'-war fight broadside: they come alongside at a few hundred metres and fire
+//   whole sides.
 // How hard they fight comes from the difficulty and the voyage (progress.js). A raider captain sails a ship fitted
 // out with garage parts, which show on it, and is twice as tough.
 import * as THREE from 'three';
@@ -21,13 +22,17 @@ import { DIFFICULTY, effects, looks, newCaptain } from './progress.js';
 // How the raiders compare with the Captain on the middle setting (Rough Air): sail a little slower, reload half as
 // slowly again, and aim a little off (by this much for every metre to the target)
 export const RAIDER = { pace: DIFFICULTY.rough.pace, slow: DIFFICULTY.rough.slow, aim: DIFFICULTY.rough.aim };
-const ROLE = { skiff: 'chaser', cutter: 'chaser', brig: 'broadside', frigate: 'broadside' };
+const ROLE = { skiff: 'chaser', cutter: 'chaser', brig: 'broadside', frigate: 'broadside', galleon: 'broadside', manowar: 'broadside' };
+// The Galleon and the Man-o'-war are drawn at most at middle detail as raiders: there can be several of them in a fight
+const TOP = { galleon: 'middle', manowar: 'middle' };
 // Free flight's waves: the old ladder, then three to six mixed
 export const WAVES = [['skiff'], ['skiff', 'skiff'], ['cutter'], ['cutter', 'skiff'], ['brig'], ['brig', 'cutter'], ['frigate'],
   ['frigate', 'cutter', 'cutter'], ['brig', 'brig', 'skiff', 'skiff'], ['frigate', 'brig', 'cutter', 'cutter', 'skiff']];
 export function waveAt(n) {
   if (n < WAVES.length) return WAVES[n];
   const pool = ['skiff', 'skiff', 'cutter', 'cutter', 'cutter', 'brig', 'brig', 'frigate'];
+  if (n >= WAVES.length + 4) pool.push('galleon'); // the big ships join free flight's later waves
+  if (n >= WAVES.length + 8) pool.push('manowar');
   return Array.from({ length: Math.min(6, 3 + ((n - WAVES.length) >> 1)) }, () => pool[Math.floor(Math.random() * pool.length)]);
 }
 
@@ -68,23 +73,26 @@ function raiderShip(T, fart, fits) {
 }
 
 export function makeRaiders(scene, art, bolts, fart) {
-  const T = {};
-  for (const R of FLEET) {
+  // each class's models, built the first time a raider of that class is needed (or warmed up in port beforehand)
+  const T = {}, built = {};
+  for (const R of FLEET) Object.defineProperty(T, R.id, { enumerable: true, get() {
+    if (built[R.id]) return built[R.id];
     const midModel = fleetModel(R, 'middle', fart, COLOURS.raider), farModel = fleetModel(R, 'far', fart, COLOURS.raider);
     let full = null;
-    T[R.id] = { R, midModel, farModel, fullModel: () => (full ??= fleetModel(R, 'full', fart, COLOURS.raider)), zones: hitZones(fleetShip(midModel, fart)) };
-  }
+    return (built[R.id] = { R, midModel, farModel, fullModel: () => (full ??= fleetModel(R, 'full', fart, COLOURS.raider)), zones: hitZones(fleetShip(midModel, fart)) });
+  } });
+  const warm = (ids) => { for (const id of ids) void T[id]; };
   const list = [];
   let ai = true;
 
   // A raider. o: { difficulty, level (progress.js raiderLevel), captain: { name, fits, health } }
   function spawn(id, pos, heading, frozen = false, o = {}) {
     const D = DIFFICULTY[o.difficulty ?? 'rough'], L = o.level ?? { health: 1, damage: 1, slow: 1, aim: 1 }, cap = o.captain;
-    // a captain's ship carries parts at Mk II; their numbers come from the same rules as the Captain's
+    // a captain's ship carries parts (Mk I on the first voyage, better later); their numbers come from the same rules as the Captain's
     let m = {}, fits = {};
     if (cap) {
       const c = newCaptain(); c.ship = id; c.fitted[id] = [...cap.fits];
-      for (const p of cap.fits) c.parts[p] = 2;
+      for (const p of cap.fits) c.parts[p] = cap.mark ?? 2;
       m = effects(c, id); fits = looks(c, id);
     }
     const tough = L.health * (cap?.health ?? 1);
@@ -179,7 +187,7 @@ export function makeRaiders(scene, art, bolts, fart) {
       if (r.f.down && !r.counted) { r.counted = true; downed.push(r); }
       if (r.f.down && (r.f.pos.y < CLOUD_Y - 140 || r.f.down.t > 16)) r.gone = true;
       const size = (r.R.length / Math.max(1, camera.position.distanceTo(r.f.pos))) * toScreen;
-      r.ship.detail(size < 0.06 ? 'far' : size > 0.32 ? 'full' : 'middle', camera.userData.pixelScale ?? 500);
+      r.ship.detail(size < 0.06 ? 'far' : size > 0.32 && !TOP[r.id] ? 'full' : 'middle', camera.userData.pixelScale ?? 500);
     }
     for (let i = list.length - 1; i >= 0; i--) if (list[i].gone) { scene.remove(list[i].ship.root); list.splice(i, 1); }
     return downed;
@@ -197,5 +205,5 @@ export function makeRaiders(scene, art, bolts, fart) {
   }
 
   function clear() { for (const r of list) scene.remove(r.ship.root); list.length = 0; }
-  return { list, spawn, spawnWave, update, hitBy, clear, templates: T, setAI: (on) => { ai = on; } };
+  return { list, spawn, spawnWave, update, hitBy, clear, warm, templates: T, setAI: (on) => { ai = on; } };
 }

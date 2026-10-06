@@ -38,12 +38,22 @@ export function brasswork(hull, batch, R, q, S) {
       const qf = R.quarterdeck.front - 0.06;
       hullBand(hull, batch, { z0: zs + 0.03, z1: qf, top: (z) => rim(z) - 0.03, bottom: (z) => rim(z) - 0.3, side, tile: T.band, I: Math.max(4, Math.round(I * 0.2)) });
     }
+    if (B.quarter && R.forecastle) {
+      const fb = R.forecastle.back + 0.06;
+      hullBand(hull, batch, { z0: fb, z1: zb - 0.03, top: (z) => rim(z) - 0.03, bottom: (z) => rim(z) - 0.3, side, tile: T.band, I: Math.max(4, Math.round(I * 0.2)) });
+    }
     for (const [z, w] of B.straps) hullStrap(hull, batch, { z, width: w, side, J: Math.max(4, Math.round(q.rings * 0.9)) });
-    if (B.lower) { const [l0, l1] = B.lower, [a, b] = span(l1); hullBand(hull, batch, { z0: a, z1: b, top: () => l0, bottom: () => l1, side, tile: T.band, I }); }
+    // lower bands: one, or a list of them (a ship with two gun decks has one between them)
+    for (const [l0, l1] of B.lower ? (Array.isArray(B.lower[0]) ? B.lower : [B.lower]) : []) { const [a, b] = span(l1); hullBand(hull, batch, { z0: a, z1: b, top: () => l0, bottom: () => l1, side, tile: T.band, I }); }
     // the keel: a brass strip along the bottom, both sides meeting under it
     hullBand(hull, batch, { z0: zs + 0.02, z1: zb - 0.02, top: (z) => keel(z) + 0.22 * (R.length / 25 + 0.4), bottom: (z) => keel(z), side, tile: T.band, I, J: 1 });
   }
-  if (R.windows?.side) for (const side of [1, -1]) hullDecal(hull, batch, { ...R.windows.side, side, rect: S.rects.windows3, I: Math.max(2, Math.round(q.rings / 3)), J: 2 });
+  // windows in the hull's side (the cabins): one panel of three, or rows of them, `reps` panels side by side
+  const sideWindows = R.windows?.side ? [].concat(R.windows.side) : [];
+  for (const W of sideWindows) for (const side of [1, -1]) for (let k = 0, n = W.reps ?? 1; k < n; k++) {
+    const z0 = lerp(W.z0, W.z1, k / n), z1 = lerp(W.z0, W.z1, (k + 1) / n);
+    hullDecal(hull, batch, { z0, z1, y0: W.y0, y1: W.y1, side, rect: S.rects.windows3, I: Math.max(2, Math.round(q.rings / 3)), J: 2 });
+  }
 }
 
 // ---------- rails: a brass handrail on turned balusters, a gunwale cap, tall posts with knobs ----------
@@ -82,6 +92,17 @@ function railAlong(batch, pts, R, q, S, h, opts = {}) {
     carry = d - len;
   }
 }
+// Where a raised deck's stairs come up: x of each flight's middle (one in the middle, one at each side, or none)
+export function stairFlights(hull, St) {
+  if (!St) return [];
+  return St.sides ? [1, -1].map((s) => s * (hull.deckHalf(St.bottom) - St.width / 2 - 0.45)) : [0];
+}
+// the rail along a raised deck's edge at z, leaving gaps where its stairs come up
+function edgeRail(hull, batch, R, q, S, z, St, h, inset) {
+  const half = hull.deckHalf(z) - inset, y = hull.deckY(z), w = St ? St.width / 2 + 0.05 : 0;
+  const runs = !St ? [[-half, half]] : St.sides ? [[-(Math.abs(stairFlights(hull, St)[0]) - w), Math.abs(stairFlights(hull, St)[0]) - w]] : [[-half, -w], [w, half]];
+  for (const [a, b] of runs) if (b - a > 0.3) railAlong(batch, [V(a, y, z), V((a + b) / 2, y, z), V(b, y, z)], R, q, S, h);
+}
 export function rails(hull, batch, R, q, S) {
   const { zs, zb } = hull, Q = R.quarterdeck, h = R.rail.h, inset = 0.06 * R.railScale, st = q.railPath;
   const bowEnd = zb - 0.25 * R.length / 25;
@@ -92,20 +113,26 @@ export function rails(hull, batch, R, q, S) {
     railAlong(batch, pts, R, q, S, h);
     return;
   }
-  // the main deck: from the quarterdeck's front, round the bow and back
-  const qf = Q.front + 0.1;
-  const main = [...railPath(hull, qf, bowEnd, 1, inset, st), ...railPath(hull, bowEnd, qf, -1, inset, st)];
-  railAlong(batch, main, R, q, S, h);
-  // the quarterdeck: down each side, across the stern, and along its front edge either side of the stairs
-  const qh = R.rail.quarterH ?? h * 0.7, qb = Q.front - 0.08, sw = Q.stairs.width / 2 + 0.05;
+  // the main deck: from the quarterdeck's front, round the bow and back (or, under a forecastle, up to it each side)
+  const qf = Q.front + 0.1, F = R.forecastle, qh = R.rail.quarterH ?? h * 0.7;
+  if (!F) {
+    const main = [...railPath(hull, qf, bowEnd, 1, inset, st), ...railPath(hull, bowEnd, qf, -1, inset, st)];
+    railAlong(batch, main, R, q, S, h);
+  } else {
+    const fb = F.back - 0.1;
+    for (const s of [1, -1]) railAlong(batch, railPath(hull, qf, fb, s, inset, st), R, q, S, h);
+    // the forecastle: down one side, round the bow and back, and along its back edge
+    const fa = F.back + 0.08;
+    railAlong(batch, [...railPath(hull, fa, bowEnd, 1, inset, st), ...railPath(hull, bowEnd, fa, -1, inset, st)], R, q, S, qh);
+    edgeRail(hull, batch, R, q, S, fa, F.stairs, qh, inset);
+  }
+  // the quarterdeck: down each side, across the stern, and along its front edge
+  const qb = Q.front - 0.08;
   const side = (s) => railPath(hull, qb, zs + 0.08, s, inset, st);
   const sternRun = [];
   for (let i = 0; i <= 10; i++) { const x = lerp(1, -1, i / 10) * (hull.deckHalf(zs + 0.08) - inset); sternRun.push(V(x, hull.deckY(zs + 0.08), zs + 0.08)); }
   railAlong(batch, [...side(1), ...sternRun.slice(1), ...side(-1).reverse().slice(1)], R, q, S, qh);
-  for (const s of [1, -1]) {
-    const x0 = s * (hull.deckHalf(qb) - inset), x1 = s * sw, y = hull.deckY(qb);
-    railAlong(batch, [V(x0, y, qb), V(lerp(x0, x1, 0.5), y, qb), V(x1, y, qb)], R, q, S, qh);
-  }
+  edgeRail(hull, batch, R, q, S, qb, Q.stairs, qh, inset);
 }
 
 // ---------- guns ----------
@@ -175,16 +202,22 @@ function gunPort(batch, m, w, h, q, S, glows, { gun = true, lid = true, barrelM 
 }
 export function guns(hull, batch, R, q, S, glows) {
   const { at, normal, tAt } = hull;
-  // broadside ports down each side
-  if (R.ports) for (const side of [1, -1]) for (const z of R.ports.z) {
-    const t = tAt(z, R.ports.y), p = at(z, t, side), n = normal(z, t, side);
+  // broadside ports down each side, in one row or several (a ship with two gun decks)
+  if (R.ports) for (const side of [1, -1]) for (const y of [].concat(R.ports.y)) for (const z of R.ports.z) {
+    const t = tAt(z, y), p = at(z, t, side), n = normal(z, t, side);
     const up = UP.clone().sub(n.clone().multiplyScalar(n.y)).normalize(), right = new THREE.Vector3().crossVectors(up, n);
     const m = frame(V(...p), right, up, n);
     if (q.level === 'far') { batch.add('dark', new THREE.PlaneGeometry(R.ports.w * 1.1, R.ports.h * 1.1), new THREE.Matrix4().multiplyMatrices(m, place([0, 0, 0.03]))); continue; }
     const level = n.clone().setY(0).normalize(), lright = new THREE.Vector3().crossVectors(UP, level);
     gunPort(batch, m, R.ports.w, R.ports.h, q, S, glows, { gun: q.portGuns, lid: q.portLids, barrelM: frame(V(...p), lright, UP.clone(), level) });
   }
-  for (const g of R.bowGuns) longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { post: Math.max(0.3, g.y - hull.deckY(g.z) + (g.swivel ? 0 : 0.02)) });
+  for (const g of R.bowGuns) {
+    if (g.face) {
+      // straight out of the bow's face, through a brass collar
+      longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { swivel: false });
+      if (q.level !== 'far') batch.add('brass', lathe([[0.42 * g.len / 2.6, -0.3], [0.5 * g.len / 2.6, -0.1], [0.42 * g.len / 2.6, 0.05], [0.24 * g.len / 2.6, 0.12]], Math.max(8, q.latheSeg)).rotateX(Math.PI / 2), place([g.x, g.y, g.z - 0.25]));
+    } else longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { post: Math.max(0.3, g.y - hull.deckY(g.z) + (g.swivel ? 0 : 0.02)) });
+  }
   for (const g of R.swivels ?? []) {
     const m = place([g.x, g.y + R.rail.h * 0.9, g.z], { euler: [0, Math.sign(g.x) * Math.PI / 2, 0] });
     longGun(batch, m, g.len, q, S, glows, { post: R.rail.h * 0.85 + 0.05 });
@@ -490,24 +523,34 @@ export function deckworks(hull, batch, R, q, S) {
       add('wood', lathe([[r * 0.04, 0], [r * 0.06, r * 0.08], [r * 0.045, r * 0.16], [r * 0.065, r * 0.22], [0.001, r * 0.27]], 6), place(d.clone().multiplyScalar(r * 0.84), { dir: d }));
     }
   }
-  // the quarterdeck: stairs up its front, brass handrails, and its front wall's windows either side
-  const Q = R.quarterdeck;
-  if (Q) {
-    const yT = hull.deckY(Q.front - 0.3), yB = hull.deckY(Q.stairs.bottom), w = Q.stairs.width, n = Math.max(3, Math.round((yT - yB) / 0.23));
-    const z0 = Q.stairs.bottom, z1 = Q.front + 0.02, rise = (yT - yB) / n, run = (z0 - z1) / n;
-    for (let i = 0; i < n; i++) batch.add('deck', box(w, 0.07, run + 0.06, 1), place([0, yB + rise * (i + 1) - 0.035, z0 - run * (i + 0.5)]));
-    for (const s of [1, -1]) {
-      const a = V(s * (w / 2 + 0.05), yB, z0), b = V(s * (w / 2 + 0.05), yT, z1);
-      batch.add('wood', box(0.1, 0.32, a.distanceTo(b), 1), new THREE.Matrix4().compose(a.clone().lerp(b, 0.5).add(V(0, 0.08, 0)), new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), b.clone().sub(a).normalize()), V(1, 1, 1)));
-      batch.add('brass', tube([a.clone().add(V(0, 0.85, 0.15)), b.clone().add(V(0, 0.85, 0))], 0.035, q.tubeRad, 2), null);
-      for (const t of [0.05, 0.5, 0.95]) { const p = a.clone().lerp(b, t); batch.add('brass', new THREE.CylinderGeometry(0.025, 0.025, 0.85, 5), place([p.x, p.y + 0.425, p.z])); }
+  // the quarterdeck (and a forecastle): stairs up its face, brass handrails, and the face's windows either side
+  // (rows of them on a tall castle). dir is which way the face looks: +1 forward (the quarterdeck), -1 aft
+  const castle = (edge, St, dir) => {
+    const yT = hull.deckY(edge - dir * 0.3), yB = hull.deckY(St ? St.bottom : edge + dir * 0.6), w = St?.width ?? 0;
+    for (const x of stairFlights(hull, St)) {
+      const n = Math.max(3, Math.round((yT - yB) / 0.23)), z0 = St.bottom, z1 = edge + dir * 0.02, rise = (yT - yB) / n, run = (z0 - z1) / n;
+      for (let i = 0; i < n; i++) batch.add('deck', box(w, 0.07, Math.abs(run) + 0.06, 1), place([x, yB + rise * (i + 1) - 0.035, z0 - run * (i + 0.5)]));
+      for (const s of [1, -1]) {
+        const a = V(x + s * (w / 2 + 0.05), yB, z0), b = V(x + s * (w / 2 + 0.05), yT, z1);
+        batch.add('wood', box(0.1, 0.32, a.distanceTo(b), 1), new THREE.Matrix4().compose(a.clone().lerp(b, 0.5).add(V(0, 0.08, 0)), new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), b.clone().sub(a).normalize()), V(1, 1, 1)));
+        batch.add('brass', tube([a.clone().add(V(0, 0.85, dir * 0.15)), b.clone().add(V(0, 0.85, 0))], 0.035, q.tubeRad, 2), null);
+        for (const t of [0.05, 0.5, 0.95]) { const p = a.clone().lerp(b, t); batch.add('brass', new THREE.CylinderGeometry(0.025, 0.025, 0.85, 5), place([p.x, p.y + 0.425, p.z])); }
+      }
     }
-    const win = rects.windows2, pw = Math.min(2.1, hull.deckHalf(Q.front) - w / 2 - 0.25), ph = pw * win.h / win.w;
-    for (const s of [1, -1]) {
-      const g = toRect(new THREE.PlaneGeometry(pw, Math.min(ph, yT - yB - 0.25)), win);
-      batch.add('parts', g, place([s * (w / 2 + 0.15 + pw / 2), yB + (yT - yB) * 0.52, Q.front + 0.04]));
+    // the face's windows: either side of a middle stair, or in columns across the face (between side stairs)
+    const win = rects.windows2, middle = St && !St.sides;
+    const span = middle ? null : St?.sides ? Math.abs(stairFlights(hull, St)[0]) - w / 2 - 0.25 : hull.deckHalf(edge) - 0.35;
+    const big = 2.1 * Math.max(1, R.length / 40), pw = middle ? Math.min(big, hull.deckHalf(edge) - w / 2 - 0.25) : Math.min(big, span), ph = pw * win.h / win.w;
+    const xs = middle ? [-(w / 2 + 0.15 + pw / 2), w / 2 + 0.15 + pw / 2] : Array.from({ length: Math.max(1, Math.floor((2 * span + 0.3) / (pw + 0.3))) }, (_, c, ) => c).map((c, _, arr) => (c - (arr.length - 1) / 2) * (pw + 0.3));
+    const rows = Math.max(1, Math.floor((yT - yB - 0.3) / (ph + 0.3))), rowH = (yT - yB) / rows;
+    for (let r = 0; r < rows; r++) for (const x of xs) {
+      const g = toRect(new THREE.PlaneGeometry(pw, Math.min(ph, rowH - 0.25)), win);
+      batch.add('parts', g, place([x, yB + rowH * (r + 0.52), edge + dir * 0.04], { euler: [0, dir > 0 ? 0 : Math.PI, 0] }));
     }
-  }
+  };
+  const Q = R.quarterdeck, F = R.forecastle;
+  if (Q) castle(Q.front, Q.stairs, 1);
+  if (F) castle(F.back, F.stairs, -1);
   // the capstan: a brass-bound drum with its bars
   if (R.capstan) {
     const z = R.capstan.z, y = hull.deckY(z), k = clamp(R.length / 25, 0.7, 1.2);
@@ -515,13 +558,13 @@ export function deckworks(hull, batch, R, q, S) {
     for (const yy of [0.08, 0.6]) batch.add('brass', S.ring(0.4 * k * (yy < 0.3 ? 1.1 : 0.85), 0.025 * k), place([0, y + yy * k, z]));
     for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; batch.add('wood', lathe([[0.03 * k, 0], [0.025 * k, 0.9 * k]], 5), place([0, y + 0.66 * k, z], { dir: [Math.cos(a), 0.06, Math.sin(a)] })); }
   }
-  // the flat stern's windows
-  if (R.windows?.transom) {
-    const T = R.windows.transom, win = rects.windows3, list = T.twin ? [-0.52, 0.52] : [0];
-    for (const x of list) {
-      const w = T.twin ? T.w * 0.5 : T.w;
-      const g = toRect(new THREE.PlaneGeometry(w, T.y1 - T.y0), win);
-      batch.add('parts', g, place([x * T.w, (T.y0 + T.y1) / 2, hull.zs - 0.012], { euler: [0, Math.PI, 0] }));
+  // the flat stern's windows: one panel, a pair, or rows of `reps` panels
+  for (const T of R.windows?.transom ? [].concat(R.windows.transom) : []) {
+    const win = rects.windows3, n = T.twin ? 2 : T.reps ?? 1, w = T.twin ? T.w * 0.5 : T.w / n;
+    for (let k = 0; k < n; k++) {
+      const x = T.twin ? (k ? 0.52 : -0.52) * T.w : (k - (n - 1) / 2) * w;
+      const g = toRect(new THREE.PlaneGeometry(T.twin ? w : w * 0.98, T.y1 - T.y0), win);
+      batch.add('parts', g, place([x, (T.y0 + T.y1) / 2, hull.zs - 0.012], { euler: [0, Math.PI, 0] }));
     }
   }
   // hatches: a brass coaming with a grating on top

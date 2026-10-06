@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { patch, depthFor, shipUniforms } from './shaders.js';
 
 const FEATS = {
-  hull: ['STRAKE', 'SCORCH'], deck: ['SCORCH'], wood: ['SCORCH'],
+  hull: ['STRAKE', 'SCORCH'], plates: ['STRAKE', 'SCORCH'], deck: ['SCORCH'], wood: ['SCORCH'],
   canvas: ['RIPPLE', 'HOLES'], silk: ['RIPPLE', 'HOLES'],
   gem: ['GEM'], flag: ['RIPPLE', 'PENNANT'], flow: ['FLOW'],
 };
@@ -44,6 +44,7 @@ export function fleetArt(art) {
     const make = (key, rig) => {
       const m = base[key].clone();
       if (key === 'hull') m.color.set(colours.planks);
+      if (key === 'plates') m.color.multiply(new THREE.Color(colours.planks));
       if (key === 'canvas') { m.color.set(colours.sails); m.emissive.set(colours.sailGlow); }
       const feats = [...(FEATS[key] ?? []), ...(rig ? ['RIG'] : [])];
       if (feats.length) patch(m, U, feats);

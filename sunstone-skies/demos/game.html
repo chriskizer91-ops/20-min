@@ -185,6 +185,7 @@
   .g-card header b, .g-part header b, .g-skill header b { font: 400 21px/1 var(--display); color: var(--cream); }
   .g-card header span, .g-part header span { flex: 1; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
   .g-part footer { display: flex; gap: 6px; justify-content: flex-end; }
+  .g-part footer .later { align-self: center; font-size: 12px; color: var(--dim); }
   .g-what { display: grid; gap: 1px; }
   .g-stats { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 10px; margin: 0; font-size: 12.5px; font-variant-numeric: tabular-nums; }
   .g-stats dt { color: var(--dim); }
@@ -291,9 +292,9 @@
       <dt>Mouse</dt><dd>aim: the guns facing that way fire</dd>
       <dt>On a raider</dt><dd>the guns lock on and aim ahead of it</dd>
       <dt>Left click or F</dt><dd>fire</dd>
-      <dt>Z · X · V</dt><dd>Crystal Surge · Double Shot · Damage Control (once unlocked)</dd>
+      <dt>Z · X · V · B</dt><dd>Crystal Surge · Double Shot · Damage Control · Sunstone Ward (once unlocked)</dd>
       <dt>C · M · H</dt><dd>look ahead · map · hide this</dd>
-      <dt>1–4 · G</dt><dd>ships · garage (free flight)</dd>
+      <dt>1–6 · G</dt><dd>ships · garage (free flight)</dd>
     </dl>
     <p id="lock-hint">Click the sky to aim with the mouse. Esc lets go.</p>
   </section>
@@ -303,6 +304,7 @@
   <button type="button" data-ability="surge" hidden><b>Surge</b><kbd>Z</kbd><small>ready</small><i></i></button>
   <button type="button" data-ability="double" hidden><b>Double Shot</b><kbd>X</kbd><small>ready</small><i></i></button>
   <button type="button" data-ability="control" hidden><b>Damage Control</b><kbd>V</kbd><small>ready</small><i></i></button>
+  <button type="button" data-ability="ward" hidden><b>Sunstone Ward</b><kbd>B</kbd><small>ready</small><i></i></button>
 </div>
 <section id="choice" class="panel" hidden>
   <p>The wave is beaten. Fly on and the hold pays more when it's banked, but the damage stays. Put in to port to bank it, repair her and visit the garage.</p>
@@ -318,7 +320,7 @@
   </nav>
   <p id="g-note" aria-live="polite"></p>
   <div id="g-body"></div>
-  <footer><small>Drag to look round her · 1–4 picks a ship you own</small><button type="button" class="big go" id="g-sail">Set sail<kbd>Enter</kbd></button></footer>
+  <footer><small>Drag to look round her · 1–6 picks a ship you own</small><button type="button" class="big go" id="g-sail">Set sail<kbd>Enter</kbd></button></footer>
 </section>
 <button type="button" class="panel big" id="btn-garage" style="position:fixed; right: var(--gutter); bottom: calc(var(--bottom) + 58px);">Garage<kbd>G</kbd></button>
 <section id="start">
@@ -330,7 +332,7 @@
     <div class="row2">
       <button type="button" class="diff" data-new="fair"><b>Fair Winds</b><small>Gentler raiders. Going down keeps half the hold</small></button>
       <button type="button" class="diff" data-new="rough"><b>Rough Air</b><small>As the raiders are meant to be. Shards pay a quarter more</small></button>
-      <button type="button" class="diff" data-new="black"><b>Black Sky</b><small>Fast, sharp-eyed raiders. Shards pay 60% more</small></button>
+      <button type="button" class="diff" data-new="black"><b>Black Sky</b><small>Fast, sharp-eyed raiders. Shards pay 40% more</small></button>
     </div>
     <button type="button" class="big" id="start-free">Free flight: every ship and part, endless waves</button>
   </div>

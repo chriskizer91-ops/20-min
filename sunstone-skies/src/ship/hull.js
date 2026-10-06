@@ -11,7 +11,7 @@ export function makeHull(R) {
   const half = curve(H.half), rim = curve(H.rim), keel = curve(H.keel);
   const p = H.fullness ?? 0.75, wale0 = H.wale ?? 0, lean = H.tumblehome ?? 0.05;
   const zs = H.stern, zb = H.bow;
-  const wale = (z) => Math.min(rim(z), wale0);
+  const wale = (z) => Math.min(rim(z), Math.max(wale0, keel(z) + 0.3)); // never below the keel (under a stern castle)
   const wallH = (z) => Math.max(0, rim(z) - wale(z));
   const bowlD = (z) => Math.max(0.02, wale(z) - keel(z));
   const fw = (z) => { const w = wallH(z); return w / (w + bowlD(z) * 1.3); };
@@ -54,14 +54,14 @@ const ringT = (j) => Math.pow(j, 1.15);
 // The hull's own geometry, into the batch
 export function buildHull(hull, batch, q) {
   const { R, at, arc, station, zs, zb } = hull;
-  const T = R.tiles;
+  const T = R.tiles, skin = R.skin ?? 'hull', tile = skin === 'plates' ? T.plates : T.planks; // planks, or the Man-o'-war's iron plates
   const I = q.stations, J = q.rings;
   for (const side of [1, -1]) {
     const g = sheet(I, J,
       (i, j) => at(station(i), ringT(j), side),
-      (i, j) => { const z = station(i); return [z / T.planks[0], arc(z, ringT(j)) / T.planks[1]]; },
+      (i, j) => { const z = station(i); return [z / tile[0], arc(z, ringT(j)) / tile[1]]; },
       side < 0);
-    batch.add('hull', g);
+    batch.add(skin, g);
   }
   // the flat stern, and a cap where the hull meets the ram or stem
   for (const [z, face] of [[zs, -1], [zb, 1]]) {
@@ -69,10 +69,10 @@ export function buildHull(hull, batch, q) {
     for (let k = 0; k <= K; k++) { const p = at(z, ringT(k / K), 1); pts.push([p[0], p[1]]); }
     for (let k = K - 1; k >= 0; k--) { const p = at(z, ringT(k / K), -1); pts.push([p[0], p[1]]); }
     if (Math.abs(pts[0][0]) < 0.03) continue;
-    const g = polygon(pts, (x, y) => [x / T.planks[0], y / T.planks[1]]);
+    const g = polygon(pts, (x, y) => [x / tile[0], y / tile[1]]);
     if (face < 0) g.rotateY(Math.PI);
     g.translate(0, 0, z + face * 0.002);
-    batch.add('hull', g);
+    batch.add(skin, g);
   }
   // the deck: boards running fore and aft; the quarterdeck's floor where the deck edge rises
   const A = q.deckAcross * 2;

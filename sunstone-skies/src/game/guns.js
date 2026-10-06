@@ -19,8 +19,8 @@ export function gunsOf(ship) {
     const z = g.port ? hull.zs + 0.3 - g.len - 0.15 : g.z - g.len - 0.15;
     B.stern.push({ p: V(g.x, g.y, z), d: V(0, 0, -1), kind: 'chaser' });
   }
-  if (R.ports) for (const side of [1, -1]) for (const z of R.ports.z) {
-    const t = hull.tAt(z, R.ports.y), p = hull.at(z, t, side), n = hull.normal(z, t, side);
+  if (R.ports) for (const side of [1, -1]) for (const y of [].concat(R.ports.y)) for (const z of R.ports.z) {
+    const t = hull.tAt(z, y), p = hull.at(z, t, side), n = hull.normal(z, t, side);
     // the guns sit level in their ports, pointing straight out from the side (the hull itself curves away below)
     (side > 0 ? B.port : B.starboard).push({ p: V(...p).addScaledVector(n, 0.75 * R.ports.h), d: n.clone().setY(0).normalize(), kind: 'broadside' });
   }

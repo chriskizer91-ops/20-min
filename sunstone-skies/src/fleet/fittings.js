@@ -59,18 +59,17 @@ export function rails(hull, batch, R, q, S) {
     for (const s of [1, -1]) railAlong(batch, railPath(hull, Q.front + 0.12, F.back - 0.12, s, inset, st), R, q, S, h);
   } else railAlong(batch, round(Q.front + 0.12), R, q, S, h);
   if (Q) {
-    // the quarterdeck: down each side, across the stern, and its breast rail either side of the stairs
-    const qh = R.rail.quarterH ?? h, qb = Q.front - 0.1, sw = Q.stairs.width / 2 + 0.06;
-    railAlong(batch, [...railPath(hull, qb, zt, 1, inset, st), ...across(zt).slice(1), ...railPath(hull, zt, qb, -1, inset, st).slice(1)], R, q, S, qh);
-    for (const s of [1, -1]) {
-      const x0 = s * (hull.deckHalf(qb) - inset), y = hull.deckY(qb);
-      railAlong(batch, [V(x0, y, qb), V(s * sw, y, qb)], R, q, S, qh);
-    }
+    // the quarterdeck: down each side, across the stern, and its breast rail, open where each flight of stairs comes up
+    const qh = R.rail.quarterH ?? h, qb = Q.front - 0.1, y = hull.deckY(qb), edge = hull.deckHalf(qb) - inset;
+    if (!R.battlements) railAlong(batch, [...railPath(hull, qb, zt, 1, inset, st), ...across(zt).slice(1), ...railPath(hull, zt, qb, -1, inset, st).slice(1)], R, q, S, qh);
+    const gaps = flights(Q.stairs).map((x) => [x - Q.stairs.width / 2 - 0.06, x + Q.stairs.width / 2 + 0.06]).sort((a, b) => a[0] - b[0]);
+    let from = -edge;
+    for (const [a, b] of [...gaps, [edge, edge]]) { if (a - from > 0.25) railAlong(batch, [V(from, y, qb), V(a, y, qb)], R, q, S, qh); from = b; }
   }
   if (F) {
     // the forecastle: round the bow, and its breast rail with gaps for the two ladders
     const fb = F.back + 0.1, fh = R.rail.foreH ?? h;
-    railAlong(batch, round(fb), R, q, S, fh);
+    if (!R.battlements) railAlong(batch, round(fb), R, q, S, fh);
     const y = hull.deckY(fb), lw = F.ladder.width / 2, lx = F.ladder.x;
     for (const s of [1, -1]) {
       railAlong(batch, [V(s * (hull.deckHalf(fb) - inset), y, fb), V(s * (lx + lw + 0.08), y, fb)], R, q, S, fh);
@@ -80,6 +79,8 @@ export function rails(hull, batch, R, q, S) {
 }
 
 // ---------- stairs and ladders ----------
+// Where a raised deck's flights of stairs are: one in the middle, or a pair at ±x (a tall castle's)
+const flights = (St) => (St.x ? [St.x, -St.x] : [0]);
 function steps(batch, hull, x, w, zTop, zBottom, q, k = 1) {
   const yT = hull.deckY(zTop + Math.sign(zTop - zBottom) * 0.3 * k), yB = hull.deckY(zBottom), n = Math.max(3, Math.round((yT - yB) / (0.23 * k)));
   const rise = (yT - yB) / n, run = (zBottom - zTop) / n;
@@ -94,21 +95,54 @@ function steps(batch, hull, x, w, zTop, zBottom, q, k = 1) {
   }
 }
 
+// A tall castle's face (the Galleon's and the Man-o'-war's): storeys of lit windows between gilt bands, and a door at
+// the foot of the quarterdeck's. dir: +1 faces forward, -1 aft
+function castleFace(batch, glows, rects, { z, dir, x0, x1, yB, yT, k, door = false }) {
+  const width = x1 - x0, cx = (x0 + x1) / 2;
+  if (width < 1.2 * k || yT - yB < 1.2 * k) return;
+  const zf = z + dir * 0.13 * k, rot = dir > 0 ? 0 : Math.PI, storeys = Math.max(1, Math.round((yT - yB) / (2.5 * k))), sh = (yT - yB) / storeys;
+  for (let st = 0; st < storeys; st++) {
+    const y0 = yB + st * sh, ym = y0 + sh * 0.52, withDoor = door && st === 0;
+    if (st > 0) batch.add('gilt', box(width + 0.2 * k, 0.12 * k, 0.12 * k), place([cx, y0, zf + dir * 0.02 * k]));
+    const win = withDoor ? rects.windows2 : rects.windows3, ph = Math.min(sh - 0.8 * k, 1.6 * k), pw = ph * win.w / win.h;
+    // panels across the face (either side of the door on the bottom storey)
+    for (const [a, b] of withDoor ? [[x0, cx - 0.9 * k], [cx + 0.9 * k, x1]] : [[x0, x1]]) {
+      const n = Math.floor((b - a) / (pw + 0.3 * k));
+      for (let i = 0; i < n; i++) {
+        const x = a + (i + 0.5) * (b - a) / n;
+        batch.add('parts', toRect(new THREE.PlaneGeometry(pw, ph), win), place([x, ym, zf], { euler: [0, rot, 0] }));
+        for (const [by, bh] of [[ph / 2 + 0.07 * k, 0.1 * k], [-ph / 2 - 0.08 * k, 0.14 * k]]) batch.add('gilt', box(pw + 0.24 * k, bh, 0.09 * k), place([x, ym + by, zf + dir * 0.02 * k]));
+        glows.push({ p: V(x, ym, z + dir * 0.6 * k), size: 1.5 * k, color: 0xffb46a, chan: 8 });
+      }
+    }
+  }
+  if (!door) return;
+  const dw = 1.15 * k, dh = Math.min(2.1 * k, sh - 0.3 * k);
+  batch.add('dark', new THREE.PlaneGeometry(dw, dh), place([cx, yB + dh / 2, zf], { euler: [0, rot, 0] }));
+  batch.add('wood', box(dw - 0.1 * k, dh - 0.08 * k, 0.06 * k, 1.4), place([cx, yB + dh / 2, zf + dir * 0.03 * k]));
+  for (const [x, y, w, h] of [[0, dh + 0.06 * k, dw + 0.24 * k, 0.12 * k], [dw / 2 + 0.06 * k, dh / 2, 0.12 * k, dh], [-dw / 2 - 0.06 * k, dh / 2, 0.12 * k, dh]])
+    batch.add('gilt', box(w, h, 0.1 * k), place([cx + x, yB + y, zf + dir * 0.04 * k]));
+  const arch = []; for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI; arch.push(V(cx + Math.cos(a) * (dw / 2 + 0.1 * k), yB + dh + 0.1 * k + Math.sin(a) * 0.35 * k, zf + dir * 0.05 * k)); }
+  batch.add('gilt', tube(arch, 0.06 * k, 4, 2), null);
+}
+
 // ---------- the deck ----------
 export function deck(hull, batch, R, q, S, glows) {
   if (q.level === 'far') return;
   const seg = Math.max(6, q.latheSeg), rects = S.rects, Q = R.quarterdeck, F = R.forecastle, k = R.kit, win = rects.windows2;
   // the quarterdeck: stairs up its front, and its front wall with windows either side of them
   if (Q) {
-    steps(batch, hull, 0, Q.stairs.width, Q.front, Q.stairs.bottom, q, k);
+    for (const x of flights(Q.stairs)) steps(batch, hull, x, Q.stairs.width, Q.front, Q.stairs.bottom, q, k);
     const z = Q.front, yT = hull.deckY(z - 0.25 * k), yB = hull.deckY(z + 0.3 * k), hw = hull.deckHalf(z + 0.3 * k) - 0.05 * k, sw = Q.stairs.width;
     batch.add('wood', box(hw * 2, yT - yB, 0.12 * k, 1.2), place([0, (yT + yB) / 2, z + 0.06 * k]));
     batch.add('gilt', box(hw * 2, 0.08 * k, 0.16 * k), place([0, yT - 0.04 * k, z + 0.08 * k]));
-    const pw = Math.min(1.9 * k, hw - sw / 2 - 0.35 * k), ph = Math.min(pw * win.h / win.w, yT - yB - 0.3 * k);
-    if (pw > 0.3) for (const s of [1, -1]) {
-      batch.add('parts', toRect(new THREE.PlaneGeometry(pw, ph), win), place([s * (sw / 2 + 0.25 * k + pw / 2), yB + (yT - yB) * 0.52, z + 0.125 * k]));
-      glows.push({ p: V(s * (sw / 2 + 0.25 * k + pw / 2), yB + (yT - yB) * 0.52, z + 0.5 * k), size: 1.3 * k, color: 0xffb46a, chan: 8 });
-    }
+    if (!Q.stairs.x) {
+      const pw = Math.min(1.9 * k, hw - sw / 2 - 0.35 * k), ph = Math.min(pw * win.h / win.w, yT - yB - 0.3 * k);
+      if (pw > 0.3) for (const s of [1, -1]) {
+        batch.add('parts', toRect(new THREE.PlaneGeometry(pw, ph), win), place([s * (sw / 2 + 0.25 * k + pw / 2), yB + (yT - yB) * 0.52, z + 0.125 * k]));
+        glows.push({ p: V(s * (sw / 2 + 0.25 * k + pw / 2), yB + (yT - yB) * 0.52, z + 0.5 * k), size: 1.3 * k, color: 0xffb46a, chan: 8 });
+      }
+    } else castleFace(batch, glows, rects, { z, dir: 1, x0: -(Q.stairs.x - sw / 2 - 0.3 * k), x1: Q.stairs.x - sw / 2 - 0.3 * k, yB, yT, k, door: true });
   }
   // the forecastle: ladders either side, and its back wall with a door and two small windows
   if (F) {
@@ -125,6 +159,8 @@ export function deck(hull, batch, R, q, S, glows) {
       const x = s * Math.min(hw - 0.6 * k, F.ladder.x + F.ladder.width / 2 + 0.75 * k);
       batch.add('parts', toRect(new THREE.PlaneGeometry(ww, ww * win.h / win.w * 2), rects.windows3), place([x, yB + (yT - yB) * 0.5, z - 0.125 * k], { euler: [0, Math.PI, 0] }));
     }
+    // a tall forecastle has a storey of windows above the door, across the middle
+    if (yT - yB > 3.2 * k) castleFace(batch, glows, rects, { z, dir: -1, x0: -(F.ladder.x - F.ladder.width / 2 - 0.3 * k), x1: F.ladder.x - F.ladder.width / 2 - 0.3 * k, yB: yB + dh + 0.35 * k, yT, k });
   }
   // the wheel (on the Frigate, two on one axle): a working part that spins with the helm
   { const W = R.wheel, y0 = hull.deckY(W.z), r = W.r, cy = y0 + r * 1.5, kw = r / 0.72, pair = W.double ? [-0.4 * kw, 0.4 * kw] : [0.08 * kw];
@@ -381,4 +417,112 @@ export function rudder(hull, batch, R, q, S) {
     add('brass', box(w * 0.6, 0.1, th + 0.05), place([-w * 0.3, y, 0]));
   }
   add('gilt', new THREE.SphereGeometry(0.12, 8, 6), place([-w * 0.92, -h * 0.55, 0], { scale: [1, 1.4, 0.5] }));
+}
+
+// ---------- the big ships' own work: anchors, battlements, the sunburst, the cargo boom and the treasure ----------
+// An anchor hanging at p (its ring), its shank `len` long, lying flat against the hull's side: an iron shank, a wooden
+// stock across its head, and two arms curving up, fore and aft, to broad flukes
+function anchor(batch, p, len, q) {
+  const r = len * 0.045, seg = Math.max(5, q.latheSeg >> 1), foot = p.clone().add(V(0, -len, 0));
+  batch.add('iron', new THREE.CylinderGeometry(r * 0.8, r, len, seg), place(p.clone().add(V(0, -len / 2, 0))));
+  batch.add('iron', new THREE.TorusGeometry(r * 2.2, r * 0.5, 4, 10), place(p.clone().add(V(0, r * 2, 0)), { euler: [0, Math.PI / 2, 0] }));
+  batch.add('wood', box(len * 0.5, r * 1.6, r * 1.6, 1.2), place(p.clone().add(V(0, -len * 0.1, 0))));
+  for (const x of [-0.2, 0.2]) batch.add('iron', box(r * 0.5, r * 1.9, r * 1.9), place(p.clone().add(V(x * len, -len * 0.1, 0))));
+  for (const a of [1, -1]) {
+    const pts = []; for (let i = 0; i <= 6; i++) { const t = (i / 6) * Math.PI * 0.42; pts.push(foot.clone().add(V(0, (1 - Math.cos(t)) * len * 0.36, Math.sin(t) * len * 0.36 * a))); }
+    batch.add('iron', tube(pts, r * 0.8, 5, 2), null);
+    const fl = [[0, 0], [len * 0.1, -len * 0.04], [len * 0.12, len * 0.12], [0, len * 0.2], [-len * 0.06, len * 0.08]];
+    for (const f of [1, -1]) batch.add('iron', polygon(fl, (x, y) => [x, y]).translate(0, 0, f * r * 0.3).rotateY(Math.PI / 2), place(pts.at(-1).clone().add(V(0, -len * 0.08, a * len * 0.02)), { euler: [a * 0.65, 0, 0] }));
+  }
+  batch.add('iron', new THREE.SphereGeometry(r * 1.4, 8, 6), place(foot));
+}
+
+export function bigWork(hull, batch, R, q, S, glows) {
+  const k = R.kit, seg = Math.max(6, q.latheSeg);
+  // anchors at the catheads, on chains down from them
+  if (R.anchors && R.catheads && q.level !== 'far') for (const s of [1, -1]) {
+    const Cz = R.catheads.z, y = hull.deckY(Cz) + 0.35 * k, tip = V(s * (hull.deckHalf(Cz) + 0.95 * k), y + 0.2 * k, Cz + 0.5 * k);
+    const len = R.anchors.len, ring = tip.clone().add(V(0, -R.anchors.drop, 0));
+    if (q.level === 'full') for (let i = 0; i < 10; i++) batch.add('iron', new THREE.TorusGeometry(0.09 * k, 0.03 * k, 4, 8), place(tip.clone().lerp(ring, (i + 0.5) / 10), { euler: [0, i % 2 ? 0 : Math.PI / 2, 0] }));
+    else batch.add('iron', box(0.06 * k, R.anchors.drop, 0.06 * k), place(tip.clone().lerp(ring, 0.5)));
+    anchor(batch, ring, len, q);
+  }
+  // battlements round the castles (the Man-o'-war): iron merlons with brass caps, and gaps between them to fire through
+  if (R.battlements && q.level !== 'far') for (const [z0, z1, across] of R.battlements) {
+    const w = 1.1 * k, gap = 0.75 * k, h = 1.05 * k, t = 0.3 * k, inset = 0.2 * k;
+    const runs = [];
+    for (const s of [1, -1]) { const pts = []; for (let z = z0; z <= z1 + 1e-6; z += (z1 - z0) / Math.max(2, Math.round((z1 - z0) / 1.5))) pts.push(V(s * (hull.deckHalf(z) - inset), hull.deckY(z), z)); runs.push(pts); }
+    if (across) { const z = across < 0 ? z0 : z1, pts = []; for (let i = 0; i <= 8; i++) pts.push(V(lerp(1, -1, i / 8) * (hull.deckHalf(z) - inset), hull.deckY(z), z)); runs.push(pts); }
+    for (const pts of runs) {
+      let d = gap / 2;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], len = a.distanceTo(b), dir = b.clone().sub(a).normalize();
+        for (; d < len; d += w + gap) {
+          const p = a.clone().addScaledVector(dir, Math.min(len, d + w / 2)), quat = new THREE.Quaternion().setFromUnitVectors(V(1, 0, 0), dir);
+          batch.add('plates', box(w, h, t, 0.35), new THREE.Matrix4().compose(p.clone().add(V(0, h / 2, 0)), quat, V(1, 1, 1)));
+          batch.add('brass', box(w + 0.08 * k, 0.1 * k, t + 0.08 * k), new THREE.Matrix4().compose(p.clone().add(V(0, h + 0.05 * k, 0)), quat, V(1, 1, 1)));
+          if (q.rivets) for (const [rx, ry] of [[-0.35, 0.25], [0.35, 0.25], [-0.35, 0.75], [0.35, 0.75]]) {
+            const o = V(rx * w, ry * h, 0).applyQuaternion(quat), nrm = V(0, 0, 1).applyQuaternion(quat);
+            for (const f of [1, -1]) batch.add('brass', S.rivet, place(p.clone().add(o).add(V(0, 0, 0)).addScaledVector(nrm, f * t / 2), { dir: nrm.clone().multiplyScalar(f), scale: 0.05 * k }));
+          }
+        }
+        d -= len;
+      }
+    }
+  }
+  // the sunburst on the Galleon's bow: a gilt sun with sixteen rays and a sunstone at its heart
+  if (R.sunburst && q.level !== 'far') {
+    const Sb = R.sunburst, c = V(0, Sb.y, Sb.z), r = Sb.r, tilt = Sb.tilt ?? 0.25;
+    const m = new THREE.Matrix4().compose(c, new THREE.Quaternion().setFromEuler(new THREE.Euler(-tilt, 0, 0)), V(1, 1, 1));
+    const rays = []; for (let i = 0; i < 32; i++) { const a = (i / 32) * Math.PI * 2, rr = i % 2 ? r * 0.55 : i % 4 ? r * 0.92 : r * 1.12; rays.push([Math.sin(a) * rr, Math.cos(a) * rr]); }
+    for (const f of [0.03, -0.03]) batch.add('gilt', polygon(rays, (x, y) => [x, y]).translate(0, 0, f * r), m);
+    batch.add('gilt', walls(rays, 0.06 * r), m);
+    batch.add('gilt', lathe([[r * 0.52, 0], [r * 0.5, 0.08 * r], [r * 0.38, 0.16 * r], [0.001, 0.2 * r]], seg).rotateX(Math.PI / 2), new THREE.Matrix4().multiplyMatrices(m, place([0, 0, 0.06 * r])));
+    batch.add('crystal', lathe([[0.001, 0], [r * 0.2, 0.06 * r], [0.001, 0.3 * r]], 6).rotateX(Math.PI / 2), new THREE.Matrix4().multiplyMatrices(m, place([0, 0, 0.2 * r])));
+    glows.push({ p: V(0, 0, 0.45 * r).applyMatrix4(m), size: r * 1.6, color: 0xffb23a, pulse: true, chan: 0 });
+  }
+  if (q.level === 'far') return;
+  // treasure chests on deck (the Galleon): banded in gilt, some with the lid open and gold glowing inside
+  for (const [x, z, a, open] of R.chests ?? []) {
+    const y = hull.deckY(z), w = 0.95 * k, d = 0.62 * k, h = 0.5 * k, m = place([x, y, z], { euler: [0, a, 0] });
+    const at = (mat) => new THREE.Matrix4().multiplyMatrices(m, mat);
+    batch.add('wood', box(w, h, d, 1.3), at(place([0, h / 2, 0])));
+    for (const bx of [-0.36, 0, 0.36]) batch.add('gilt', box(0.06 * k, h + 0.02 * k, d + 0.03 * k), at(place([bx * w, h / 2, 0])));
+    const lid = new THREE.CylinderGeometry(d / 2, d / 2, w, Math.max(6, seg), 1, false, 0, Math.PI).rotateZ(Math.PI / 2);
+    if (open) {
+      batch.add('wood', lid, at(new THREE.Matrix4().makeTranslation(0, h, -d / 2).multiply(new THREE.Matrix4().makeRotationX(-1.9)).multiply(new THREE.Matrix4().makeTranslation(0, 0, d / 2))));
+      for (let i = 0; i < 7; i++) batch.add('gilt', new THREE.SphereGeometry(0.11 * k, 6, 4), at(place([(i / 6 - 0.5) * w * 0.8, h + 0.02 * k + (i % 2) * 0.06 * k, ((i * 3) % 5 / 4 - 0.5) * d * 0.6])));
+      batch.add('crystal', lathe([[0.001, 0], [0.07 * k, 0.05 * k], [0.001, 0.26 * k]], 5), at(place([0.15 * w, h + 0.05 * k, 0], { euler: [0.3, 0, 0.4] })));
+      glows.push({ p: V(0, h + 0.3 * k, 0).applyMatrix4(m), size: 1.2 * k, color: 0xffc04a, pulse: true, chan: 0 });
+    } else {
+      batch.add('wood', lid, at(place([0, h, 0])));
+      batch.add('gilt', box(0.16 * k, 0.2 * k, 0.04 * k), at(place([0, h - 0.04 * k, d / 2 + 0.02 * k])));
+    }
+  }
+  // the cargo boom (the Galleon): a samson post at the deck's edge, and a boom from its foot reaching in over the main
+  // hatch, its whip down to a net of treasure on its way up
+  if (R.derrick) {
+    const D = R.derrick, s = Math.sign(D.x), y0 = hull.deckY(D.z), postTop = V(D.x, y0 + D.post, D.z);
+    batch.add('wood', lathe([[0.26 * k, 0], [0.24 * k, D.post * 0.5], [0.2 * k, D.post]], Math.max(6, seg)), place([D.x, y0, D.z]));
+    for (const t of [0.15, 0.55, 0.92]) batch.add('brass', S.ring(lerp(0.26, 0.2, t) * k, 0.045 * k), place([D.x, y0 + D.post * t, D.z]));
+    batch.add('brass', lathe([[0.3 * k, 0], [0.26 * k, 0.1 * k], [0.12 * k, 0.24 * k], [0.001, 0.5 * k]], Math.max(6, seg >> 1)), place(postTop));
+    const heel = V(D.x - s * 0.35 * k, y0 + 1.0 * k, D.z), head = V(D.x - s * D.reach, D.top, D.z), d = head.clone().sub(heel);
+    batch.add('wood', lathe([[0.2 * k, 0], [0.16 * k, d.length() * 0.6], [0.12 * k, d.length()]], Math.max(6, seg >> 1)), place(heel, { dir: d }));
+    for (const t of [0.05, 0.5, 0.95]) batch.add('brass', S.ring(lerp(0.2, 0.12, t) * k * 1.05, 0.04 * k), place(heel.clone().lerp(head, t), { dir: d }));
+    batch.add('dark', box(0.28 * k, 0.4 * k, 0.22 * k), place(head.clone().add(V(0, -0.3 * k, 0))));
+    const rr = 0.02 + R.length * 0.0004;
+    batch.add('rope', tube([postTop.clone().add(V(0, -0.2 * k, 0)), postTop.clone().lerp(head, 0.5).add(V(0, -0.15, 0)), head], rr, 4, 2, false, 0.5), null);
+    const load = V(head.x, D.load, head.z);
+    batch.add('rope', tube([head.clone().add(V(0, -0.5 * k, 0)), load.clone().add(V(0, 0.9 * k, 0))], rr * 1.2, 4, 1), null);
+    batch.add('iron', new THREE.TorusGeometry(0.16 * k, 0.04 * k, 4, 10), place(load.clone().add(V(0, 0.95 * k, 0)), { euler: [0, Math.PI / 2, 0] }));
+    // the net: rope lines from the hook down round a chest, with crystal shards spilling out of the top
+    batch.add('wood', box(0.9 * k, 0.55 * k, 0.6 * k, 1.3), place(load.clone().add(V(0, -0.35 * k, 0))));
+    for (const bx of [-0.3, 0.3]) batch.add('gilt', box(0.06 * k, 0.57 * k, 0.63 * k), place(load.clone().add(V(bx * k, -0.35 * k, 0))));
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2, o = V(Math.sin(a) * 0.62 * k, 0, Math.cos(a) * 0.48 * k);
+      batch.add('rope', tube([load.clone().add(V(0, 0.9 * k, 0)), load.clone().add(o).add(V(0, -0.05 * k, 0)), load.clone().add(o.clone().multiplyScalar(0.8)).add(V(0, -0.68 * k, 0)), load.clone().add(V(0, -0.7 * k, 0))], 0.025 * k, 3, 3), null);
+    }
+    batch.add('crystal', lathe([[0.001, 0], [0.12 * k, 0.1 * k], [0.001, 0.5 * k]], 5), place(load.clone().add(V(0.2 * k, -0.05 * k, 0.1 * k)), { euler: [0.4, 0, -0.3] }));
+    glows.push({ p: load.clone(), size: 1.6 * k, color: 0xffb23a, pulse: true, chan: 0 });
+  }
 }

@@ -1,19 +1,19 @@
 // garage.js: the port's garage, the panel the Captain spends shards in. Four tabs:
 //   Ships     buy the next ship up, or choose which one to sail
-//   Parts     buy parts and their upgrades (Mk I to III), and fit them into the ship's slots
+//   Parts     buy parts and their upgrades (Mk I to V), and fit them into the ship's slots
 //   Tuning    share the crystal power between sails, guns and lift (free)
-//   Captain   the Captain's level and renown, and skill points for the Helm, Gunnery and Crew
+//   Captain   the Captain's level and renown, and skill points for the Helm, Gunnery, Crew and Crystals
 // Every change shows on the ship at once (her fittings, her numbers), and is saved.
 import * as P from './progress.js';
 import { STATS } from '../ships/index.js';
 import { handling } from './flight.js';
 
 const $ = (id) => document.getElementById(id);
-const MK = ['', 'Mk I', 'Mk II', 'Mk III'];
+const MK = P.MARKS;
 const pct = (x) => `${x > 0 ? '+' : '−'}${Math.round(Math.abs(x) * 100)}%`;
 const WORDS = { hull: 'hull', sails: 'sails', crystals: 'crystals', speed: 'speed', turn: 'turning', climb: 'climbing', damage: 'damage',
   reload: 'reload time', range: 'range', pitch: 'gun tilt', swing: 'gun swing', power: 'power to share', repair: 'repairs' };
-const GAIN = [0, 1, 1.5, 2], COST = [0, 1, 1.15, 1.3];
+const { GAIN, COST } = P;
 
 // env: { captain(), names: { id: name }, changed(), setSail(), free() }
 export function makeGarage(env) {
@@ -58,7 +58,8 @@ export function makeGarage(env) {
       const list = c.fitted[c.ship], slots = P.SLOTS[c.ship];
       html = `<p class="g-slots">${list.length} of ${slots} slot${slots > 1 ? 's' : ''} used on the ${env.names[c.ship]}</p>` + P.PARTS.map((Pt) => {
         const m = c.parts[Pt.id] ?? 0, fitted = list.includes(Pt.id), next = m + 1;
-        const buy = m >= 3 ? '' : `<button type="button" class="chip buy" data-act="buypart" data-id="${Pt.id}"${c.shards < Pt.price[m] && !free ? ' aria-disabled="true"' : ''}>${m ? `Upgrade to ${MK[next]}` : 'Buy Mk I'} · ${Pt.price[m]}</button>`;
+        const buy = m >= P.MAX_MARK ? '' : !P.markOpen(c, next) ? `<small class="later">${MK[next]} from voyage ${P.MARK_FROM[next]}</small>`
+          : `<button type="button" class="chip buy" data-act="buypart" data-id="${Pt.id}"${c.shards < Pt.price[m] && !free ? ' aria-disabled="true"' : ''}>${m ? `Upgrade to ${MK[next]}` : 'Buy Mk I'} · ${Pt.price[m].toLocaleString()}</button>`;
         const fit = !m ? '' : `<button type="button" class="chip" data-act="${fitted ? 'unfit' : 'fit'}" data-id="${Pt.id}" aria-pressed="${fitted}">${fitted ? 'Fitted' : 'Fit'}</button>`;
         return `<article class="g-part${fitted ? ' on' : ''}"><header><b>${Pt.name}</b><span>${m ? MK[m] : 'Not bought'}</span></header>`
           + `<div class="g-what">${partLine(Pt, Math.max(1, m))}</div><footer>${fit}${buy}</footer></article>`;
@@ -95,7 +96,7 @@ export function makeGarage(env) {
       case 'buyship': return say(P.buyShip(c, id), `The ${env.names[id]} is yours`);
       case 'sail': return say(P.chooseShip(c, id), `Sailing the ${env.names[id]}`);
       case 'buypart': {
-        if (free) { c.parts[id] = Math.min(3, (c.parts[id] ?? 0) + 1); return say(null, ''); }
+        if (free) { c.parts[id] = Math.min(P.MAX_MARK, (c.parts[id] ?? 0) + 1); return say(null, ''); }
         const m = P.nextMark(c, id), err = P.buyPart(c, id);
         return say(err, `${P.partById(id).name} ${MK[m]} bought${c.fitted[c.ship].includes(id) ? '' : ': fit it to use it'}`);
       }

@@ -3,6 +3,7 @@
 // brass (shiny), wood (matte) or lamplight (glowing), so the painted brass catches the sunset.
 import * as THREE from 'three';
 import planksUrl from '../../assets/ships/planks.webp';
+import platesUrl from '../../assets/ships/plates.webp';
 import deckUrl from '../../assets/ships/deck.webp';
 import bandUrl from '../../assets/ships/band.webp';
 import partsUrl from '../../assets/ships/parts.webp';
@@ -63,12 +64,13 @@ function surfaceFrom(id) {
 
 export async function loadShipArt(renderer) {
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const [planks, deck, band, parts] = await Promise.all([planksUrl, deckUrl, bandUrl, partsUrl].map(loadImage));
-  const P = pixels(planks), D = pixels(deck), B = pixels(band), Q = pixels(parts);
+  const [planks, deck, band, parts, plates] = await Promise.all([planksUrl, deckUrl, bandUrl, partsUrl, platesUrl].map(loadImage));
+  const P = pixels(planks), D = pixels(deck), B = pixels(band), Q = pixels(parts), A = pixels(plates);
   const tex = (img, srgb = true, repeat = false) => { const t = new THREE.Texture(img); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso; if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; return t; };
   const bandSurf = surfaceFrom(B), partSurf = surfaceFrom(Q);
   const T = {
     planks: tex(planks, true, true), planksN: toTexture(normalFrom(P, 4, true), P.width, P.height, false, true, aniso),
+    plates: tex(plates, true, true), platesN: toTexture(normalFrom(A, 5, true), A.width, A.height, false, true, aniso),
     deck: tex(deck, true, true), deckN: toTexture(normalFrom(D, 3, true), D.width, D.height, false, true, aniso),
     band: tex(band, true, true), bandN: toTexture(normalFrom(B, 5, false), B.width, B.height, false, true, aniso),
     bandORM: toTexture(bandSurf.orm, B.width, B.height, false, true, aniso),
@@ -79,6 +81,8 @@ export async function loadShipArt(renderer) {
   const std = (o) => new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, ...o });
   const M = {
     hull: std({ map: T.planks, normalMap: T.planksN, normalScale: new THREE.Vector2(0.8, 0.8), roughness: 0.8, emissive: 0xffffff, emissiveMap: T.planks, emissiveIntensity: 0.07 }),
+    // the Man-o'-war's armour: dark iron plates, a little shiny
+    plates: std({ map: T.plates, color: 0xc8c8cc, normalMap: T.platesN, normalScale: new THREE.Vector2(0.9, 0.9), roughness: 0.6, metalness: 0.25, emissive: 0xffffff, emissiveMap: T.plates, emissiveIntensity: 0.14 }),
     deck: std({ map: T.deck, normalMap: T.deckN, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 0.82, emissive: 0xffffff, emissiveMap: T.deck, emissiveIntensity: 0.07 }),
     band: std({ map: T.band, normalMap: T.bandN, metalnessMap: T.bandORM, roughnessMap: T.bandORM, metalness: 1, roughness: 1, emissive: 0xffffff, emissiveMap: T.band, emissiveIntensity: 0.05 }),
     brass: std({ color: 0xd9a743, metalness: 0.92, roughness: 0.3 }),

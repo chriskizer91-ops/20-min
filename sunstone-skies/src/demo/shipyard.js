@@ -1,11 +1,11 @@
-// shipyard.js: the demo page for the Captain's four levelled-up ships. The chosen ship floats over the sunset cloud
+// shipyard.js: the demo page for the Captain's six levelled-up ships. The chosen ship floats over the sunset cloud
 // sea, and the panel works her: the working parts (sail, helm, climb, battle stations, firing), damage (hull, sails,
-// crystals), the garage (five fittings; one slot on a Skiff up to four on a Frigate) and the crystal power shared
+// crystals), the garage (the game's ten parts; one slot on a Skiff up to four on a Frigate) and the crystal power shared
 // between sails, guns and lift. "Old" shows the game's ship as it was, and "Both" puts them side by side.
 import * as THREE from 'three';
 import { loadShipArt } from '../ship/materials.js';
 import { buildShip } from '../ship/build.js';
-import { SHIPS as OLD } from '../ships/index.js';
+import { FLEET as OLD } from '../ships/index.js';
 import { fleetArt, COLOURS } from '../fleet/materials.js';
 import { buildFleetShip, NO_FIT } from '../fleet/build.js';
 import { ELEVATE } from '../fleet/guns.js';
@@ -13,18 +13,16 @@ import { FLEET } from '../fleet/index.js';
 import { gunsOf, makeBolts } from '../game/guns.js';
 import { makeSmoke } from '../game/effects.js';
 import { SUN, makeSky, makeClouds, makePeaks } from './sunset.js';
+import { PARTS, SLOTS } from '../game/progress.js';
 
 const $ = (id) => document.getElementById(id);
 
-// The garage's fittings, from the plan in docs/frigate.md: each one gains something and costs something in flight
-export const PARTS = [
-  { id: 'armour', name: 'Armour plate', gain: 'More hull', cost: 'Slower, climbs worse' },
-  { id: 'racing', name: 'Racing canvas', gain: 'More speed', cost: 'Weaker sails' },
-  { id: 'longFocus', name: 'Long-focus guns', gain: 'More range', cost: 'Less damage' },
-  { id: 'highAngle', name: 'High-angle mounts', gain: 'Guns tilt further', cost: 'Slower reload' },
-  { id: 'cage', name: 'Crystal cage', gain: 'Tougher crystals', cost: 'Less power to share' },
-];
-export const SLOTS = { skiff: 1, cutter: 2, brig: 3, frigate: 4 };
+// The garage's parts are the game's own (src/game/progress.js): each gains something and costs something in flight.
+// Most show on the ship; Rapid loaders and Trim fins don't change her looks.
+const pct = (x) => `${x > 0 ? '+' : '−'}${Math.round(Math.abs(x) * 100)}%`;
+const WORDS = { hull: 'hull', sails: 'sails', crystals: 'crystals', speed: 'speed', turn: 'turning', climb: 'climbing', damage: 'damage',
+  reload: 'reload time', range: 'range', pitch: 'gun tilt', swing: 'gun swing', power: 'power to share' };
+const words = (o) => Object.entries(o).map(([k, x]) => `${pct(x)} ${WORDS[k]}`).join(', ');
 
 async function main() {
   const canvas = $('stage');
@@ -147,6 +145,8 @@ async function main() {
     for (const k of ['sail', 'turn', 'climb']) nc[k] = C[k];
     Object.assign(nc.stations, C.stations); Object.assign(nc.power, C.power); Object.assign(nc.damage, C.damage);
     ship = next; C = nc; G = gunsOf(ship); pending.clear();
+    while (on.size > slots()) on.delete([...on].at(-1)); // a smaller ship has fewer slots
+    ship.fit({ ...NO_FIT, ...looksOn() });
     garage(); show();
   }
   for (const R of FLEET) {
@@ -186,24 +186,30 @@ async function main() {
   const health = (k) => slider(`d-${k}`, `o-${k}`, (v) => { C.damage[k] = 1 - v / 100; return `${v}%`; });
   const dmg = ['hull', 'sails', 'crystals'].map(health);
   $('btn-repair').addEventListener('click', () => { for (const el of dmg) { el.value = 100; el.dispatchEvent(new Event('input')); } });
-  // the garage: tap a fitting to put it on or take it off; one slot on a Skiff, up to four on a Frigate
+  // the garage: tap a part to put it on or take it off; one slot on a Skiff, up to four on a Frigate; one kind of canvas
   const slots = () => SLOTS[ship.recipe.id];
+  const on = new Set(); // the parts fitted (some don't show on the ship, so the model's own list isn't enough)
+  const looksOn = () => Object.fromEntries(PARTS.filter((P) => P.look).map((P) => [P.look, on.has(P.id)]));
   for (const P of PARTS) {
     const d = document.createElement('div'); d.className = 'part';
-    d.innerHTML = `<b>${P.name}</b><button type="button" class="chip" aria-pressed="false">Fit</button><small class="gain">+ ${P.gain}</small><small class="cost">− ${P.cost}</small>`;
+    d.innerHTML = `<b>${P.name}</b><button type="button" class="chip" aria-pressed="false">Fit</button><small class="gain">${words(P.plus)} (Mk I)</small><small class="cost">${words(P.minus)}${P.look ? '' : ' · doesn\'t show on her'}</small>`;
     const btn = d.querySelector('button');
     btn.addEventListener('click', () => {
-      const on = !ship.fitted[P.id], used = Object.values(ship.fitted).filter(Boolean).length;
-      if (on && used >= slots()) { $('slots').textContent = `${slots() === 1 ? 'The one slot is' : `All ${slots()} slots are`} full: take a part off first`; return; }
-      ship.fit({ [P.id]: on }); garage(); counts();
+      if (on.has(P.id)) on.delete(P.id);
+      else {
+        const clash = P.group && [...on].find((id) => PARTS.find((x) => x.id === id).group === P.group);
+        if (clash) on.delete(clash); // one kind of canvas at a time: the new one goes on instead
+        if (on.size >= slots()) { $('slots').textContent = `${slots() === 1 ? 'The one slot is' : `All ${slots()} slots are`} full: take a part off first`; return; }
+        on.add(P.id);
+      }
+      ship.fit({ ...NO_FIT, ...looksOn() }); garage(); counts();
     });
     d.dataset.part = P.id;
     $('parts').append(d);
   }
   function garage() {
-    const used = Object.values(ship.fitted).filter(Boolean).length;
-    $('slots').textContent = `${used} of ${slots()} part slot${slots() > 1 ? 's' : ''} used`;
-    for (const d of $('parts').children) { const on = !!ship.fitted[d.dataset.part]; const b = d.querySelector('button'); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? 'Fitted' : 'Fit'; }
+    $('slots').textContent = `${on.size} of ${slots()} part slot${slots() > 1 ? 's' : ''} used`;
+    for (const d of $('parts').children) { const f = on.has(d.dataset.part); const b = d.querySelector('button'); b.setAttribute('aria-pressed', String(f)); b.textContent = f ? 'Fitted' : 'Fit'; }
   }
   garage();
   // the power: three shares that always add up to the whole
@@ -267,7 +273,12 @@ async function main() {
     get ship() { return ship; }, get control() { return C; },
     which(w) { state.which = w; show(); },
     view(v, yaw, pitch, dist) { setView(v); if (yaw != null) { state.aim = null; state.yaw = yaw; state.pitch = pitch; if (dist) state.dist = dist; } state.idle = -1e9; },
-    fit(f) { ship.fit({ ...NO_FIT, ...f }); garage(); counts(); },
+    // fit these looks (or parts) outright, slots or not
+    fit(f) {
+      on.clear();
+      for (const [k, v] of Object.entries(f)) { const P = PARTS.find((x) => x.look === k || x.id === k); if (v && P) on.add(P.id); }
+      ship.fit({ ...NO_FIT, ...looksOn() }); garage(); counts();
+    },
     fire(b) { pending.add(b); },
     step(seconds) { for (let t = 0; t < seconds; t += 1 / 30) tick(1 / 30); },
     oldStats: (id = ship.recipe.id) => oldOf(id).stats,

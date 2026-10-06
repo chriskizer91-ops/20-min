@@ -2,7 +2,7 @@
 //   A voyage (the campaign): the Captain sets sail from port; each wave of the voyage comes in (a big wave in two
 //   groups, the second as reinforcements once the first is mostly down); after each wave the Captain flies on or puts
 //   in to port; the last wave brings a raider captain, and beating it ends the voyage. Going down loses the hold and
-//   the wave is sailed again from port. (The rules and numbers are in progress.js.)
+//   the wave is sailed again from port, a little weaker each time. (The rules and numbers are in progress.js.)
 //   Free flight: the old endless waves, with everything unlocked and the garage open between waves.
 import * as P from './progress.js';
 import { waveAt } from './raiders.js';
@@ -33,14 +33,14 @@ export function makeDirector(env) {
       W.groups = []; W.state = 'fight';
       return;
     }
-    const wave = P.waveOf(c.voyage, c.wave), o = { difficulty: c.difficulty, level: P.raiderLevel(c.voyage) };
+    const wave = P.waveOf(c.voyage, c.wave, c.tries ?? 0), o = { difficulty: c.difficulty, level: P.raiderLevel(c.voyage) };
     W.wave = wave; W.groups = wave.groups.map((g) => [...g]); W.next = 0;
     const first = W.groups[W.next++], ids = wave.captain ? [wave.captain.id, ...first] : first;
     const a = env.raiders.spawnWave(ids, player, { ...o, captain: wave.captain });
     W.threat = threatOf(live());
     const who = wave.captain ? `${wave.captain.name} in a ${env.classOf(wave.captain.id)}${first.length ? `, with ${describe(first)}` : ''}` : describe(first);
     env.ui.banner(wave.boss ? `Voyage ${c.voyage}: the last wave` : `Voyage ${c.voyage}, wave ${c.wave} of ${P.wavesIn(c.voyage)}`,
-      `${who}, to the ${env.compass(a)}${W.groups.length > 1 ? '. More behind them' : ''}`);
+      `${who}, to the ${env.compass(a)}${W.groups.length > 1 ? '. More behind them' : ''}${c.tries ? '. They lost ships last time too' : ''}`);
     W.state = 'fight';
   }
 
@@ -126,6 +126,7 @@ export function makeDirector(env) {
   // leave port for the voyage's next wave
   function setSail() {
     if (W.state !== 'port') return;
+    env.raiders.warm?.(P.classesOf(C().voyage)); // build this voyage's raider ships now, not when they appear
     env.ui.port(false);
     W.state = 'calm'; W.timer = 6;
   }

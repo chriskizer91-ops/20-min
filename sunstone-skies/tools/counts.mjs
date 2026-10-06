@@ -8,8 +8,8 @@ import { RigBatch } from '../src/fleet/rig.js';
 import { shipUniforms } from '../src/fleet/shaders.js';
 
 // materials aren't needed to count: plain stand-ins
-const fart = { rects: rectsJson.rects, instance: (colours = { trim: [1, 1, 1], pennant: [[1, 1, 1], [1, 1, 1]] }) => ({
-  U: shipUniforms(), colours, get: () => new THREE.MeshBasicMaterial(), depth: () => new THREE.MeshDepthMaterial(),
+const fart = { rects: rectsJson.rects, instance: (colours = { trim: [1, 1, 1], pennant: [[1, 1, 1], [1, 1, 1]], sails: 0xffffff, sailGlow: 0 }) => ({
+  U: shipUniforms(), colours, get: () => new THREE.MeshStandardMaterial(), depth: () => new THREE.MeshDepthMaterial(),
 }) };
 // tally each part maker's triangles by wrapping the batch
 const tally = new Map();

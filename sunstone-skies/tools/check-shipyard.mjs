@@ -1,8 +1,10 @@
 // check-shipyard.mjs: opens the shipyard demo in a headless browser the size of a laptop and of a phone, works the
 // levelled-up Frigate through its panel, checks every part answers, and takes pictures into shots/ (or the folder given).
+// Then it chooses each of the six ships in turn.
 //   the detail dial: full, middle and far within their budgets; the old Frigate unchanged
 //   working parts: sails furl and fold, the helm, the fins, battle stations, firing a closed side
-//   damage: the three sliders reach the ship; the garage: four slots, the fifth part refused; the power shares add up
+//   damage: the three sliders reach the ship; the garage: four slots, the fifth part refused, one kind of canvas;
+//   the power shares add up
 // Run: node tools/build.mjs shipyard && node tools/check-shipyard.mjs [folder]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -99,6 +101,20 @@ const step = (page, s) => page.evaluate((s) => window.__yard.step(s), s);
   await page.evaluate(() => window.__yard.view('turn', 0.95, 0.16, window.__yard.state.dist * 1.0));
   await step(page, 0.5);
   await shot(page, 'yard-laptop-garage');
+  // one kind of canvas at a time: storm canvas goes on in place of the racing canvas
+  await page.click('[data-part="storm"] button');
+  const st = await page.evaluate(() => ({ fitted: window.__yard.ship.fitted, pressed: [...document.querySelectorAll('#parts [aria-pressed="true"]')].map((b) => b.closest('[data-part]').dataset.part) }));
+  console.log(`storm canvas fitted: ${st.pressed.join(', ')}`);
+  expect(st.fitted.storm && !st.fitted.racing && st.pressed.length === 4, `storm canvas didn't take the racing canvas's place: ${st.pressed}`);
+  // every ship of the fleet, and the parts carried over to the smaller ones' slots
+  for (const id of ['skiff', 'cutter', 'brig', 'frigate', 'galleon', 'manowar']) {
+    await page.evaluate((id) => window.__yard.select(id), id); await step(page, 0.3);
+    const r = await page.evaluate(() => ({ id: window.__yard.ship.recipe.id, slots: document.getElementById('slots').textContent, tris: window.__yard.ship.stats.triangles }));
+    console.log(`${r.id.padEnd(8)} ${r.tris.toLocaleString().padStart(8)} triangles; "${r.slots}"`);
+    expect(r.id === id, `choosing the ${id} didn't change the ship`);
+    if (id === 'skiff') expect(/^1 of 1/.test(r.slots), `the Skiff's one slot: "${r.slots}"`);
+    if (id === 'manowar') expect(/of 6/.test(r.slots), `the Man-o'-war's six slots: "${r.slots}"`);
+  }
 
   // the power: shares always add up to the whole
   await page.click('[data-tab="power"]');

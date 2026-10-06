@@ -3,7 +3,7 @@
 //   plum strake shows a row of gold squares (the "chequer"). At battle stations the lids swing up and the guns run
 //   out; when a side fires its guns kick back into the hull and roll out again.
 //   Chasers at the bow and stern: long guns on swivels, which kick back along their barrels.
-// Two garage fittings change them (docs/frigate.md):
+// Two garage fittings change them (docs/ships.md):
 //   long-focus guns: longer barrels with glass lenses along them (more range, less damage)
 //   high-angle mounts: barrels raised on brass elevating arcs (they tilt further, but reload slower)
 // Every gun is built in all four ways, and the builder shows the one the garage fits.
@@ -141,14 +141,25 @@ export function guns(hull, batch, R, q, S, glows) {
     bow: batch.ch('guns:bow'), stern: batch.ch('guns:stern'),
     swivel: { 1: batch.ch('swivel:port'), [-1]: batch.ch('swivel:starboard') },
   };
-  if (R.ports) for (const side of [1, -1]) for (const z of R.ports.z) {
-    const t = hull.tAt(z, R.ports.y), p = hull.at(z, t, side), n = hull.normal(z, t, side);
+  // broadside ports down each side, in one row or two (a ship with two gun decks)
+  if (R.ports) for (const side of [1, -1]) for (const y of [].concat(R.ports.y)) for (const z of R.ports.z) {
+    const t = hull.tAt(z, y), p = hull.at(z, t, side), n = hull.normal(z, t, side);
     const up = UP.clone().sub(n.clone().multiplyScalar(n.y)).normalize(), right = new THREE.Vector3().crossVectors(up, n);
     const m = frame(V(...p), right, up, n);
     if (q.level === 'far') { batch.add('gilt', new THREE.PlaneGeometry(R.ports.w * 1.05, R.ports.h * 1.05), new THREE.Matrix4().multiplyMatrices(m, place([0, 0, 0.03]))); continue; }
     port(batch, m, R.ports.w, R.ports.h, q, S, glows, side, chan[side > 0 ? 'port' : 'starboard']);
   }
-  for (const g of R.bowGuns) longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { post: Math.max(0.3 * R.kit, g.y - hull.deckY(g.z)), chan: chan.bow, glowChan: 4 });
+  for (const g of R.bowGuns) {
+    if (!g.face) { longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { post: Math.max(0.3 * R.kit, g.y - hull.deckY(g.z)), chan: chan.bow, glowChan: 4 }); continue; }
+    // a bow gun straight out of the bow's face (the Man-o'-war's four), through a square port framed in gilt
+    longGun(batch, place([g.x, g.y, g.z]), g.len, q, S, glows, { swivel: false, chan: chan.bow, glowChan: 4 });
+    if (q.level === 'far') continue;
+    const k = R.kit, w = 1.05 * k, zf = hull.zb + 0.012, b = 0.13 * k;
+    batch.add('dark', new THREE.PlaneGeometry(w, w), place([g.x, g.y, zf]));
+    for (const [x, y, bw, bh] of [[0, w / 2 + b / 2, w + 2 * b, b], [0, -w / 2 - b / 2, w + 2 * b, b], [w / 2 + b / 2, 0, b, w], [-w / 2 - b / 2, 0, b, w]])
+      batch.add('gilt', box(bw, bh, 0.14 * k), place([g.x + x, g.y + y, zf + 0.05 * k]));
+    batch.add('iron', lathe([[0.42 * k, 0], [0.4 * k, 0.12 * k], [0.26 * k, 0.2 * k]], Math.max(8, q.latheSeg)).rotateX(Math.PI / 2), place([g.x, g.y, zf]));
+  }
   // swivel guns on the rails, pointing out to each side (the Skiff's broadsides)
   for (const g of R.swivels ?? []) {
     const s = Math.sign(g.x), m = place([g.x, g.y + R.rail.h * 0.9, g.z], { euler: [0, s * Math.PI / 2, 0] });

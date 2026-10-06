@@ -62,3 +62,36 @@ export function smokeFrom(flyer, smoke, sparks, dt) {
   smoke.emit(at, drift, 2.5 + burning * 3, L * 0.05 + 0.6, L * (0.22 + burning * 0.3) + 3, 0.6 - burning * 0.5, 0.3 + burning * 0.35);
   if (burning > 0.5 && Math.random() < burning) sparks(at, drift.clone().add({ x: 0, y: 3, z: 0 }), 0.6 + Math.random() * 0.5, 1.2 + L * 0.06, Math.random() < 0.5 ? 0xff7a2a : 0xffc04a);
 }
+
+// The Sunstone Ward: a shell of golden crystal light round the Captain's ship while the ward is up. Brightest at its
+// rim, with slow bands of light running over it, and a flicker where it's thin.
+export function makeWard(scene) {
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uK: { value: 0 }, uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    vertexShader: `varying vec3 vN; varying vec3 vV; varying vec3 vP;
+      void main() { vP = position; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform float uK; uniform float uTime; varying vec3 vN; varying vec3 vV; varying vec3 vP;
+      void main() {
+        float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.2);
+        float bands = 0.5 + 0.5 * sin(vP.y * 9.0 - uTime * 2.4 + sin(vP.x * 5.0 + uTime) * 1.5);
+        float a = uK * (rim * 0.85 + bands * 0.08 + 0.03);
+        gl_FragColor = vec4(vec3(1.0, 0.78, 0.36) * a, a);
+      }`,
+  });
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), mat);
+  mesh.visible = false; mesh.renderOrder = 5; mesh.frustumCulled = false;
+  scene.add(mesh);
+  return {
+    mesh,
+    // k: how bright (0 is gone); the shell is sized to the ship and rides with her
+    update(ship, k, time) {
+      mesh.visible = k > 0.01;
+      if (!mesh.visible) return;
+      const L = ship.recipe.length;
+      mesh.position.copy(ship.root.position); mesh.position.y += L * 0.16;
+      mesh.quaternion.copy(ship.root.quaternion);
+      mesh.scale.set(L * 0.36, L * 0.34, L * 0.62);
+      mat.uniforms.uK.value = k; mat.uniforms.uTime.value = time;
+    },
+  };
+}

@@ -3,7 +3,7 @@
 //   RIPPLE  sails and pennants rippling in the wind (a furled sail stops rippling)
 //   HOLES   sails torn by shot: holes with scorched edges open as the sails' health falls
 //   SCORCH  the hull charred by shot, then holed and smouldering as its health falls
-//   STRAKE  the gun strake painted in the Captain's plum (or a raider's rust)
+//   STRAKE  the gun strake painted in the Captain's plum (or a raider's rust); a ship with two gun decks has two
 //   GEM     sunstone crystals going dark one by one as the crystals' health falls
 //   FLOW    the aether conduits: pulses of light running to the sails, the guns or the lift vents, as bright as the
 //           share of crystal power each gets
@@ -17,7 +17,7 @@ export function shipUniforms() {
     uRig: { value: Array.from({ length: CHANNELS }, () => new THREE.Vector3()) },
     uSailDmg: { value: 0 }, uHullDmg: { value: 0 }, uCrystal: { value: 1 },
     uPow: { value: new THREE.Vector3(1 / 3, 1 / 3, 1 / 3) },
-    uStrake: { value: new THREE.Vector4(-0.9, -2.7, 1, 0) },
+    uStrake: { value: new THREE.Vector4(-0.9, -2.7, 1, 0) }, uStrake2: { value: new THREE.Vector4(0, 0, 0, 0) },
     uPaint: { value: new THREE.Color(0x6a2456) },
     uFlowColor: { value: new THREE.Color(0xff7418) },
   };
@@ -76,7 +76,7 @@ const FRAG_HEAD = /* glsl */`
   varying float vTag;
   uniform float uTime, uSailDmg, uHullDmg, uCrystal;
   uniform vec3 uPow, uPaint, uFlowColor;
-  uniform vec4 uStrake;
+  uniform vec4 uStrake, uStrake2;
   ${NOISE}
 `;
 const COLOR_F = /* glsl */`
@@ -90,6 +90,7 @@ const COLOR_F = /* glsl */`
   #endif
   #ifdef STRAKE
   { float s = smoothstep(uStrake.y - 0.012, uStrake.y + 0.012, vRest.y) * (1.0 - smoothstep(uStrake.x - 0.012, uStrake.x + 0.012, vRest.y)) * uStrake.z;
+    s = max(s, smoothstep(uStrake2.y - 0.012, uStrake2.y + 0.012, vRest.y) * (1.0 - smoothstep(uStrake2.x - 0.012, uStrake2.x + 0.012, vRest.y)) * uStrake2.z);
     float lum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
     diffuseColor.rgb = mix(diffuseColor.rgb, uPaint * (0.5 + lum * 1.7), s);
     dDark = max(dDark, s * 0.75); }

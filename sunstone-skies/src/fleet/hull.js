@@ -4,12 +4,16 @@
 //   the deck edge steps up cleanly at a forecastle and a quarterdeck, with stations either side of each step
 // Then what dresses it: the gun strake's gold pinstripes, the channels the shrouds are made fast to, the stern
 // gallery and the quarter galleries, the bulkheads under the raised decks, the keel with its glowing lift vents,
-// and (a garage fitting) armour plate.
+// and (a garage fitting) armour plate. A hull can wear iron plates instead of planks (the Man-o'-war: skin 'plates'),
+// and a ship with two gun decks has two strakes.
 import * as THREE from 'three';
 import { curve, clamp, lerp, sheet, polygon, place, box, lathe, tube, toRect } from '../ship/kit.js';
 import { hullBand, hullStrap, rivetRow, hullDecal } from '../ship/hull.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// The ship's gun strakes as a list of [top, bottom]: one, or one for each gun deck
+export const strakesOf = (R) => (!R.strake ? [] : Array.isArray(R.strake[0]) ? R.strake : [R.strake]);
 
 export function makeHull(R) {
   const H = R.hull;
@@ -62,11 +66,11 @@ function stations(hull, n, steps) {
 
 const ringT = (j) => Math.pow(j, 1.15);
 export function buildHull(hull, batch, q) {
-  const { R, at, arc, zs, zb } = hull, T = R.tiles;
+  const { R, at, arc, zs, zb } = hull, T = R.tiles, skin = R.skin ?? 'hull', tile = skin === 'plates' ? T.plates : T.planks;
   const Z = stations(hull, q.stations, R.steps ?? []), I = Z.length - 1, J = q.rings;
   const zi = (u) => Z[Math.round(u * I)];
   for (const s of [1, -1]) {
-    batch.add('hull', sheet(I, J, (i, j) => at(zi(i), ringT(j), s), (i, j) => { const z = zi(i); return [z / T.planks[0], arc(z, ringT(j)) / T.planks[1]]; }, s < 0));
+    batch.add(skin, sheet(I, J, (i, j) => at(zi(i), ringT(j), s), (i, j) => { const z = zi(i); return [z / tile[0], arc(z, ringT(j)) / tile[1]]; }, s < 0));
   }
   // the stern's flat transom and a cap where the hull meets the ram
   for (const [z, face] of [[zs, -1], [zb, 1]]) {
@@ -74,10 +78,10 @@ export function buildHull(hull, batch, q) {
     for (let k = 0; k <= K; k++) { const p = at(z, ringT(k / K), 1); pts.push([p[0], p[1]]); }
     for (let k = K - 1; k >= 0; k--) { const p = at(z, ringT(k / K), -1); pts.push([p[0], p[1]]); }
     if (Math.abs(pts[0][0]) < 0.03) continue;
-    const g = polygon(pts, (x, y) => [x / T.planks[0], y / T.planks[1]]);
+    const g = polygon(pts, (x, y) => [x / tile[0], y / tile[1]]);
     if (face < 0) g.rotateY(Math.PI);
     g.translate(0, 0, z + face * 0.002);
-    batch.add('hull', g);
+    batch.add(skin, g);
   }
   // the deck: boards fore and aft, stepping up to the raised decks
   const A = q.deckAcross * 2;
@@ -98,10 +102,11 @@ export function brass(hull, batch, R, q, S) {
     // a band round the raised decks, just under their rail
     for (const [z0, z1] of R.raised ?? []) hullBand(hull, batch, { z0, z1, top: (z) => rim(z) - 0.04 * k, bottom: (z) => rim(z) - 0.32 * k, side: s, tile: T.band, I: Math.max(6, Math.round(I * 0.25)) });
     for (const [z, w] of B.straps) hullStrap(hull, batch, { z, width: w, side: s, J: Math.max(6, Math.round(q.rings * 0.9)) });
-    if (B.lower) { const [l0, l1] = B.lower, [c, d] = span(l1); hullBand(hull, batch, { z0: c, z1: d, top: () => l0, bottom: () => l1, side: s, tile: T.band, I }); }
-    // the strake's gold pinstripes, top and bottom
-    if (R.strake) {
-      const [p0, p1] = R.strake, [e, f] = span(p1), w = 0.035 * Math.max(0.6, k);
+    // lower bands: one, or a list of them (a ship with two gun decks has one between them)
+    for (const [l0, l1] of B.lower ? (Array.isArray(B.lower[0]) ? B.lower : [B.lower]) : []) { const [c, d] = span(l1); hullBand(hull, batch, { z0: c, z1: d, top: () => l0, bottom: () => l1, side: s, tile: T.band, I }); }
+    // each strake's gold pinstripes, top and bottom
+    for (const [p0, p1] of strakesOf(R)) {
+      const [e, f] = span(p1), w = 0.035 * Math.max(0.6, k);
       for (const y of [p0, p1]) hullBand(hull, batch, { z0: e, z1: f, top: () => y + w, bottom: () => y - w, side: s, tile: [1, 1], I, J: 1, key: 'gilt', off: 0.022 * k, edges: false });
     }
     // the keel shoe
@@ -240,18 +245,22 @@ export function quarterGalleries(hull, batch, R, q, S, glows) {
 }
 
 // ---------- the stern castle's windows: a row along each side and a row across the transom, lit from within ----------
+// (a castle two storeys high has rows of them: `side` and `transom` can be lists, and `reps` panels side by side)
 export function windows(hull, batch, R, q, S, glows) {
   const W = R.windows, k = R.kit;
   if (!W || q.level === 'far') return;
-  if (W.side) for (const s of [1, -1]) {
-    hullDecal(hull, batch, { ...W.side, side: s, rect: S.rects.windows3, I: Math.max(2, Math.round(q.rings / 3)), J: 2, off: 0.012 * k });
-    const a = hull.side((W.side.z0 + W.side.z1) / 2, (W.side.y0 + W.side.y1) / 2, s);
-    glows.push({ p: a.p.clone().addScaledVector(a.n, 0.45 * k), size: 1.3 * k, color: 0xffb46a, chan: 8 });
+  for (const Ws of W.side ? [].concat(W.side) : []) for (const s of [1, -1]) for (let r = 0, n = Ws.reps ?? 1; r < n; r++) {
+    const z0 = lerp(Ws.z0, Ws.z1, r / n), z1 = lerp(Ws.z0, Ws.z1, (r + 1) / n), gap = n > 1 ? 0.12 * k : 0;
+    hullDecal(hull, batch, { ...Ws, z0: z0 + gap, z1: z1 - gap, side: s, rect: S.rects.windows3, I: Math.max(2, Math.round(q.rings / 3)), J: 2, off: 0.012 * k });
+    const a = hull.side((z0 + z1) / 2, (Ws.y0 + Ws.y1) / 2, s);
+    glows.push({ p: a.p.clone().addScaledVector(a.n, 0.45 * k), size: (Ws.glow ?? 1.3) * k, color: 0xffb46a, chan: 8 });
+    // gilt sills and lintels on a castle's rows
+    if (Ws.frame && q.level === 'full') for (const y of [Ws.y0 - 0.09 * k, Ws.y1 + 0.09 * k]) hullBand(hull, batch, { z0: z0 + gap, z1: z1 - gap, top: () => y + 0.07 * k, bottom: () => y - 0.07 * k, side: s, tile: [1, 1], I: 3, J: 1, key: 'gilt', off: 0.04 * k, edges: false });
   }
-  if (W.transom) {
-    const T = W.transom, h = T.y1 - T.y0, list = T.twin ? [-0.52, 0.52] : [0], zs = hull.zs;
-    for (const x of list) {
-      const w = T.twin ? T.w * 0.5 : T.w, cx = x * T.w;
+  for (const T of W.transom ? [].concat(W.transom) : []) {
+    const h = T.y1 - T.y0, n = T.twin ? 2 : T.reps ?? 1, zs = hull.zs;
+    for (let i = 0; i < n; i++) {
+      const w = T.twin ? T.w * 0.5 : T.w / n - (n > 1 ? 0.2 * k : 0), cx = T.twin ? (i ? 0.52 : -0.52) * T.w : (i - (n - 1) / 2) * (T.w / n);
       batch.add('parts', toRect(new THREE.PlaneGeometry(w, h), S.rects.windows3), place([cx, (T.y0 + T.y1) / 2, zs - 0.012], { euler: [0, Math.PI, 0] }));
       for (const [bx, by, bw, bh] of [[0, h / 2 + 0.05 * k, w + 0.2 * k, 0.1 * k], [0, -h / 2 - 0.05 * k, w + 0.2 * k, 0.1 * k], [w / 2 + 0.05 * k, 0, 0.1 * k, h], [-w / 2 - 0.05 * k, 0, 0.1 * k, h]])
         batch.add('gilt', box(bw, bh, 0.06 * k), place([cx + bx, (T.y0 + T.y1) / 2 + by, zs - 0.03 * k]));

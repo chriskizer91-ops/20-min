@@ -15,7 +15,7 @@ import { makeFlyer } from './flight.js';
 import { makeBolts, makeGunnery, batteryFor, BATTERY_NAMES, intercept } from './guns.js';
 import { makeRaiders } from './raiders.js';
 import { hitZones, firstHit } from './damage.js';
-import { makeSmoke, smokeFrom } from './effects.js';
+import { makeSmoke, smokeFrom, makeWard } from './effects.js';
 import * as P from './progress.js';
 import { makeDirector } from './voyage.js';
 import { makeAbilities } from './abilities.js';
@@ -58,7 +58,7 @@ async function main() {
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
   scene.add(hemi, sun, sun.target);
 
-  const bolts = makeBolts(scene), smoke = makeSmoke(scene);
+  const bolts = makeBolts(scene), smoke = makeSmoke(scene), ward = makeWard(scene);
   const raiders = makeRaiders(scene, art, bolts, fart);
 
   // ---------- the Captain, and the ship they fly ----------
@@ -184,11 +184,11 @@ async function main() {
   }
   function enterPort() {
     if (cap.ship !== player.ship.recipe.id) fly(cap.ship);
-    player.repair(1); abilities.reset();
+    player.repair(1); abilities.reset(); ward.mesh.visible = false;
     garage.open(); cam.yaw = 2.4; cam.pitch = 0.25;
     frameView();
   }
-  function leavePort() { garage.close(); cam.zoom = 1; frameView(); }
+  function leavePort() { if (cap.ship !== player.ship.recipe.id) fly(cap.ship); else outfit(); garage.close(); cam.zoom = 1; frameView(); }
   // in port the garage covers the right of the screen, so the view moves over to put the ship in the space left
   function frameView() {
     const w = innerWidth, h = innerHeight, panel = $('port').hidden ? 0 : $('port').getBoundingClientRect().width + 16;
@@ -364,13 +364,14 @@ async function main() {
     time += dt;
     const inp = held ?? input.read();
     for (const k of inp.pressed) {
-      if (k >= '1' && k <= '4') { const id = SHIPS[+k - 1].id; if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
+      if (k >= '1' && k <= '6') { const id = SHIPS[+k - 1].id; if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
       else if (k === 'c') { cam.yaw = 0; cam.pitch = 0.2; }
       else if (k === 'm') mini.classList.toggle('big');
       else if (k === 'h') toggleHelp();
       else if (k === 'z') abilities.use('surge');
       else if (k === 'x') abilities.use('double');
       else if (k === 'v') abilities.use('control');
+      else if (k === 'b') abilities.use('ward');
       else if (k === 'g') { if (W.state === 'port' && W.mode === 'free') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); } else openFreeGarage(); }
       else if (k === 'Enter' && W.state === 'after') director.flyOn();
       else if (k === 'p' && W.state === 'after') director.putIn();
@@ -411,6 +412,7 @@ async function main() {
     smokeFrom(player, smoke, bolts.spark, dt);
     for (const r of raiders.list) smokeFrom(r.f, smoke, bolts.spark, dt);
     smoke.update(dt, camera);
+    ward.update(player.ship, player.down ? 0 : abilities.ward(), time);
     reward(gone);
     director.update(dt);
     world.time.value = time;
@@ -433,12 +435,13 @@ async function main() {
   // for tools/check.mjs
   window.__game = {
     ready: true, get player() { return player; }, get gunnery() { return gunnery; }, cam, fly, input, raiders, bolts, renderer, camera, scene, waves: W,
-    get captain() { return cap; }, director, garage, abilities, begin, P,
+    get captain() { return cap; }, director, garage, abilities, ward, begin, P,
     get hits() { return hits; }, get downed() { return downed; }, get locked() { return locked; },
-    // run the game's clock without drawing, holding these controls (for tests on slow software rendering)
-    step(seconds, controls = {}) {
+    // run the game's clock without drawing, holding these controls (for tests on slow software rendering;
+    // tools/sim-voyage.mjs uses longer ticks to sail faster)
+    step(seconds, controls = {}, dt = 1 / 60) {
       held = { turn: 0, climb: 0, sail: 0, fire: false, look: { x: 0, y: 0 }, zoom: 0, pressed: new Set(), lastLook: performance.now() / 1000, locked: false, ...controls };
-      for (let t = 0; t < seconds; t += 1 / 60) tick(1 / 60);
+      for (let t = 0; t < seconds - 1e-6; t += dt) tick(dt);
       held = null;
     },
   };

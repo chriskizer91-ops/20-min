@@ -1,5 +1,5 @@
 // game-shots.mjs: pictures of the game flying the levelled-up Frigate: in a fight with a raider Frigate alongside,
-// and close to that raider, for checking by eye. Run: node tools/build.mjs game && node tools/game-shots.mjs [folder]
+// and close to that raider; then the Captain's Man-o'-war with a raider Galleon and Man-o'-war, for checking by eye. Run: node tools/build.mjs game && node tools/game-shots.mjs [folder]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
@@ -12,6 +12,7 @@ page.on('pageerror', (e) => console.log('ERR', e.message));
 await page.goto(`file://${root}dist/game.html`);
 await page.waitForFunction(() => window.__game?.ready || !document.getElementById('error').hidden, null, { timeout: 180000 });
 await page.addStyleTag({ content: '#help{display:none!important}' });
+await page.click('#start-free'); // past the start screen, into free flight
 // the Frigate in a fight: a raider Frigate on her port beam and a Cutter ahead, the Captain firing at the Frigate
 const info = await page.evaluate(() => {
   const g = window.__game;
@@ -38,5 +39,19 @@ await page.screenshot({ path: `${out}/game-raider-frigate.png`, timeout: 120000 
 await page.evaluate(() => { const g = window.__game; g.raiders.clear(); g.waves.state = 'calm'; g.cam.yaw = 2.6; g.cam.pitch = 0.35; g.cam.zoom = 0.8; g.step(4, { sail: -1 }); });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: `${out}/game-frigate-calm.png`, timeout: 120000 });
+// the big two: the Captain's Man-o'-war with a raider Galleon on her beam and a raider Man-o'-war coming in ahead
+await page.evaluate(() => {
+  const g = window.__game;
+  g.fly('manowar'); const P = g.player;
+  g.raiders.clear(); P.repair(1); P.pos.set(0, 900, 0); P.heading = 0; P.sail = 0.7; g.waves.state = 'fight';
+  const foe = g.raiders.spawn('galleon', P.pos.clone().add({ x: 230, y: 10, z: 60 }), 0.15);
+  g.raiders.spawn('manowar', P.pos.clone().add({ x: -120, y: 40, z: 700 }), Math.PI - 0.3);
+  g.cam.yaw = 1.1; g.cam.pitch = 0.1;
+  for (let i = 0; i < 12; i++) g.step(0.25, { fire: i % 3 === 0, sail: 0 });
+  foe.f.hit('hull', foe.f.full.hull * 0.4); foe.f.hit('sails', foe.f.full.sails * 0.35);
+  g.step(1, {});
+});
+await page.waitForTimeout(2500);
+await page.screenshot({ path: `${out}/game-manowar-fight.png`, timeout: 120000 });
 await browser.close();
 console.log('done');
