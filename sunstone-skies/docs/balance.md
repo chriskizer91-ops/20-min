@@ -124,6 +124,16 @@ How it's worked out:
 
 (Parts here fill her slots in this order: armour, heavy shot, rapid loaders, storm canvas, crystal cage, trim fins.)
 
+Two things the Captain can change in flight don't change these numbers:
+
+- **Crystal power in flight** (R) picks the Captain's own tuning, or 60% of the power to the sails or to the guns
+  (a fifth to the lift either way). Either could be set in the garage's Tuning for nothing, so it adds no strength the
+  rating misses; it only lets the Captain change her mind in the middle of a fight. The rating counts the garage
+  tuning.
+- **Aiming at a part** (T): the hull is aimed at the same point as before, and the simulated Captain aims at it, so
+  the numbers here are at full pay. Aiming at the crystals brings raiders down sooner but halves their pay, and aiming
+  at the sails slows them: a Captain can trade shards for an easier fight.
+
 What each voyage needs (danger · strength):
 
 | Voyage | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |

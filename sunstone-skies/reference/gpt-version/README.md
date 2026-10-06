@@ -15,10 +15,23 @@ which this game takes nothing more from (`CLAUDE.md`).
   16-pixel border copied from the neighbouring tiles), re-saved as AVIF at quality 75 in `assets/map/`, and its corner
   map picture (`assets/map/minimap.webp`, resized to 1536 x 1024). Its ground detail (fine grain and water ripples close
   to the ground) is rewritten in `src/game/world.js`.
+- **The rest** (October 6), each rewritten into our own modules and hooked to our game through `src/game/events.js`:
+  - `sound.js` → `src/game/sound.js`: the same instruments and score, plus sounds for our four abilities, a new level
+    and a finished voyage.
+  - `services.js` and `settings.js` → `src/game/settings.js` and `settings-panel.js`: the settings, with music volume
+    and showing the guide again added. Its port-panel changes belong to the phone game's port; from them our garage
+    took the idea of a line on how each ship fights, and of showing what an upgrade would change (as strength).
+  - `firing-board.js` → `src/game/board.js`: Hull, Sails or Crystals (no Auto: it aimed at the hull anyway), the
+    batteries, the target panel and the hit mark.
+  - `explore-photo.js` → `src/game/photo.js` and `explore.js`: the photo camera works in every mode; the flight courses
+    and waypoints are in Explore, a mode of their own on the start screen.
+  - `voyage-guide.js` → `src/game/guide.js` and the crystal power in `src/game/main.js` (R, not X: X is our Double
+    Shot). The choice of encounter and perk between waves is left out: our charts, garage and skills cover that ground.
+  - `near-ground.js` → `src/game/ground.js`: the trees. Its eight traced roofs are left out.
 
-## Kept here to take from later
+## The layers, as it wrote them
 
-The layers it added, as it wrote them. They hook into the phone game through `window.Aether` and events the GPT
+Kept for reference. They hook into the phone game through `window.Aether` and events the GPT
 version patched into that game's code, so they're for reading and rewriting into our modules, not for dropping in.
 
 | File | What it does |

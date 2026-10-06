@@ -1,8 +1,11 @@
 // main.js: Sunstone Skies, the laptop game. The Captain flies the four levelled-up ships over Chris's map and fights
 // waves of raiders: swing the camera round the ship to aim, and whichever guns face where you look fire. Shots tear
 // the hull, the sails or the crystals (docs/ships.md); a raider with no hull left goes down, and so does the Captain.
-// Two ways to play (voyage.js): voyages, where shards from raiders buy ships and parts in port and renown buys
-// skills (progress.js, garage.js, abilities.js); and free flight, with everything unlocked.
+// Three ways to play (voyage.js): voyages, where shards from raiders buy ships and parts in port and renown buys
+// skills (progress.js, garage.js, abilities.js); free flight, with everything unlocked; and exploring, with no raiders
+// (explore.js). Around the flying: sound and music (sound.js), the settings (settings-panel.js), the firing board and
+// choosing what to aim at (board.js), the photo camera (photo.js), the flight guide (guide.js), and trees when flying
+// low (ground.js). What happens in the game is announced (events.js) for whichever of them wants to know.
 import * as THREE from 'three';
 import { loadShipArt } from '../ship/materials.js';
 import { STATS } from '../ships/index.js';
@@ -20,6 +23,15 @@ import * as P from './progress.js';
 import { makeDirector } from './voyage.js';
 import { makeAbilities } from './abilities.js';
 import { makeGarage } from './garage.js';
+import { emit, on } from './events.js';
+import { settings, setSettings } from './settings.js';
+import { makeSound } from './sound.js';
+import { makeBoard } from './board.js';
+import { makePhoto } from './photo.js';
+import { makeGuide } from './guide.js';
+import { makeSettingsPanel } from './settings-panel.js';
+import { makeExplore } from './explore.js';
+import { makeGround } from './ground.js';
 import minimapUrl from '../../assets/map/minimap.webp';
 
 const $ = (id) => document.getElementById(id);
@@ -29,6 +41,10 @@ const COMPASS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-we
 const compassDeg = (heading) => ((180 - THREE.MathUtils.radToDeg(heading)) % 360 + 360) % 360; // north is up the map (-z)
 const SHIPS = FLEET;
 const NAMES = Object.fromEntries(SHIPS.map((R) => [R.id, R.name]));
+// the crystal power, shifted in flight (R): the Captain's own tuning from the garage, or most of it to the sails or
+// to the guns (the lift keeps a fifth)
+const POWER_MODES = ['yours', 'sails', 'guns'];
+const POWER_SHARES = { sails: { sails: 0.6, guns: 0.2, lift: 0.2 }, guns: { sails: 0.2, guns: 0.6, lift: 0.2 } };
 
 async function main() {
   const canvas = $('stage');
@@ -91,12 +107,22 @@ async function main() {
   }
   // the Captain's parts, skills and tuning, on the ship: how she flies and fires, and what she shows
   function outfit() {
-    const id = player.ship.recipe.id, e = P.effects(cap, id), L = P.looks(cap, id);
+    const id = player.ship.recipe.id, tuned = powerMode === 'yours' ? cap : { ...cap, power: POWER_SHARES[powerMode] };
+    const e = P.effects(tuned, id), L = P.looks(cap, id);
     player.setMods(e);
     gunnery.setMods(e, L.heavyShot ? 1.25 : 1);
     player.ship.fit(Object.fromEntries(Object.keys(player.ship.fitted).map((k) => [k, !!L[k]])));
-    Object.assign(player.ship.control.power, cap.power);
+    Object.assign(player.ship.control.power, tuned.power);
   }
+  let powerMode = 'yours';
+  function setPower(mode) {
+    if (!POWER_MODES.includes(mode) || mode === powerMode) return;
+    powerMode = mode;
+    if (player) outfit();
+    for (const b of document.querySelectorAll('#power [data-power]')) b.setAttribute('aria-pressed', String(b.dataset.power === mode));
+    emit('power', { mode });
+  }
+  const nextPower = () => { setPower(POWER_MODES[(POWER_MODES.indexOf(powerMode) + 1) % POWER_MODES.length]); toast(powerMode === 'yours' ? 'Crystal power: your own tuning' : `Crystal power to the ${powerMode}`); };
 
   // ---------- the camera: behind the ship, swung round it by the mouse or a drag ----------
   const cam = { yaw: 0, pitch: 0.2, dist: 40, zoom: 1, look: new THREE.Vector3(), shake: 0 };
@@ -104,7 +130,7 @@ async function main() {
   const aimPoint = new THREE.Vector3();
   let locked = null, reach = true;
   function placeCamera(dt, inp) {
-    const sens = inp.locked ? 0.0026 : touch ? 0.0042 : 0.005;
+    const sens = (inp.locked ? 0.0026 : touch ? 0.0042 : 0.005) * settings.sensitivity;
     cam.yaw -= inp.look.x * sens;
     cam.pitch = THREE.MathUtils.clamp(cam.pitch + inp.look.y * sens, -0.35, 1.25);
     cam.zoom = THREE.MathUtils.clamp(cam.zoom * Math.pow(1.12, inp.zoom), 0.55, 2.6);
@@ -119,7 +145,7 @@ async function main() {
     const target = player.pos.clone().add(new THREE.Vector3(0, R.length * 0.42 + 2, 0));
     camera.position.copy(target).addScaledVector(cam.look, -cam.dist * cam.zoom);
     camera.lookAt(target);
-    if (cam.shake > 0) { cam.shake = Math.max(0, cam.shake - dt); const s = cam.shake * 0.012; camera.rotation.x += (Math.random() - 0.5) * s; camera.rotation.y += (Math.random() - 0.5) * s; }
+    if (cam.shake > 0) { cam.shake = Math.max(0, cam.shake - dt); const s = cam.shake * 0.012 * (settings.shake / 0.65); camera.rotation.x += (Math.random() - 0.5) * s; camera.rotation.y += (Math.random() - 0.5) * s; }
     // the guns lock on to the raider nearest the crosshair, and lead it
     locked = null;
     let bestA = Infinity;
@@ -138,7 +164,7 @@ async function main() {
     player.ship.root.updateMatrixWorld(true);
     const m = gunnery.muzzle(battery);
     if (!m) { reach = false; return; }
-    aimPoint.copy(intercept(m.p, player.velocity, locked.f.aimAt(), locked.f.velocity, m.K.speed));
+    aimPoint.copy(intercept(m.p, player.velocity, board.point(locked) ?? locked.f.aimAt(), locked.f.velocity, m.K.speed));
     reach = gunnery.reaches(battery, aimPoint);
   }
 
@@ -151,6 +177,7 @@ async function main() {
       if (!h) return false;
       h.r.f.hit(h.h.part, b.K.damage); hits++;
       bolts.burst(h.h.at, ...BURST[h.h.part]);
+      emit('hit', { owner: 'player', target: 'enemy', part: h.h.part, damage: b.K.damage, at: h.h.at });
       return true;
     }
     if (player.down) return false;
@@ -159,6 +186,7 @@ async function main() {
     player.hit(h.part, b.K.damage);
     bolts.burst(h.at, ...BURST[h.part]);
     hurt = Math.min(1, hurt + 0.45); cam.shake = 0.3;
+    emit('hit', { owner: 'raider', target: 'player', part: h.part, damage: b.K.damage * player.shield, at: h.at });
     return true;
   }
 
@@ -174,21 +202,24 @@ async function main() {
       downed++;
       bolts.burst(r.f.pos, 0xff8a3a, 60, 2.2); bolts.burst(r.f.pos.clone().add({ x: 0, y: 3, z: 0 }), 0xffe08a, 30, 1.6);
       const how = r.f.down.why, what = `${r.name} ${how === 'hull' ? 'going down' : 'sinking, crystals dead'}`;
-      if (W.mode !== 'campaign') { toast(what); continue; }
+      if (W.mode !== 'campaign') { toast(what); emit('sunk', { id: r.id, captain: !!r.captain, how, pos: r.f.pos.clone(), shards: 0 }); continue; }
       const shards = P.bounty(cap, r.id, how, !!r.captain), before = P.levelOf(cap.renown).level;
       cap.hold += shards; cap.renown += P.renownFor(cap, r.id, !!r.captain);
       toast(`${what} · +${shards} shards${how === 'crystals' ? ' (the crystals shattered: half pay)' : ''}`);
+      emit('sunk', { id: r.id, captain: !!r.captain, how, pos: r.f.pos.clone(), shards });
       const after = P.levelOf(cap.renown).level;
-      if (after > before) banner(`Level ${after}`, 'A skill point to spend in port');
+      if (after > before) { banner(`Level ${after}`, 'A skill point to spend in port'); emit('level', { level: after }); }
     }
   }
   function enterPort() {
+    setPower('yours');
     if (cap.ship !== player.ship.recipe.id) fly(cap.ship);
     player.repair(1); abilities.reset(); ward.mesh.visible = false;
     garage.open(); cam.yaw = 2.4; cam.pitch = 0.25;
     frameView();
+    emit('mode', { mode: 'port' });
   }
-  function leavePort() { if (cap.ship !== player.ship.recipe.id) fly(cap.ship); else outfit(); garage.close(); cam.zoom = 1; frameView(); }
+  function leavePort() { if (cap.ship !== player.ship.recipe.id) fly(cap.ship); else outfit(); garage.close(); cam.zoom = 1; frameView(); emit('mode', { mode: 'flight' }); }
   // in port the garage covers the right of the screen, so the view moves over to put the ship in the space left
   function frameView() {
     const w = innerWidth, h = innerHeight, panel = $('port').hidden ? 0 : $('port').getBoundingClientRect().width + 16;
@@ -199,7 +230,7 @@ async function main() {
   for (const R of SHIPS) {
     const b = document.createElement('button');
     b.type = 'button'; b.dataset.ship = R.id; b.innerHTML = `<b>${R.name}</b><small>${R.cls}</small>`;
-    b.addEventListener('click', () => { if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(R.id))) { P.chooseShip(cap, R.id); fly(R.id); garage.render(); } });
+    b.addEventListener('click', () => { if (W.mode !== 'campaign' || (W.state === 'port' && cap.ships.includes(R.id))) { P.chooseShip(cap, R.id); fly(R.id); garage.render(); } });
     $('ships').append(b);
   }
   const toggleHelp = () => { const h = $('help'); h.hidden = !h.hidden; $('btn-help').hidden = !h.hidden; };
@@ -207,8 +238,15 @@ async function main() {
   const mini = $('minimap'), mctx = mini.getContext('2d'), mimg = new Image(); mimg.src = minimapUrl;
   // the map's drawing size follows its size on screen (small in the corner, or big in the middle), so it stays sharp
   const sizeMap = () => { const r = mini.getBoundingClientRect(); mini.width = Math.round(r.width * devicePixelRatio); mini.height = Math.round(r.height * devicePixelRatio); mctx.imageSmoothingQuality = 'high'; };
-  const bigMap = () => { mini.classList.toggle('wide'); sizeMap(); };
-  mini.addEventListener('click', bigMap);
+  const bigMap = () => { mini.classList.toggle('map-big'); sizeMap(); };
+  // exploring, a click on the big map sets a waypoint there; otherwise a click makes the map bigger or smaller
+  mini.addEventListener('click', (e) => {
+    if (W.mode === 'explore' && mini.classList.contains('map-big')) {
+      const r = mini.getBoundingClientRect();
+      if (explore.point((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)) { bigMap(); return; }
+    }
+    bigMap();
+  });
 
   const input = makeInput(canvas, document.body);
   canvas.addEventListener('pointerdown', () => setTimeout(() => $('touch-hint').classList.add('gone'), 4000), { once: true });
@@ -223,8 +261,8 @@ async function main() {
   addEventListener('resize', resize);
 
   // ---------- the garage, the abilities, the choice after a wave, and the start ----------
-  const garage = makeGarage({ captain: () => cap, names: NAMES, free: () => W.mode === 'free',
-    setSail: () => { if (W.mode === 'free') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); } else director.setSail(); },
+  const garage = makeGarage({ captain: () => cap, names: NAMES, free: () => W.mode !== 'campaign',
+    setSail: () => { if (W.mode !== 'campaign') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); emit('mode', { mode: 'flight' }); } else director.setSail(); },
     changed: () => { if (cap.ship !== player.ship.recipe.id) fly(cap.ship); else outfit(); updatePurse(); } });
   const abilities = makeAbilities({ captain: () => cap, player: () => player, gunnery: () => gunnery, toast });
   $('btn-flyon').addEventListener('click', () => director.flyOn());
@@ -233,19 +271,22 @@ async function main() {
   for (const b of $('abilities').querySelectorAll('[data-ability]')) b.addEventListener('click', () => abilities.use(b.dataset.ability));
   // in free flight the garage opens between waves; the game waits while it's open
   function openFreeGarage() {
-    if (W.mode !== 'free' || !director.calm || W.state === 'port') return;
+    if (W.mode === 'campaign' || !director.calm || W.state === 'port') return;
     W.state = 'port'; garage.open(); frameView();
+    emit('mode', { mode: 'port' });
   }
   // begin playing: free flight, a new Captain (fresh: true), or carrying on with the saved one
   function begin(mode, fresh = false) {
-    if (mode === 'free') cap = P.freeCaptain();
+    if (mode === 'free' || mode === 'explore') cap = P.freeCaptain();
     else if (fresh) { P.forget(); cap = P.newCaptain(); P.save(cap); }
     else cap = P.load() ?? P.newCaptain();
-    document.body.classList.toggle('free', mode === 'free');
+    document.body.classList.toggle('free', mode !== 'campaign');
+    document.body.classList.toggle('exploring', mode === 'explore');
     $('start').hidden = true;
-    player = null; fly(cap.ship);
+    powerMode = 'yours'; player = null; fly(cap.ship);
     director.begin(mode);
     abilities.reset(); updatePurse();
+    emit('mode', { mode: W.state === 'port' ? 'port' : 'flight' });
   }
   $('start-continue').hidden = !P.load();
   if (P.load()) $('start-new').textContent = 'A new Captain (starts over)';
@@ -257,8 +298,40 @@ async function main() {
     begin('campaign', true);
   });
   $('start-free').addEventListener('click', () => begin('free'));
+  $('start-explore').addEventListener('click', () => begin('explore'));
   fly(cap.ship);
   resize();
+
+  // ---------- pausing: for the settings and the photo camera the world stops, and keeps being drawn ----------
+  let paused = false;
+  function setPaused(on) {
+    if (paused === on) return;
+    paused = on;
+    if (!on) input.flush(); // whatever the mouse and keys did meanwhile isn't flying
+    emit('pause', { paused });
+  }
+  const flying = () => $('start').hidden && W.state !== 'port' && !!player;
+  const mode = () => (!$('start').hidden ? 'title' : photo.on ? 'photo' : W.state === 'port' ? 'port' : 'flight');
+
+  // ---------- around the flying: sound, the firing board, the photo camera, the guide, the settings, exploring ----------
+  const sound = makeSound({ mode, paused: () => paused, player: () => player, gunnery: () => gunnery, cam,
+    fighting: () => W.state === 'fight', surging: () => abilities.surging });
+  const board = makeBoard({ gunnery: () => gunnery, player: () => player, locked: () => locked, reach: () => reach, battery: () => batteryFor(cam.yaw),
+    flying: () => flying() && !paused && W.mode !== 'explore' });
+  const photo = makePhoto({ camera, renderer, scene, player: () => player, cam, canFly: () => flying() && !player.down && !paused, pause: setPaused, input });
+  const guide = makeGuide({ player: () => player, cam, flying: () => flying() && !paused && !photo.on });
+  const settingsPanel = makeSettingsPanel({ pause: setPaused, flying: () => flying() && !photo.on, guideAgain: () => guide.again(), testSound: () => { sound.unlock().then(() => sound.test()); } });
+  const explore = makeExplore({ scene, camera, player: () => player, exploring: () => W.mode === 'explore' && flying() && !photo.on, paused: () => paused });
+  const ground = makeGround(scene, world.tiles);
+  for (const b of document.querySelectorAll('#power [data-power]')) b.addEventListener('click', () => setPower(b.dataset.power));
+  // Esc opens the settings, unless it's the Esc that lets the mouse go from the view (the photo camera and the settings
+  // themselves take their own Esc first)
+  let letGo = -1e9;
+  document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) letGo = performance.now(); });
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.repeat || document.pointerLockElement || performance.now() - letGo < 300) return;
+    settingsPanel.open();
+  });
 
   // ---------- the HUD ----------
   let region = '', regionTimer = 0, hudTimer = 0, hurt = 0;
@@ -337,6 +410,7 @@ async function main() {
       const x = (player.pos.x / MAP.w + 0.5) * W2, y = (player.pos.z / MAP.h + 0.5) * H2, s = Math.max(5, W2 / 40);
       mctx.fillStyle = '#ff4636'; mctx.strokeStyle = '#3a1631'; mctx.lineWidth = Math.max(1, s / 5);
       for (const q of raiders.list) if (!q.f.down) { mctx.beginPath(); mctx.arc((q.f.pos.x / MAP.w + 0.5) * W2, (q.f.pos.z / MAP.h + 0.5) * H2, s * 0.45, 0, Math.PI * 2); mctx.fill(); mctx.stroke(); }
+      explore.drawMap(mctx, W2, H2, mini.classList.contains('map-big'));
       mctx.save(); mctx.translate(x, y); mctx.rotate(-player.heading + Math.PI);
       mctx.fillStyle = '#e2bd67'; mctx.lineWidth = Math.max(1.5, s / 4);
       mctx.beginPath(); mctx.moveTo(0, -s * 1.3); mctx.lineTo(s * 0.8, s); mctx.lineTo(0, s * 0.45); mctx.lineTo(-s * 0.8, s); mctx.closePath(); mctx.fill(); mctx.stroke();
@@ -348,6 +422,7 @@ async function main() {
   function updatePurse() {
     if (!player) return;
     const lv = P.levelOf(cap.renown);
+    if (W.mode === 'explore') { $('purse').innerHTML = 'Exploring · no raiders'; $('level').hidden = true; return; }
     if (W.mode === 'free') { $('purse').innerHTML = `Free flight · wave <b>${W.n + 1}</b> · downed <b>${downed}</b>`; $('level').hidden = true; return; }
     const at = P.on(cap);
     $('purse').innerHTML = `${P.CHARTS[cap.chart].name} · voyage <b>${at.voyage}</b> · wave <b>${at.wave}</b> of ${P.wavesIn(at.voyage)} · danger <b>${P.danger(cap)}</b> · hold <b>${cap.hold}</b>${cap.streak ? ` ×${P.holdBonus(cap).toFixed(1)}` : ''} · shards <b>${cap.shards.toLocaleString()}</b>`;
@@ -372,10 +447,15 @@ async function main() {
   let last = performance.now(), time = 0, held = null;
   // one step of the game: controls, flying, the raiders, the camera, the guns, the shots, the HUD
   function tick(dt) {
+    // paused (the settings, the photo camera): nothing moves; the photo camera can still fly round
+    if (paused) { photo.frame(); return; }
     time += dt;
     const inp = held ?? input.read();
     for (const k of inp.pressed) {
-      if (k >= '1' && k <= '6') { const id = SHIPS[+k - 1].id; if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
+      if (k >= '1' && k <= '6') { const id = SHIPS[+k - 1].id; if (W.mode !== 'campaign' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
+      else if (k === 't') board.cycle();
+      else if (k === 'r' && W.state !== 'port') nextPower();
+      else if (k === 'o' && W.state !== 'port') photo.enter();
       else if (k === 'c') { cam.yaw = 0; cam.pitch = 0.2; }
       else if (k === 'm') bigMap();
       else if (k === 'h') toggleHelp();
@@ -383,7 +463,7 @@ async function main() {
       else if (k === 'x') abilities.use('double');
       else if (k === 'v') abilities.use('control');
       else if (k === 'b') abilities.use('ward');
-      else if (k === 'g') { if (W.state === 'port' && W.mode === 'free') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); } else openFreeGarage(); }
+      else if (k === 'g') { if (W.state === 'port' && W.mode !== 'campaign') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); emit('mode', { mode: 'flight' }); } else openFreeGarage(); }
       else if (k === 'Enter' && W.state === 'after') director.flyOn();
       else if (k === 'p' && W.state === 'after') director.putIn();
       else if (k === 'Enter' && W.state === 'port' && W.mode === 'campaign') director.setSail();
@@ -400,6 +480,7 @@ async function main() {
       player.ship.glow.material.uniforms.uScale.value = camera.userData.pixelScale;
       director.update(dt);
       hud(dt, 'bow');
+      board.update(); guide.update(dt); explore.update(dt); ground.update(camera); // in port these put themselves away
       return;
     }
     // the flagship's working parts: sail set, gun decks manned in a fight (or when a side is fired), damage shown
@@ -418,7 +499,14 @@ async function main() {
     const battery = batteryFor(cam.yaw);
     aimFor(battery);
     gunnery.update(dt);
-    if (inp.fire && !player.down && gunnery.fire(battery, aimPoint, bolts, 'player', player.velocity)) player.ship.fire?.(battery);
+    if (inp.fire && !player.down) {
+      const n = gunnery.fire(battery, aimPoint, bolts, 'player', player.velocity);
+      if (n) {
+        player.ship.fire?.(battery);
+        cam.shake = Math.max(cam.shake, Math.min(0.14, 0.05 + n * 0.006));
+        emit('shot', { owner: 'player', battery, count: n, pos: player.pos });
+      }
+    }
     bolts.update(dt, hitTest, camera);
     smokeFrom(player, smoke, bolts.spark, dt);
     for (const r of raiders.list) smokeFrom(r.f, smoke, bolts.spark, dt);
@@ -433,6 +521,7 @@ async function main() {
     art.M.gem.emissiveIntensity = 0.55 + Math.sin(time * 2.4) * 0.09;
     player.ship.glow.material.uniforms.uScale.value = camera.userData.pixelScale;
     hud(dt, battery);
+    board.update(); guide.update(dt); explore.update(dt); ground.update(camera);
   }
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -448,6 +537,8 @@ async function main() {
     ready: true, get player() { return player; }, get gunnery() { return gunnery; }, cam, fly, input, raiders, bolts, renderer, camera, scene, waves: W,
     get captain() { return cap; }, director, garage, abilities, ward, begin, P,
     get hits() { return hits; }, get downed() { return downed; }, get locked() { return locked; },
+    sound, board, photo, guide, settingsPanel, explore, ground, settings, setSettings, on, emit, get aimPoint() { return aimPoint; },
+    get paused() { return paused; }, pause: setPaused, get power() { return powerMode; }, setPower, mode,
     // run the game's clock without drawing, holding these controls (for tests on slow software rendering;
     // tools/sim-voyage.mjs uses longer ticks to sail faster)
     step(seconds, controls = {}, dt = 1 / 60) {

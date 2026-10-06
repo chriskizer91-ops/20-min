@@ -11,10 +11,10 @@ detail, more things to do and more decisions, because it only has to run on a la
 - Write only inside this folder (`20-min/sunstone-skies/`). Other repositories are read-only.
 - Take nothing more from `airship-game-in-aethermoor-` (Chris, October 6). It was the starting copy, and its Galleon and
   Man-o'-war models were the starting point for ours; from here this game goes its own way.
-- Chris sent a version made with ChatGPT (October 6) and said to take pieces of it: its top-down map is in, and its
-  other additions (sound, settings, target choice, photo camera, flight guide...) are in `reference/gpt-version/` to
-  rewrite into our code. Take only what it added, not the airship repo's game underneath it, and name it as the source
-  in the commit message.
+- Chris sent a version made with ChatGPT (October 6) and said to take pieces of it. Its map, sound, settings, aiming
+  at a part, firing board, photo camera, flight guide, crystal power in flight, Explore and trees are in, rewritten
+  into our modules (`reference/gpt-version/README.md` says what came from where). Take only what it added, not the
+  airship repo's game underneath it, and name it as the source in the commit message.
 - Laptop only: keyboard and mouse, full detail. Phones aren't a target.
 - Chris reads the README, the docs and everything in the game: plain words.
 - The numbers that balance the game live in `src/game/progress.js`; check a change with the simulated Captain

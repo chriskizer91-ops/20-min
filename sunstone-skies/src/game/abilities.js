@@ -1,10 +1,11 @@
-// abilities.js: the Captain's three abilities, unlocked by the skills (progress.js). Each runs for a few seconds and
+// abilities.js: the Captain's four abilities, unlocked by the skills (progress.js). Each runs for a few seconds and
 // then has to come back before it can be used again.
 //   Crystal Surge (Z): a burst of speed and turning, the sails glowing with the crystals' power
 //   Double Shot (X): the gun crews reload twice as fast (two and a half times at rank 4)
 //   Damage Control (V): the crew patch up hull, sails and crystals: 30% of what's missing (45% at rank 4)
 //   Sunstone Ward (B): a ward of crystal light round the ship: hits do half damage (a third at rank 4)
 import { abilities as unlocked } from './progress.js';
+import { emit } from './events.js';
 
 export function makeAbilities(env) {
   // env: { captain(), player(), gunnery(), toast(text) }
@@ -18,6 +19,7 @@ export function makeAbilities(env) {
     s.on = A.time; s.cool = A.cooldown; s.strong = A.strong;
     if (id === 'control') { s.from = { hull: P.health.hull, sails: P.health.sails, crystals: P.health.crystals }; s.mend = A.strong ? 0.45 : 0.3; }
     env.toast(`${A.name}!`);
+    emit('ability', { id });
     return true;
   }
   function update(dt) {

@@ -5,8 +5,10 @@
 //   them ends the voyage. Going down loses the hold and the wave is sailed again from port (a little weaker each time,
 //   except on Black Sky). (The rules and numbers are in progress.js.)
 //   Free flight: the old endless waves, with everything unlocked and the garage open between waves.
+//   Explore: free flight with no raiders at all, for flight courses, waypoints and pictures (explore.js).
 import * as P from './progress.js';
 import { waveAt } from './raiders.js';
+import { emit } from './events.js';
 
 const COMPASS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
 const NUMBER = ['', 'a', 'two', 'three', 'four', 'five', 'six', 'seven'];
@@ -28,10 +30,12 @@ export function makeDirector(env) {
   // start a wave: the voyage's next wave, or free flight's next on the ladder
   function startWave() {
     const player = env.player(), c = C();
+    if (W.mode === 'explore') return; // no raiders
     if (W.mode === 'free') {
       const ids = waveAt(W.n), a = env.raiders.spawnWave(ids, player);
       env.ui.banner(`Raiders, wave ${W.n + 1}`, `${describe(ids)}, to the ${env.compass(a)}`);
       W.groups = []; W.state = 'fight';
+      emit('wave', { reinforcements: false });
       return;
     }
     const at = P.on(c), D = P.danger(c), wave = P.nextWave(c), o = { chart: c.chart, level: P.raiderLevel(D) }, name = P.CHARTS[c.chart].name;
@@ -43,13 +47,14 @@ export function makeDirector(env) {
     env.ui.banner(wave.boss ? `${name}, voyage ${at.voyage}: the last wave` : `${name}, voyage ${at.voyage}, wave ${at.wave} of ${P.wavesIn(at.voyage)}`,
       `${who}, to the ${env.compass(a)}${W.groups.length > 1 ? '. More behind them' : ''}${at.tries && P.CHARTS[c.chart].mercy ? '. They lost ships last time too' : ''}`);
     W.state = 'fight';
+    emit('wave', { reinforcements: false });
   }
 
   // the Captain's ship went down
   function lose() {
     const c = C();
     W.lost = 6;
-    if (W.mode === 'free') { env.ui.banner(`The ${env.player().ship.recipe.name} is going down`, 'Your crew will get her back up'); return; }
+    if (W.mode !== 'campaign') { env.ui.banner(`The ${env.player().ship.recipe.name} is going down`, 'Your crew will get her back up'); return; }
     const { kept, lost } = P.wentDown(c);
     P.save(c);
     env.ui.banner(`The ${env.player().ship.recipe.name} is going down`, lost ? `${lost} shards lost from the hold${kept ? `, ${kept} saved` : ''}` : 'Towed back to port');
@@ -60,7 +65,7 @@ export function makeDirector(env) {
     if (W.lost > 0) {
       if ((W.lost -= dt) <= 0) {
         env.raiders.clear();
-        if (W.mode === 'free') { player.reset(player.pos.clone().setY(700), player.heading); W.state = 'calm'; W.timer = 10; env.ui.banner('Back in the air', 'The raiders will be back'); }
+        if (W.mode !== 'campaign') { player.reset(player.pos.clone().setY(700), player.heading); W.state = 'calm'; W.timer = 10; env.ui.banner('Back in the air', 'The raiders will be back'); }
         else toPort('Towed back to port', `Wave ${P.on(c).wave} of ${P.CHARTS[c.chart].name} voyage ${P.on(c).voyage} waits${P.CHARTS[c.chart].mercy ? ', a little weaker' : ''}`);
       }
       return;
@@ -68,7 +73,7 @@ export function makeDirector(env) {
     if (W.state === 'port') return;
     if (player.down) { lose(); return; }
     if (W.state === 'calm') {
-      player.repair(dt * (W.mode === 'free' ? 0.12 : 0.02));
+      player.repair(dt * (W.mode !== 'campaign' ? 0.12 : 0.02));
       if ((W.timer -= dt) <= 0) startWave();
       return;
     }
@@ -82,6 +87,7 @@ export function makeDirector(env) {
       const ids = W.groups[W.next++], a = env.raiders.spawnWave(ids, player, { chart: c.chart, level: P.raiderLevel(P.danger(c)) });
       W.threat = threatOf(live());
       env.ui.banner('Reinforcements', `${describe(ids)}, to the ${env.compass(a)}`);
+      emit('wave', { reinforcements: true });
       return;
     }
     if (now.length) return;
@@ -91,6 +97,7 @@ export function makeDirector(env) {
     if (W.wave.boss) {
       const v = P.on(c).voyage, name = P.CHARTS[c.chart].name, paid = P.voyageDone(c);
       P.save(c);
+      emit('voyage', { chart: c.chart, voyage: v });
       toPort(`${name}, voyage ${v} done`, `${paid} shards banked · voyage ${P.on(c).voyage} waits`);
       return;
     }
@@ -134,11 +141,11 @@ export function makeDirector(env) {
 
   return {
     W, update, flyOn, putIn, setSail, toPort,
-    // begin playing: a voyage (from port) or free flight (straight into the air)
+    // begin playing: a voyage (from port), free flight or exploring (straight into the air)
     begin(mode) {
       W.mode = mode; W.n = 0; W.lost = 0; env.raiders.clear(); env.ui.choice(false);
       if (mode === 'campaign') toPort('In port', `${P.CHARTS[C().chart].name}: voyage ${P.on(C()).voyage}, wave ${P.on(C()).wave} waits`);
-      else { env.ui.port(false); W.state = 'calm'; W.timer = 6; }
+      else { env.ui.port(false); W.state = 'calm'; W.timer = mode === 'explore' ? Infinity : 6; }
     },
     get calm() { return W.state === 'calm' || W.state === 'port' || W.state === 'after'; },
     COMPASS,

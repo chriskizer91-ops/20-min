@@ -150,7 +150,7 @@ export async function makeWorld(renderer) {
   const puffs = makePuffs();
   group.add(puffs.mesh);
 
-  return { group, time, puffs, deck };
+  return { group, time, puffs, deck, tiles: textures };
 }
 
 // A soft cumulus picture drawn once, and instanced billboards of it

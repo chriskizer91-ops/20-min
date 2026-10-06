@@ -3,7 +3,9 @@
 //   dist/hangar.html  every ship at every level of detail, with its triangle count kept near its budget
 //   dist/game.html    each of the six ships flown: how fast it goes, turns and climbs; every battery fired at a
 //                     raider and hitting it; a raider shot down; raiders fighting back; the Captain going down and
-//                     coming back; the keyboard, mouse and touch controls answering; pictures of a battle
+//                     coming back; the keyboard, mouse and touch controls answering; pictures of a battle; the
+//                     settings, sound, aiming at a part, crystal power, the photo camera, the flight guide, exploring
+//                     and trees when flying low
 // Run: node tools/build.mjs && node tools/check.mjs [folder]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -263,6 +265,147 @@ function battle(ids = ['frigate', 'cutter']) {
   await page.evaluate(() => { const g = window.__game; g.garage.tab = 'parts'; });
   await page.waitForTimeout(1200);
   await shot(page, 'laptop-garage');
+  await page.close();
+}
+
+{
+  // the pieces from the version made with ChatGPT: settings, sound, aiming at a part, the firing board, crystal power,
+  // the photo camera, the flight guide, exploring (a flight course and a waypoint), and trees when flying low
+  const page = await open('game', 'laptop', gameReady);
+  await page.click('#start-free');
+  // the settings: Esc opens them and the game waits; a change keeps; Esc closes them
+  await page.keyboard.press('Escape');
+  await wait(page, () => window.__game.settingsPanel.on && window.__game.paused, null, 'Esc opening the settings and pausing the game');
+  const set = await page.evaluate(() => {
+    const g = window.__game, p0 = g.player.pos.clone();
+    g.step(2, { sail: 1 });
+    const vol = document.querySelector('#settings [data-set="volume"]'); vol.value = '0.3'; vol.dispatchEvent(new Event('input', { bubbles: true }));
+    return { moved: g.player.pos.distanceTo(p0), volume: g.settings.volume, kept: JSON.parse(localStorage.getItem('sunstone-skies:settings:1') ?? '{}').volume };
+  });
+  await shot(page, 'laptop-settings');
+  await page.keyboard.press('Escape');
+  await wait(page, () => !window.__game.settingsPanel.on && !window.__game.paused, null, 'Esc closing the settings');
+  console.log(`settings: the game waited (moved ${set.moved.toFixed(1)} m), volume ${set.volume}, kept ${set.kept}`);
+  if (set.moved > 0.01 || set.volume !== 0.3 || set.kept !== 0.3) problems.push(`the settings: ${JSON.stringify(set)}`);
+  // aiming: T cycles the part; a raider on the beam takes the damage where the guns aim
+  await page.keyboard.press('t');
+  await wait(page, () => window.__game.board.part === 'sails', null, 'T choosing the sails');
+  const aimed = await page.evaluate(() => {
+    const g = window.__game, out = {}, hits = [];
+    const off = g.on('hit', (d) => { if (d.owner === 'player') hits.push(d.part); });
+    for (const part of ['hull', 'sails', 'crystals']) {
+      g.fly('frigate'); const P = g.player;
+      g.raiders.clear(); g.waves.timer = 1e9; g.raiders.setAI(false); g.waves.state = 'fight';
+      P.repair(1); P.pos.set(0, 900, 0); P.heading = 0; P.speed = 3; P.sail = 0.05; P.vy = 0;
+      const foe = g.raiders.spawn('frigate', P.pos.clone().add({ x: 200, y: 4, z: 10 }), 0.05, true);
+      g.board.choose(part);
+      g.cam.yaw = Math.PI / 2; g.cam.pitch = 0.02; g.step(0.2, {});
+      const locked = g.locked === foe, status = document.getElementById('aim-status').textContent;
+      for (let i = 0; i < 3; i++) { for (const k in g.gunnery.ready) g.gunnery.ready[k] = 0; g.cam.yaw = Math.PI / 2; g.cam.pitch = 0.02; g.step(1.4, { fire: true }); }
+      out[part] = Object.fromEntries(['hull', 'sails', 'crystals'].map((k) => [k, Math.round(100 - foe.f.frac(k) * 100)]));
+      Object.assign(out[part], { locked, status });
+    }
+    off();
+    out.board = !document.getElementById('board').hidden; out.target = document.getElementById('t-name').textContent; out.events = hits.length;
+    return out;
+  });
+  console.log('aiming at each part (% lost):', JSON.stringify(aimed));
+  for (const part of ['hull', 'sails', 'crystals']) {
+    const x = aimed[part], most = ['hull', 'sails', 'crystals'].reduce((a, b) => (x[b] > x[a] ? b : a));
+    if (!x.locked || most !== part) problems.push(`aiming at the ${part}: the most damage went to the ${most} (${JSON.stringify(x)})`);
+  }
+  if (!aimed.board || !aimed.target || !/aiming at her crystals/.test(aimed.crystals.status) || aimed.events < 6) problems.push(`the firing board: ${JSON.stringify(aimed)}`);
+  // sound: there, started by the first click, and playing the guns
+  const sound = await page.evaluate(() => {
+    const g = window.__game;
+    for (const k in g.gunnery.ready) g.gunnery.ready[k] = 0;
+    g.step(0.2, { fire: true });
+    return { available: g.sound.available, unlocked: g.sound.unlocked, voices: g.sound.voices };
+  });
+  console.log('sound:', JSON.stringify(sound));
+  if (sound.available && (!sound.unlocked || !sound.voices)) problems.push(`the sound: ${JSON.stringify(sound)}`);
+  // crystal power in flight: R to the sails (faster), to the guns (quicker reloads), and back to her own tuning
+  const p0 = await page.evaluate(() => ({ v: window.__game.player.H.vmax, r: window.__game.gunnery.reload('port') }));
+  await page.keyboard.press('r');
+  await wait(page, () => window.__game.power === 'sails', null, 'R shifting the power to the sails');
+  const p1 = await page.evaluate(() => { const g = window.__game, out = { v: g.player.H.vmax }; g.setPower('guns'); out.r = g.gunnery.reload('port'); g.setPower('yours'); out.back = g.player.H.vmax; return out; });
+  console.log(`crystal power: top speed ${p0.v.toFixed(1)} → ${p1.v.toFixed(1)} m/s to the sails; reload ${p0.r.toFixed(2)} → ${p1.r.toFixed(2)} s to the guns`);
+  if (!(p1.v > p0.v * 1.05) || !(p1.r < p0.r * 0.95) || Math.abs(p1.back - p0.v) > 0.01) problems.push(`crystal power in flight: ${JSON.stringify({ p0, p1 })}`);
+  // the photo camera: O, the game waits, a drag swings round her, a picture, O back
+  await page.evaluate(() => { const g = window.__game; g.raiders.clear(); g.waves.state = 'calm'; g.cam.yaw = 2.6; g.cam.pitch = 0.3; });
+  await page.keyboard.press('o');
+  await wait(page, () => window.__game.photo.on && window.__game.paused, null, 'O opening the photo camera');
+  const v0 = await page.evaluate(() => window.__game.photo.view);
+  await page.mouse.move(640, 420); await page.mouse.down(); await page.mouse.move(800, 380, { steps: 5 }); await page.mouse.up();
+  const ph = await page.evaluate((v0) => {
+    const g = window.__game, p0 = g.player.pos.clone();
+    g.step(1, { sail: 1 });
+    const click = HTMLAnchorElement.prototype.click; let saved = null;
+    HTMLAnchorElement.prototype.click = function () { saved = this.download; };
+    const url = g.photo.save();
+    HTMLAnchorElement.prototype.click = click;
+    return { moved: g.player.pos.distanceTo(p0), swung: Math.abs(g.photo.view.yaw - v0.yaw), url: url?.slice(0, 22), saved, hud: getComputedStyle(document.getElementById('ship')).display };
+  }, v0);
+  await shot(page, 'laptop-photo');
+  await page.keyboard.press('o');
+  await wait(page, () => !window.__game.photo.on && !window.__game.paused, null, 'O putting the photo camera away');
+  console.log('photo camera:', JSON.stringify(ph));
+  if (ph.moved > 0.01 || ph.swung < 0.2 || ph.url !== 'data:image/png;base64,' || !/^Sunstone Skies .*\.png$/.test(ph.saved ?? '') || ph.hud !== 'none') problems.push(`the photo camera: ${JSON.stringify(ph)}`);
+  // the flight guide: shown when flying, and moving on once the tip is done (turning, then the sails)
+  const guide = await page.evaluate(() => {
+    const g = window.__game;
+    g.guide.again(); g.setSettings({ guide: true });
+    g.step(0.2, {});
+    const first = document.getElementById('guide-n').textContent;
+    g.step(2.5, { turn: 1 });
+    return { first, then: document.getElementById('guide-n').textContent, shown: !document.getElementById('guide').hidden };
+  });
+  console.log('flight guide:', JSON.stringify(guide));
+  if (!/1 of 5/.test(guide.first) || !/2 of 5/.test(guide.then) || !guide.shown) problems.push(`the flight guide: ${JSON.stringify(guide)}`);
+  // exploring: no raiders, a flight course flown ring by ring, a waypoint set on the big map and reached
+  const ex = await page.evaluate(() => {
+    const g = window.__game;
+    g.begin('explore'); g.fly('cutter');
+    const P = g.player; P.pos.set(-2000, 700, 3000); P.heading = Math.PI;
+    g.step(20, { sail: 1 });
+    const out = { raiders: g.raiders.list.length, panel: !document.getElementById('explore').hidden };
+    document.getElementById('ex-course').click(); g.step(0.1, {});
+    out.rings = g.scene.getObjectByName('flight course')?.children.length ?? 0;
+    for (const p of g.explore.course.points) { P.pos.copy(p); g.step(0.25, {}); }
+    out.finished = !g.explore.course; out.best = g.explore.best.cutter > 0; out.note = document.getElementById('ex-note').textContent;
+    return out;
+  });
+  await page.keyboard.press('m');
+  await wait(page, () => document.getElementById('minimap').classList.contains('map-big'), null, 'M opening the big map');
+  const box = await page.evaluate(() => { const r = document.getElementById('minimap').getBoundingClientRect(); return { x: r.left + r.width * 0.3, y: r.top + r.height * 0.4 }; });
+  await page.mouse.click(box.x, box.y);
+  const wp = await page.evaluate(() => {
+    const g = window.__game, w = g.explore.waypoint, out = { set: !!w, closed: !document.getElementById('minimap').classList.contains('map-big') };
+    if (!w) return out;
+    out.at = [Math.round(w.x), Math.round(w.z)];
+    g.step(0.3, {});
+    out.nav = document.getElementById('ex-dist').textContent;
+    g.player.pos.set(w.x + 60, g.player.pos.y, w.z); g.step(0.3, {});
+    out.reached = !g.explore.waypoint;
+    return out;
+  });
+  console.log('exploring:', JSON.stringify(ex), 'waypoint:', JSON.stringify(wp));
+  if (ex.raiders || !ex.panel || ex.rings !== 6 || !ex.finished || !ex.best) problems.push(`exploring and a flight course: ${JSON.stringify(ex)}`);
+  if (!wp.set || !wp.closed || !wp.nav || !wp.reached || Math.abs(wp.at[0] + 0.2 * 23040) > 300 || Math.abs(wp.at[1] + 0.1 * 15360) > 300) problems.push(`a waypoint from the big map: ${JSON.stringify(wp)}`);
+  // trees: low over the western woods, and none from up high
+  const trees = await page.evaluate(() => {
+    const g = window.__game, P = g.player;
+    P.pos.set(-6000, 170, 600); P.heading = Math.PI * 0.75; g.cam.yaw = 0; g.cam.pitch = 0.25; g.step(0.3, {});
+    const low = g.ground.trees;
+    P.pos.y = 1400; g.step(0.3, {});
+    const high = g.ground.trees;
+    P.pos.y = 170; g.step(0.3, {});
+    return { low, high };
+  });
+  console.log('trees:', JSON.stringify(trees));
+  if (trees.low < 50 || trees.high !== 0) problems.push(`trees when flying low: ${JSON.stringify(trees)}`);
+  await page.waitForTimeout(1500);
+  await shot(page, 'laptop-trees');
   await page.close();
 }
 

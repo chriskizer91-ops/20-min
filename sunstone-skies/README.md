@@ -15,11 +15,20 @@ What's in it so far:
   needs a strong ship.
 - **Voyages**: runs of waves of raiders, longer and harder voyage by voyage, each ending with a named raider captain.
 - **The map**: Aethermoor seen straight down, like a view from the air, sharper than before (4 m to a pixel), with a
-  fine grain over the ground when you fly low. It comes from the version of the game made with ChatGPT that Chris sent;
-  more pieces of that version are waiting in `reference/gpt-version/`.
+  fine grain over the ground and trees standing up out of the woods when you fly low.
+- **Sound and music**, all made in code: the wind and her timbers, rolling broadsides, hits that sound like what they
+  hit, raiders going down, the abilities, and a quiet score that quickens in a fight.
+- **Choosing what to shoot at**: a raider's hull, sails or crystals, each doing something different, with a firing
+  board showing every battery's guns and reload, and the raider you're locked on.
+- **Crystal power in flight**, the **photo camera**, a **flight guide** for the first flight, and **settings**.
 - **The port and the garage**: bank your shards, pick the chart, buy ships and parts, tune the crystal power.
 - **The Captain's levels**: renown wins levels, levels buy skill ranks in four skills, and skills unlock four abilities.
-- **Free flight**, with everything unlocked.
+- **Free flight**, with everything unlocked, and **Explore**: no raiders, flight courses against the clock, and
+  waypoints on the map.
+
+The map, the sound, the settings, aiming at a part, the firing board, the photo camera, the guide, crystal power in
+flight, Explore and the low-flying trees all come from the version of the game made with ChatGPT that Chris sent
+(`reference/gpt-version/`), rewritten into this game.
 
 It's built for a laptop with a keyboard and mouse. It's still the pieces, not the finished game.
 
@@ -35,8 +44,9 @@ Each is one file with everything inside, and works with no internet.
 
 ## Playing
 
-The start screen offers **Carry on** (once there's a saved Captain), **A new Captain**, or **free flight**. A new
-Captain starts over, so with one saved it asks for a second click. Progress saves in the browser by itself.
+The start screen offers **Carry on** (once there's a saved Captain), **A new Captain**, **free flight**, or
+**Explore**. A new Captain starts over, so with one saved it asks for a second click. Progress saves in the browser by
+itself, and so do the settings.
 
 | Keys | |
 |---|---|
@@ -45,10 +55,52 @@ Captain starts over, so with one saved it asks for a second click. Progress save
 | Space / E or ↑, Shift / Q or ↓ | climb, dive |
 | Mouse | aim: the guns on that side fire; hold the aim on a raider and the guns lock on and lead it |
 | Left click or F | fire |
+| T | aim at the raider's hull, sails or crystals |
+| R | crystal power: your own tuning, to the sails, or to the guns |
 | Z · X · V · B | Crystal Surge · Double Shot · Damage Control · Sunstone Ward (once unlocked) |
 | Enter · P | after a wave: fly on · put in to port. In port, Enter sets sail |
 | 1–6 | in port: sail another ship you own |
+| O | the photo camera |
+| Esc | the settings (the game waits while they're open). With the mouse locked to the view, the first Esc lets it go |
 | C · M · H | look ahead · the map · hide the keys |
+
+### Aiming, and the firing board
+
+Lock on to a raider (hold the aim on her) and **T** picks what the guns aim at:
+
+| Aim at | What it does |
+|---|---|
+| Her hull | Sinks her when it's gone: full pay |
+| Her sails | Torn sails slow her and spoil her turning: she can't run or bring her guns round so fast |
+| Her crystals | Brings her down fastest (they break before the hull does), but the loot shatters: half pay |
+
+The **firing board** (bottom left) shows the four batteries round a plan of the ship, each with its guns and its
+reload, and the one facing where you look picked out. The line under the crosshair says whether that battery is ready,
+reloading or out of reach. The **target** panel (right) shows the raider you're locked on, how far off she is and what's
+left of her hull, sails and crystals. A mark by the crosshair says what your last shots hit, and for how much.
+
+### Crystal power in flight
+
+**R** shifts the crystal power without going to port: your own tuning from the garage, most of it to the **sails**
+(faster), or most of it to the **guns** (quicker reloads, a little more damage). The lift keeps a fifth either way.
+Back in port it's your own tuning again.
+
+### The photo camera, the guide and the settings
+
+- **O** opens the photo camera: the game stops, the HUD goes, and you can fly the camera round your ship (drag, and the
+  mouse wheel to come closer). There's a lens from wide to long, the light, and **Save picture**, which puts a picture
+  in your downloads. O or Esc goes back to flying.
+- The **flight guide** shows a few tips the first time you fly, each moving on once you've done it. It can be turned
+  off, or shown again, in the settings.
+- The **settings** (Esc, or the gear) hold the sound and music and their volumes, the mouse speed, how much the camera
+  shakes, the size of the HUD, and the guide.
+
+### Explore
+
+No raiders: just you, every ship and part, and Aethermoor. **Flight course** puts six rings in the sky ahead at
+different heights: fly through them in order (the next is gold) against the clock; each ship's best time is kept.
+Open the map (**M**) and click anywhere to set a **waypoint**: the panel points the way and counts down the distance,
+and a marker shows where it is. The photo camera is at its best here.
 
 ### Charts, voyages and danger
 
@@ -127,7 +179,7 @@ raiders lost ships too), so no wave there is a wall. Black Sky shows no mercy: t
 |---|---|
 | Charts | Pick the chart for the next voyage: each chart's next voyage, its danger, and whether your ship is ready for it |
 | Ships | Buy the next ship up: the Cutter (250 shards), the Brig (700), the Frigate (2,500), the Galleon (8,000), the Man-o'-war (15,000). Choose which to sail, and see each one's strength with your parts and skills |
-| Parts | Buy parts and upgrade them (Mk I to V), and fit them into the ship's slots: one on the Skiff, up to six on the Man-o'-war. A part bought is yours on every ship |
+| Parts | Buy parts and upgrade them (Mk I to V), and fit them into the ship's slots: one on the Skiff, up to six on the Man-o'-war. A part bought is yours on every ship. Each part shows what its next mark would do to your ship's strength |
 | Tuning | Share the crystal power between sails (speed), guns (reload, a little damage) and lift (climbing). Free |
 | Captain | Your level and renown, your skill points, and the highest danger you've beaten |
 
@@ -230,8 +282,13 @@ After a change, build and publish `dist/game.artifact.html` and `dist/shipyard.a
 so they keep working.
 
 The ships' code is in `src/fleet/` (one measurements file each); the progress rules in `src/game/progress.js`; the
-voyages in `src/game/voyage.js`; the garage in `src/game/garage.js`; the abilities in `src/game/abilities.js`.
-The map's tiles came from the version made with ChatGPT that Chris sent (`reference/gpt-version/README.md`).
+voyages in `src/game/voyage.js`; the garage in `src/game/garage.js`; the abilities in `src/game/abilities.js`; the sound
+in `src/game/sound.js`; the settings in `src/game/settings.js` and `settings-panel.js`; aiming and the firing board in
+`src/game/board.js`; the photo camera in `photo.js`; the guide in `guide.js`; Explore in `explore.js`; the trees in
+`ground.js`. What happens in a fight is announced in `events.js` for whichever of them wants to know.
+The map's tiles, and the ideas and much of the code for the sound, the settings, aiming at a part, the firing board,
+the photo camera, the guide, crystal power in flight, Explore and the trees, came from the version made with ChatGPT
+that Chris sent (`reference/gpt-version/README.md`).
 Everything else came from `chriskizer91-ops/airship-game-in-aethermoor-`, which was the starting point (the Galleon and
 the Man-o'-war began as that game's models of them). Nothing more is taken from it: the rules for working here are in
 `CLAUDE.md`.

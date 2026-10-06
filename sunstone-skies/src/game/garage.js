@@ -33,6 +33,22 @@ export function makeGarage(env) {
     const c = Object.entries(Pt.minus).map(([k, x]) => `${pct(x * COST[m])} ${WORDS[k]}`).join(', ');
     return `<small class="gain">${g}</small><small class="cost">${c}</small>`;
   }
+  // how each ship fights, in a line (after the ship roles in the version made with ChatGPT that Chris sent)
+  const ROLE = {
+    skiff: ['Scout', 'Out-turns and out-climbs everything. Keep moving and trade shots with her bow gun.'],
+    cutter: ['Fast raider', 'The fastest ship in the sky: choose your fight, then turn to bring her three side guns round.'],
+    brig: ['All-rounder', 'Six guns a side. Fire one broadside while the other reloads.'],
+    frigate: ['Hunter', 'Ten guns a side and a strong hull. Turn early and make each broadside count.'],
+    galleon: ['Treasure fortress', 'Sixteen guns a side on two decks, and slow to turn: keep the raiders abeam and let them come.'],
+    manowar: ['Ship of the line', 'Twenty-four guns a side and a hull of iron. She barely turns: the fight comes to her.'],
+  };
+  // what the next mark of a part would do to the strength of the ship being sailed (fitted in a free slot if it isn't)
+  function strengthAfter(c, id) {
+    const list = c.fitted[c.ship];
+    const t = { ...c, parts: { ...c.parts, [id]: (c.parts[id] ?? 0) + 1 }, fitted: { ...c.fitted, [c.ship]: [...list] } };
+    if (!list.includes(id) && P.fitPart(t, id) !== null) return null; // no slot for it (or the other kind of canvas): nothing to show
+    return P.strength(t);
+  }
   function shipStats(id) {
     const c = C(), S = STATS[id], H = handling(S), e = P.effects(c, id);
     const kmh = (v) => Math.round(v * 3.6);
@@ -71,7 +87,8 @@ export function makeGarage(env) {
         const btn = sailing ? '<button type="button" class="chip" disabled>Sailing her</button>'
           : own ? `<button type="button" class="chip" data-act="sail" data-id="${id}">Sail her</button>`
             : `<button type="button" class="chip buy" data-act="buyship" data-id="${id}"${c.shards < price ? ' aria-disabled="true"' : ''}>Buy · ${price.toLocaleString()}</button>`;
-        return `<article class="g-card${sailing ? ' on' : ''}"><header><b>${env.names[id]}</b><span>${id[0].toUpperCase() + id.slice(1)}</span>${btn}</header>${shipStats(id)}</article>`;
+        return `<article class="g-card${sailing ? ' on' : ''}"><header><b>${env.names[id]}</b><span>${id[0].toUpperCase() + id.slice(1)}</span>${btn}</header>`
+          + `<p class="g-role"><b>${ROLE[id][0]}.</b> ${ROLE[id][1]}</p>${shipStats(id)}</article>`;
       }).join('');
     } else if (tab === 'parts') {
       const list = c.fitted[c.ship], slots = P.SLOTS[c.ship];
@@ -80,8 +97,10 @@ export function makeGarage(env) {
         const buy = m >= P.MAX_MARK ? '' : !P.markOpen(c, next) ? `<small class="later">${MK[next]} once you've beaten danger ${P.MARK_FROM[next]}</small>`
           : `<button type="button" class="chip buy" data-act="buypart" data-id="${Pt.id}"${c.shards < Pt.price[m] && !free ? ' aria-disabled="true"' : ''}>${m ? `Upgrade to ${MK[next]}` : 'Buy Mk I'} · ${Pt.price[m].toLocaleString()}</button>`;
         const fit = !m ? '' : `<button type="button" class="chip" data-act="${fitted ? 'unfit' : 'fit'}" data-id="${Pt.id}" aria-pressed="${fitted}">${fitted ? 'Fitted' : 'Fit'}</button>`;
+        const after = m < P.MAX_MARK && P.markOpen(c, next) ? strengthAfter(c, Pt.id) : null, now = P.strength(c);
+        const preview = after == null ? '' : `<small class="g-preview">${MK[next]} on the ${env.names[c.ship]}: strength ${now.toFixed(1)} → <b class="${after > now ? 'up' : after < now ? 'down' : ''}">${after.toFixed(1)}</b></small>`;
         return `<article class="g-part${fitted ? ' on' : ''}"><header><b>${Pt.name}</b><span>${m ? MK[m] : 'Not bought'}</span></header>`
-          + `<div class="g-what">${partLine(Pt, Math.max(1, m))}</div><footer>${fit}${buy}</footer></article>`;
+          + `<div class="g-what">${partLine(Pt, Math.max(1, m))}${preview}</div><footer>${fit}${buy}</footer></article>`;
       }).join('');
     } else if (tab === 'tuning') {
       const e = P.effects(c);

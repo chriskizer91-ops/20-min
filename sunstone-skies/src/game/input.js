@@ -90,6 +90,8 @@ export function makeInput(canvas, el) {
   hold('#btn-sail-up', () => { sailHold = 1; }, () => { sailHold = 0; });
   hold('#btn-sail-down', () => { sailHold = -1; }, () => { sailHold = 0; });
 
+  // forget what built up while the game wasn't reading (paused for the settings or the photo camera)
+  s.flush = () => { s.look.x = s.look.y = 0; s.zoom = 0; s.pressed.clear(); mouseFire = false; };
   // every frame: combine everything into one set of controls
   s.read = () => {
     const k = (...names) => names.some((n) => keys.has(n)) ? 1 : 0;

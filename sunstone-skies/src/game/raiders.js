@@ -19,6 +19,7 @@ import { CLOUD_Y } from './world.js';
 import { fleetModel, fleetShip } from '../fleet/build.js';
 import { COLOURS } from '../fleet/materials.js';
 import { CHARTS, effects, looks, newCaptain } from './progress.js';
+import { emit } from './events.js';
 
 // How the raiders compare with the Captain on the middle chart (Rough Air): sail a little slower, reload half as
 // slowly again, and aim a little off (by this much for every metre to the target)
@@ -169,7 +170,8 @@ export function makeRaiders(scene, art, bolts, fart) {
       if (dist > m.K.speed * m.K.life * 0.7 || !r.gun.reaches(b, aim)) continue; // they hold fire till it's worth it
       const e = dist * r.aim + 1.5;
       aim.add(off.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2 * e));
-      if (r.gun.fire(b, aim, bolts, 'raider', r.f.velocity)) r.ship.fire?.(b);
+      const n = r.gun.fire(b, aim, bolts, 'raider', r.f.velocity);
+      if (n) { r.ship.fire?.(b); emit('shot', { owner: 'raider', battery: b, count: n, pos: r.f.pos }); }
     }
   }
 
