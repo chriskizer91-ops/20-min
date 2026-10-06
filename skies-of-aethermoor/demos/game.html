@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skies of Aethermoor</title>
+<style>
+  /* Flying the Captain's ship over Aethermoor. The game's own look on every screen: plum panels with a cream edge, gold
+     for names, the two game fonts. Everything is inside this one file, so it works with no internet. */
+  @font-face { font-family: 'Jacquard 12'; src: url(/*FONT_DISPLAY*/) format('woff'); font-display: swap; }
+  @font-face { font-family: 'Pixelify Sans'; src: url(/*FONT_BODY*/) format('woff'); font-display: swap; }
+  :root {
+    color-scheme: dark;
+    --night: #0e1626;
+    --panel: rgba(24, 12, 30, 0.82);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #c3b4cf;
+    --gold: #e2bd67;
+    --warn: #ffb4a0;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(14px, env(safe-area-inset-left, 0px));
+    --top: calc(10px + env(safe-area-inset-top, 0px));
+    --bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 14px/1.35 var(--body); font-variant-ligatures: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; cursor: crosshair; }
+  body.ready #stage { opacity: 1; }
+  body.locked #stage { cursor: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .panel { background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.5); border-radius: 8px; }
+  .shadow { text-shadow: 0 1px 0 #000, 0 0 10px rgba(0, 0, 0, 0.85); }
+
+  #ship { position: fixed; top: var(--top); left: var(--gutter); padding: 6px 12px 8px; pointer-events: none; }
+  #ship h1 { margin: 0; font: 400 30px/0.95 var(--display); color: var(--gold); }
+  #ship .cls { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  #readout { display: grid; grid-template-columns: auto auto; gap: 0 10px; margin-top: 4px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  #readout dt { color: var(--dim); }
+  #readout dd { margin: 0; color: var(--cream); text-align: right; }
+  .meter { display: block; width: 100%; height: 5px; margin-top: 2px; border-radius: 3px; background: rgba(236, 220, 184, 0.15); overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 50%; background: var(--gold); }
+  /* what's left of the ship: hull, sails, crystals */
+  #health { display: grid; grid-template-columns: auto 1fr auto; gap: 1px 8px; align-items: center; margin: 6px 0 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+  #health .row { display: contents; }
+  #health dt { color: var(--dim); }
+  #health dd { margin: 0; min-width: 4ch; text-align: right; color: var(--cream); }
+  #health .meter { margin: 0; width: 70px; }
+  #health .low dt, #health .low dd { color: var(--warn); }
+  .meter.hull i { background: var(--gold); }
+  .meter.sails i { background: var(--cream); }
+  .meter.crystals i { background: #ff9f45; }
+
+  #minimap { position: fixed; top: var(--top); right: var(--gutter); width: clamp(150px, 20vw, 260px); aspect-ratio: 3 / 2; border: 2px solid var(--cream);
+    border-radius: 6px; box-shadow: 0 0 0 2px var(--plum), 0 8px 24px rgba(0, 0, 0, 0.5); background: #0a3b80; cursor: pointer; }
+  #minimap.big { width: min(92vw, 900px); left: 50%; right: auto; translate: -50% 0; top: calc(var(--top) + 54px); z-index: 5; }
+
+  #compass { position: fixed; top: var(--top); left: 50%; translate: -50% 0; padding: 3px 12px; font: 400 22px/1 var(--display); color: var(--cream); pointer-events: none; }
+  #region { position: fixed; left: 50%; top: 22%; translate: -50% 0; margin: 0; pointer-events: none; white-space: nowrap; opacity: 0;
+    font: 400 clamp(28px, 5vw, 52px)/1 var(--display); color: var(--cream); text-shadow: 0 2px 0 #000, 0 0 24px rgba(0, 0, 0, 0.9); }
+  #region::before, #region::after { content: '—'; margin: 0 0.4em; color: var(--gold); }
+  #region.on { animation: region 3.4s ease-in-out forwards; }
+  @keyframes region { 0% { opacity: 0; } 18%, 72% { opacity: 1; } 100% { opacity: 0; } }
+
+  #aim { position: fixed; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; pointer-events: none; }
+  #aim svg { width: 100%; height: 100%; overflow: visible; transition: transform 0.15s; }
+  #aim.locked svg { transform: rotate(45deg) scale(1.15); }
+  #aim.locked circle, #aim.locked path { stroke: #ff7a5a; }
+  #aim.far { opacity: 0.4; }
+  #battery { position: fixed; left: 50%; top: calc(var(--top) + 40px); translate: -50% 0; text-align: center; font-size: 13px; pointer-events: none; white-space: nowrap; }
+  #battery b { color: var(--gold); font-weight: 400; }
+  #battery .meter { width: 110px; margin: 3px auto 0; }
+  #warn { position: fixed; left: 50%; top: 32%; translate: -50% 0; margin: 0; padding: 6px 14px; color: var(--warn); font-size: 15px; pointer-events: none; }
+  #score { position: fixed; right: var(--gutter); top: calc(var(--top) + clamp(100px, 13.3vw, 174px) + 10px); padding: 4px 10px; font-size: 13px; pointer-events: none; }
+  #score b { color: var(--gold); font-weight: 400; }
+  .narrow { display: none; }
+
+  /* the raiders: a tag over each one, or at the edge of the screen pointing to it */
+  #tags { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .tag { position: absolute; left: 0; top: 0; display: grid; grid-template-columns: auto auto; gap: 2px 6px; padding: 3px 6px 4px; font-size: 11px; white-space: nowrap;
+    background: rgba(48, 10, 14, 0.72); border: 1px solid rgba(255, 110, 90, 0.75); border-radius: 5px; color: var(--ink); will-change: transform; }
+  .tag b { font-weight: 400; color: #ffb4a0; }
+  .tag .d { color: var(--dim); text-align: right; }
+  .tag .meter { grid-column: 1 / -1; width: 66px; height: 3px; margin: 0; }
+  .tag .arrow { display: none; position: absolute; left: 50%; top: -15px; margin-left: -6px; width: 12px; text-align: center; color: #ff6a50; font-size: 12px; }
+  .tag.edge .arrow { display: block; }
+  .tag.edge { opacity: 0.85; }
+  .tag.locked { border-color: #ffd36a; box-shadow: 0 0 10px rgba(255, 200, 90, 0.6); }
+  #banner { position: fixed; left: 50%; top: 33%; translate: -50% 0; width: max-content; max-width: 92vw; text-align: center; pointer-events: none; opacity: 0; }
+  #banner.on { animation: region 4.4s ease-in-out forwards; }
+  #banner-title { margin: 0; font: 400 clamp(30px, 6vw, 56px)/1 var(--display); color: var(--gold); text-shadow: 0 2px 0 #000, 0 0 24px rgba(0, 0, 0, 0.9); }
+  #banner-line { margin: 6px 0 0; font-size: clamp(14px, 2.4vw, 18px); color: var(--cream); text-shadow: 0 1px 0 #000, 0 0 12px rgba(0, 0, 0, 0.9); }
+  #toast { position: fixed; left: 50%; top: calc(var(--top) + 84px); translate: -50% 0; margin: 0; padding: 4px 12px; font-size: 14px; color: #ffb4a0; pointer-events: none; opacity: 0; white-space: nowrap; }
+  #toast.on { animation: region 3s ease-in-out forwards; }
+  #hurt { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(170, 20, 10, 0) 50%, rgba(170, 20, 10, 0.6) 100%); }
+
+  #dock { position: fixed; left: var(--gutter); right: var(--gutter); bottom: var(--bottom); display: flex; gap: 8px; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+  #dock > * { pointer-events: auto; }
+  #ships { display: flex; gap: 3px; padding: 3px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  #ships button { display: grid; justify-items: center; gap: 2px; padding: 6px 10px 5px; min-height: 40px; background: none; border: 0; border-radius: 6px; flex: 0 0 auto; }
+  #ships button b { font: 400 20px/0.9 var(--display); white-space: nowrap; }
+  #ships button small { font-size: 10px; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; }
+  #ships button[aria-pressed='true'] { background: var(--plum); color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+  #help { padding: 8px 12px; font-size: 12.5px; max-width: 360px; }
+  #help h2 { margin: 0 0 4px; font: 400 20px/1 var(--display); color: var(--gold); }
+  #help dl { display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; margin: 0; }
+  #help dt { color: var(--cream); white-space: nowrap; }
+  #help dd { margin: 0; color: var(--dim); }
+  #help p { margin: 6px 0 0; color: var(--gold); }
+  #btn-help { padding: 6px 10px; min-height: 34px; }
+
+  /* touch controls, shown on phones and tablets */
+  .touch-only { display: none; }
+  body.touch .touch-only { display: grid; }
+  body.touch .mouse-only { display: none !important; }
+  #stick { position: fixed; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; border: 2px solid rgba(236, 220, 184, 0.55);
+    background: rgba(24, 12, 30, 0.35); pointer-events: none; display: grid; place-items: center; }
+  #stick i { width: 44px; height: 44px; border-radius: 50%; background: rgba(226, 189, 103, 0.75); box-shadow: 0 0 12px rgba(0, 0, 0, 0.5); }
+  #touch-buttons { position: fixed; right: var(--gutter); bottom: calc(var(--bottom) + 64px); gap: 10px; justify-items: end; }
+  #btn-fire { width: 86px; height: 86px; border-radius: 50%; border: 2px solid var(--cream); background: radial-gradient(circle at 50% 40%, #a33a2a, #5a1a20);
+    font: 400 26px/1 var(--display); color: var(--cream); box-shadow: 0 0 0 3px var(--plum), 0 6px 20px rgba(0, 0, 0, 0.5); touch-action: none; }
+  #btn-fire.on { background: radial-gradient(circle at 50% 40%, #e2bd67, #a35a2a); color: var(--plum); }
+  .sail { display: flex; gap: 8px; }
+  .sail button { width: 56px; height: 46px; border-radius: 8px; border: 1px solid rgba(236, 220, 184, 0.6); background: var(--panel); font-size: 13px; touch-action: none; }
+  .sail button.on { border-color: var(--gold); color: var(--gold); }
+  #touch-hint { position: fixed; left: var(--gutter); right: 170px; bottom: calc(var(--bottom) + 190px); font-size: 12.5px; color: var(--ink); pointer-events: none; transition: opacity 0.6s; }
+  #touch-hint.gone { opacity: 0; }
+
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; font: 400 30px var(--display); color: var(--dim); transition: opacity 0.6s; }
+  body.ready #loading { opacity: 0; }
+  #error { position: fixed; inset: auto 16px 16px; padding: 12px; background: #3a0d18; border: 1px solid #ff7a8a; border-radius: 6px; }
+
+  @media (max-width: 700px) {
+    #ship h1 { font-size: 24px; }
+    #readout { font-size: 12px; }
+    #compass { top: calc(var(--top) + 2px); font-size: 18px; }
+    #battery { top: auto; bottom: calc(var(--bottom) + 252px); right: var(--gutter); left: auto; translate: none; text-align: right; }
+    #minimap { width: 130px; }
+    #score { top: calc(var(--top) + 98px); }
+    #ship { padding: 5px 10px 7px; }
+    #health { font-size: 11px; gap: 1px 6px; grid-template-columns: auto 1fr; }
+    #health .meter { width: 46px; }
+    #health dd { display: none; }
+    #score { font-size: 12px; padding: 3px 8px; }
+    .wide { display: none; }
+    .narrow { display: inline; }
+    #toast { top: calc(var(--top) + 46px); font-size: 13px; }
+    #ships button b { font-size: 17px; }
+    #ships button { padding: 5px 7px 4px; }
+    #dock { justify-content: center; }
+  }
+  @media (prefers-reduced-motion: reduce) { #region.on, #banner.on, #toast.on { animation-duration: 0.01s; } }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<p id="loading">Raising the sails…</p>
+<section id="ship" class="panel">
+  <h1 id="ship-name">Tradewind</h1>
+  <div class="cls" id="ship-cls">Brig</div>
+  <dl id="readout">
+    <dt>Speed</dt><dd id="r-speed">0 km/h</dd>
+    <dt>Height</dt><dd id="r-height">0 m</dd>
+    <dt>Sail<span class="wide"> set</span></dt><dd id="r-sail">50%</dd>
+  </dl>
+  <span class="meter" aria-hidden="true"><i id="sail-bar"></i></span>
+  <dl id="health">
+    <div class="row" id="row-hull"><dt>Hull</dt><span class="meter hull"><i id="h-hull"></i></span><dd id="n-hull">0</dd></div>
+    <div class="row" id="row-sails"><dt>Sails</dt><span class="meter sails"><i id="h-sails"></i></span><dd id="n-sails">0</dd></div>
+    <div class="row" id="row-crystals"><dt>Crystals</dt><span class="meter crystals"><i id="h-crystals"></i></span><dd id="n-crystals">0</dd></div>
+  </dl>
+</section>
+<div id="compass" class="panel" aria-live="off">N</div>
+<canvas id="minimap" aria-label="The map of Aethermoor: tap to make it bigger"></canvas>
+<div id="score" class="panel"><span class="wide">Raiders downed</span><span class="narrow">Downed</span>: <b id="score-n">0</b> · Wave <b id="wave-n">1</b></div>
+<div id="tags" aria-hidden="true"></div>
+<div id="hurt" aria-hidden="true"></div>
+<div id="banner" aria-live="polite"><p id="banner-title"></p><p id="banner-line"></p></div>
+<p id="toast" class="panel" aria-live="polite"></p>
+<p id="region" aria-live="polite"></p>
+<div id="aim" aria-hidden="true"><svg viewBox="-23 -23 46 46">
+  <circle r="14" fill="none" stroke="#ecdcb8" stroke-width="2" opacity="0.85"/><circle r="2.2" fill="#e2bd67"/>
+  <path d="M-22 0h6M16 0h6M0 -22v6M0 16v6" stroke="#ecdcb8" stroke-width="2" opacity="0.85"/></svg></div>
+<div id="battery" class="shadow"><b id="battery-name">Bow guns</b> · <span id="battery-count">2</span><span class="meter"><i id="reload-bar"></i></span></div>
+<p id="warn" class="panel" hidden></p>
+<div id="stick" hidden><i></i></div>
+<div id="touch-buttons" class="touch-only">
+  <button id="btn-fire" type="button" aria-label="Fire">Fire</button>
+  <div class="sail"><button id="btn-sail-down" type="button">Sail −</button><button id="btn-sail-up" type="button">Sail +</button></div>
+</div>
+<p id="touch-hint" class="touch-only shadow">Left thumb: steer and climb · drag on the right: aim</p>
+<div id="dock">
+  <div id="ships" class="panel" role="group" aria-label="Ship"></div>
+  <section id="help" class="panel mouse-only">
+    <h2>Flying</h2>
+    <dl>
+      <dt>W / S</dt><dd>more sail / less sail</dd>
+      <dt>A / D or ← →</dt><dd>turn</dd>
+      <dt>Space / E or ↑</dt><dd>climb</dd>
+      <dt>Shift / Q or ↓</dt><dd>dive</dd>
+      <dt>Mouse</dt><dd>aim: the guns facing that way fire</dd>
+      <dt>On a raider</dt><dd>the guns lock on and aim ahead of it</dd>
+      <dt>Left click or F</dt><dd>fire</dd>
+      <dt>C · M · 1–4 · H</dt><dd>look ahead · map · ships · hide this</dd>
+    </dl>
+    <p id="lock-hint">Click the sky to aim with the mouse. Esc lets go.</p>
+  </section>
+  <button id="btn-help" class="panel mouse-only" type="button" hidden>Keys (H)</button>
+</div>
+<p id="error" hidden></p>
+<!--SCRIPT-->
+</body>
+</html>
