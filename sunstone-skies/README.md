@@ -14,6 +14,9 @@ What's in it so far:
   danger, and the port rates your ship's strength on the same scale, so you can see whether she's ready. Black Sky
   needs a strong ship.
 - **Voyages**: runs of waves of raiders, longer and harder voyage by voyage, each ending with a named raider captain.
+- **The map**: Aethermoor seen straight down, like a view from the air, sharper than before (4 m to a pixel), with a
+  fine grain over the ground when you fly low. It comes from the version of the game made with ChatGPT that Chris sent;
+  more pieces of that version are waiting in `reference/gpt-version/`.
 - **The port and the garage**: bank your shards, pick the chart, buy ships and parts, tune the crystal power.
 - **The Captain's levels**: renown wins levels, levels buy skill ranks in four skills, and skills unlock four abilities.
 - **Free flight**, with everything unlocked.
@@ -220,6 +223,7 @@ node tools/sim-voyage.mjs      # a simulated Captain sailing the charts (see doc
 node tools/counts.mjs          # where each ship's triangles go
 node tools/yard-shots.mjs      # pictures from the shipyard, into shots/
 node tools/game-shots.mjs      # pictures of a fight, into shots/
+node tools/map-shots.mjs       # pictures of the ground from the air, into shots/
 ```
 
 After a change, build and publish `dist/game.artifact.html` and `dist/shipyard.artifact.html` to the two links above,
@@ -227,6 +231,7 @@ so they keep working.
 
 The ships' code is in `src/fleet/` (one measurements file each); the progress rules in `src/game/progress.js`; the
 voyages in `src/game/voyage.js`; the garage in `src/game/garage.js`; the abilities in `src/game/abilities.js`.
+The map's tiles came from the version made with ChatGPT that Chris sent (`reference/gpt-version/README.md`).
 Everything else came from `chriskizer91-ops/airship-game-in-aethermoor-`, which was the starting point (the Galleon and
 the Man-o'-war began as that game's models of them). Nothing more is taken from it: the rules for working here are in
 `CLAUDE.md`.

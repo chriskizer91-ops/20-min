@@ -205,7 +205,10 @@ async function main() {
   const toggleHelp = () => { const h = $('help'); h.hidden = !h.hidden; $('btn-help').hidden = !h.hidden; };
   $('btn-help').addEventListener('click', toggleHelp);
   const mini = $('minimap'), mctx = mini.getContext('2d'), mimg = new Image(); mimg.src = minimapUrl;
-  mini.addEventListener('click', () => { mini.classList.toggle('big'); });
+  // the map's drawing size follows its size on screen (small in the corner, or big in the middle), so it stays sharp
+  const sizeMap = () => { const r = mini.getBoundingClientRect(); mini.width = Math.round(r.width * devicePixelRatio); mini.height = Math.round(r.height * devicePixelRatio); mctx.imageSmoothingQuality = 'high'; };
+  const bigMap = () => { mini.classList.toggle('wide'); sizeMap(); };
+  mini.addEventListener('click', bigMap);
 
   const input = makeInput(canvas, document.body);
   canvas.addEventListener('pointerdown', () => setTimeout(() => $('touch-hint').classList.add('gone'), 4000), { once: true });
@@ -215,7 +218,7 @@ async function main() {
     camera.aspect = w / h; camera.fov = w < h ? 68 : 55; camera.updateProjectionMatrix(); frameView();
     camera.userData.pixelScale = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
     for (const s of built.values()) s.glow.material.uniforms.uScale.value = camera.userData.pixelScale;
-    const r = mini.getBoundingClientRect(); mini.width = Math.round(r.width * devicePixelRatio); mini.height = Math.round(r.height * devicePixelRatio);
+    sizeMap();
   }
   addEventListener('resize', resize);
 
@@ -374,7 +377,7 @@ async function main() {
     for (const k of inp.pressed) {
       if (k >= '1' && k <= '6') { const id = SHIPS[+k - 1].id; if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
       else if (k === 'c') { cam.yaw = 0; cam.pitch = 0.2; }
-      else if (k === 'm') mini.classList.toggle('big');
+      else if (k === 'm') bigMap();
       else if (k === 'h') toggleHelp();
       else if (k === 'z') abilities.use('surge');
       else if (k === 'x') abilities.use('double');

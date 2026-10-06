@@ -1,5 +1,6 @@
-// world.js: Aethermoor to fly over. Chris's map (nine tiles, 5 m to a pixel, 23 km across) lies flat far below as the
-// ground, the open sea runs on past its edges, a broken deck of cloud floats between, and big clouds drift at the
+// world.js: Aethermoor to fly over. Chris's map lies flat far below as the ground: nine tiles, 23 km across, painted
+// straight down like a view from the air (the top-down set from the version of the game Chris sent on October 6, 4 m
+// to a pixel). The open sea runs on past its edges, a broken deck of cloud floats between, and big clouds drift at the
 // ship's height. The sky is late afternoon with the sun low in the west.
 import * as THREE from 'three';
 import tile1 from '../../assets/map/tile-1.avif';
@@ -12,7 +13,7 @@ import tile7 from '../../assets/map/tile-7.avif';
 import tile8 from '../../assets/map/tile-8.avif';
 import tile9 from '../../assets/map/tile-9.avif';
 
-export const MAP = { w: 23040, h: 15360, px: 5 }; // metres; x runs east, z runs south, the map's centre at the origin
+export const MAP = { w: 23040, h: 15360, px: 4 }; // metres; x runs east, z runs south, the map's centre at the origin
 export const SUN = new THREE.Vector3(-0.55, 0.52, 0.25).normalize();
 export const CLOUD_Y = 430, THINNING = 2400;
 
@@ -60,19 +61,44 @@ const CLOUD_GLSL = `
   float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * n2(p); p = p * 2.07 + 13.3; a *= 0.5; } return v; }
   float cover(vec2 xz, float t) { vec2 p = xz * 0.00045 + vec2(t * 0.0022, t * 0.0009); return smoothstep(0.44, 0.64, fbm(p) * 0.85 + fbm(p * 3.3 + 7.0) * 0.25); }`;
 
+// A map tile: 1920 x 1280 pixels of map with a 16-pixel border copied from its neighbours all round (1952 x 1312), so
+// the seams between tiles don't show when the far ground is drawn small
+const TILE = { w: 1952, h: 1312, border: 16 };
 function loadTexture(url, renderer) {
   return new Promise((res, rej) => new THREE.TextureLoader().load(url, (t) => {
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+    t.offset.set(TILE.border / TILE.w, TILE.border / TILE.h); t.repeat.set(1 - 2 * TILE.border / TILE.w, 1 - 2 * TILE.border / TILE.h);
     t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter; res(t);
   }, undefined, rej));
 }
+
+// Close to the ground the map's pixels would show, so below about 900 m a fine grain is laid over it, fixed to the
+// ground (finer grain where there's room for it on screen, none where it would only shimmer), a little stronger in the
+// woods, and slow ripples on the water. The map stays the only source of what's where. (The idea, and much of how,
+// from the same version Chris sent.)
+const DETAIL_GLSL = `
+  float gh(vec2 p) { vec3 q = fract(vec3(p.x, p.y, p.x + p.y) * vec3(0.1031, 0.11369, 0.13787)); q += dot(q, q.yzx + 19.19); return fract((q.x + q.y) * q.z); }
+  float gn(vec2 p) { vec2 c = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(gh(c), gh(c + vec2(1.0, 0.0)), f.x), mix(gh(c + vec2(0.0, 1.0)), gh(c + vec2(1.0)), f.x), f.y) - 0.5; }
+  float grainAt(vec2 p, float freq, float footprint) { return (1.0 - smoothstep(0.16, 0.9, footprint * freq)) * gn(p * freq); }
+  vec3 groundDetail(vec3 col, vec3 w, float t) {
+    float near = 1.0 - smoothstep(250.0, 950.0, abs(cameraPosition.y - w.y));
+    if (near < 0.001) return col;
+    float footprint = max(length(dFdx(w.xz)), length(dFdy(w.xz)));
+    float water = smoothstep(1.1, 1.55, max(col.b, col.g) / max(col.r, 0.006)) * smoothstep(0.55, 0.95, col.b / max(col.g, 0.006));
+    float wood = smoothstep(1.0, 1.5, col.g / max(col.r, 0.006)) * (1.0 - water);
+    float grain = 0.52 * grainAt(w.xz, 0.36, footprint) + 0.3 * grainAt(w.xz + 7.37, 0.95, footprint) + 0.18 * grainAt(w.xz - 3.81, 2.35, footprint);
+    float ripple = (0.55 * sin(dot(w.xz, vec2(0.7, 0.41)) + t * 0.23) + 0.45 * sin(dot(w.xz, vec2(-0.26, 0.67)) - t * 0.18)) * (1.0 - smoothstep(0.16, 0.9, footprint * 0.82));
+    return col * (1.0 + near * mix(grain * (0.1 + 0.035 * wood), grain * 0.02 + ripple * 0.028, water));
+  }`;
 
 export async function makeWorld(renderer) {
   const group = new THREE.Group();
   const time = { value: 0 };
   group.add(makeSky());
 
-  // the map: nine tiles, each 7.68 x 5.12 km, painted colours kept as Chris painted them, with cloud shadows passing over
+  // the map: nine tiles, each 7.68 x 5.12 km, its colours kept as painted, with cloud shadows passing over and the fine
+  // grain close to
   const urls = [tile1, tile2, tile3, tile4, tile5, tile6, tile7, tile8, tile9];
   const textures = await Promise.all(urls.map((u) => loadTexture(u, renderer)));
   const tw = MAP.w / 3, th = MAP.h / 3;
@@ -80,10 +106,10 @@ export async function makeWorld(renderer) {
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = time; sh.uniforms.uSun = { value: SUN };
       sh.vertexShader = 'varying vec3 vWorld;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-      sh.fragmentShader = 'varying vec3 vWorld;\nuniform float uTime;\nuniform vec3 uSun;\n' + CLOUD_GLSL + '\n' + sh.fragmentShader.replace('#include <map_fragment>',
-        '#include <map_fragment>\nvec2 sp = vWorld.xz - uSun.xz / uSun.y * ' + CLOUD_Y.toFixed(1) + ';\ndiffuseColor.rgb *= 1.0 - 0.38 * cover(sp, uTime);');
+      sh.fragmentShader = 'varying vec3 vWorld;\nuniform float uTime;\nuniform vec3 uSun;\n' + CLOUD_GLSL + '\n' + DETAIL_GLSL + '\n' + sh.fragmentShader.replace('#include <map_fragment>',
+        '#include <map_fragment>\ndiffuseColor.rgb = groundDetail(diffuseColor.rgb, vWorld, uTime);\nvec2 sp = vWorld.xz - uSun.xz / uSun.y * ' + CLOUD_Y.toFixed(1) + ';\ndiffuseColor.rgb *= 1.0 - 0.38 * cover(sp, uTime);');
     };
-    mat.customProgramCacheKey = () => 'ground-cloud-shadow';
+    mat.customProgramCacheKey = () => 'ground-cloud-shadow-detail';
     return mat;
   };
   textures.forEach((t, i) => {
@@ -92,9 +118,10 @@ export async function makeWorld(renderer) {
     m.position.set(-MAP.w / 2 + tw * (col + 0.5), 0, -MAP.h / 2 + th * (row + 0.5));
     group.add(m);
   });
-  // the open sea past the map's edges, the same deep blue as its painted sea. It's drawn first and the map over it:
-  // laid just under the map instead, the two would flicker where the far ground is too far off to tell them apart
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000).rotateX(-Math.PI / 2), shade(new THREE.MeshBasicMaterial({ color: 0x0a3b80, toneMapped: false, depthWrite: false })));
+  // the open sea past the map's edges, the same deep blue as the map's own sea at its edges. It's drawn first and the
+  // map over it: laid just under the map instead, the two would flicker where the far ground is too far off to tell
+  // them apart
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(160000, 160000).rotateX(-Math.PI / 2), shade(new THREE.MeshBasicMaterial({ color: 0x002951, toneMapped: false, depthWrite: false })));
   sea.renderOrder = -5; group.add(sea);
 
   // the deck of cloud: white and gold-edged from above, grey from beneath, gaps where the ground shows through
