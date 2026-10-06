@@ -2,6 +2,7 @@
 // textures, the map and the two game fonts), so they open on a phone with no internet.
 //   dist/game.html     Skies of Aethermoor: fly the Captain's ships over the map
 //   dist/hangar.html   the Captain's ships up close
+//   dist/shipyard.html the levelled-up Frigate: her working parts, damage, garage fittings and crystal power
 // and, for each, a .artifact.html copy for publishing on claude.ai (which supplies the document around the page).
 // Run: node tools/build.mjs   (after `npm install`)
 import { build } from 'esbuild';
@@ -11,10 +12,12 @@ const root = new URL('..', import.meta.url).pathname;
 const PAGES = [
   { name: 'game', entry: 'src/game/main.js', html: 'demos/game.html' },
   { name: 'hangar', entry: 'src/demo/hangar.js', html: 'demos/hangar.html' },
+  { name: 'shipyard', entry: 'src/demo/shipyard.js', html: 'demos/shipyard.html' },
 ];
 const font = (f) => 'data:font/woff;base64,' + readFileSync(root + 'assets/fonts/' + f).toString('base64');
 mkdirSync(root + 'dist', { recursive: true });
-for (const P of PAGES) {
+const only = process.argv[2];
+for (const P of PAGES.filter((p) => !only || p.name === only)) {
   const out = await build({
     entryPoints: [root + P.entry], bundle: true, format: 'iife', minify: true, target: 'es2020', write: false,
     loader: { '.webp': 'dataurl', '.avif': 'dataurl', '.json': 'json' }, legalComments: 'none',

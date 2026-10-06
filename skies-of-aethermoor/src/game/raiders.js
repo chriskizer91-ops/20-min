@@ -12,6 +12,9 @@ import { makeFlyer } from './flight.js';
 import { makeGunnery, intercept } from './guns.js';
 import { hitZones, firstHit } from './damage.js';
 import { CLOUD_Y } from './world.js';
+import { flagshipModel, flagshipShip } from '../flagship/build.js';
+import { COLOURS } from '../flagship/materials.js';
+import flagFrigate from '../flagship/frigate.js';
 
 // How the raiders compare with the Captain: sail a little slower, reload half as slowly again, and aim a little off
 // (by this much for every metre to the target)
@@ -67,9 +70,40 @@ function raiderShip(T) {
   };
 }
 
-export function makeRaiders(scene, art, bolts) {
+// A raider flying the levelled-up Frigate: its own middle and far ships (sharing the class's models), so its sails
+// furl, its lids open, its guns kick and its damage shows, on it alone
+function flagshipRaider(T, fart) {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const mid = flagshipShip(T.midModel, fart, { motion: false }), far = flagshipShip(T.farModel, fart, { motion: false });
+  far.root.visible = false; body.add(mid.root, far.root);
+  const move = shipMotion(T.R, body, []);
+  return {
+    root, body, recipe: T.R, hull: T.midModel.hull, length: T.R.length, level: 'middle',
+    update(dt, opts) { move(dt, opts); (this.level === 'far' ? far : mid).update(dt, opts); },
+    detail(level, pixelScale) {
+      mid.root.visible = level === 'middle'; far.root.visible = level === 'far'; this.level = level;
+      for (const s of [mid, far]) s.glow.material.uniforms.uScale.value = pixelScale;
+    },
+    fire(b) { mid.fire(b); far.fire(b); },
+    // its sail, its gun decks (manned while it fights) and its damage, from how it's flying
+    sync(f, fighting) {
+      for (const s of [mid, far]) {
+        const C = s.control; C.sail = f.sail;
+        C.stations.port = C.stations.starboard = fighting ? 1 : 0;
+        for (const k of ['hull', 'sails', 'crystals']) C.damage[k] = 1 - f.frac(k);
+      }
+    },
+  };
+}
+
+export function makeRaiders(scene, art, bolts, fart) {
   const rart = raiderArt(art), T = {};
   for (const R of SHIPS) {
+    if (R.id === 'frigate' && fart) {
+      const midModel = flagshipModel(flagFrigate, 'middle', fart, COLOURS.raider), farModel = flagshipModel(flagFrigate, 'far', fart, COLOURS.raider);
+      T[R.id] = { R: flagFrigate, midModel, farModel, flagship: true, zones: hitZones(flagshipShip(midModel, fart)) };
+      continue;
+    }
     const mid = buildShip(R, 'middle', rart), far = buildShip(R, 'far', rart);
     crimsonPennants(mid); crimsonPennants(far);
     T[R.id] = { R, mid, far, zones: hitZones(mid) };
@@ -78,7 +112,7 @@ export function makeRaiders(scene, art, bolts) {
   let ai = true;
 
   function spawn(id, pos, heading, frozen = false) {
-    const ship = raiderShip(T[id]);
+    const ship = T[id].flagship ? flagshipRaider(T[id], fart) : raiderShip(T[id]);
     const f = makeFlyer(ship, STATS[id], { pos, heading }, RAIDER.pace);
     f.sail = 0.85; f.speed = f.H.vmax * 0.6; f.aimY = T[id].zones.aim.y;
     ship.root.position.copy(pos); ship.root.rotation.y = heading;
@@ -147,7 +181,7 @@ export function makeRaiders(scene, art, bolts) {
       if (dist > m.K.speed * m.K.life * 0.7 || !r.gun.reaches(b, aim)) continue; // they hold fire till it's worth it
       const e = dist * RAIDER.aim + 1.5;
       aim.add(off.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2 * e));
-      r.gun.fire(b, aim, bolts, 'raider', r.f.velocity);
+      if (r.gun.fire(b, aim, bolts, 'raider', r.f.velocity)) r.ship.fire?.(b);
     }
   }
 
@@ -159,6 +193,7 @@ export function makeRaiders(scene, art, bolts) {
       const live = !r.f.down;
       if (r.frozen && live) r.ship.update(dt, { calm: true });
       else r.f.update(dt, live && ai && !foe.down ? steer(r, foe, dt) : { turn: 0, climb: 0, sailTo: 0.6 });
+      r.ship.sync?.(r.f, live && ai && !r.frozen && !foe.down);
       r.ship.root.updateMatrixWorld(true);
       r.gun.update(dt);
       if (live && ai && !r.frozen && !foe.down) shoot(r, foe);

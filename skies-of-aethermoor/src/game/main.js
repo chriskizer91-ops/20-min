@@ -5,7 +5,10 @@
 import * as THREE from 'three';
 import { loadShipArt } from '../ship/materials.js';
 import { buildShip } from '../ship/build.js';
-import { SHIPS, STATS } from '../ships/index.js';
+import { SHIPS as BASE_SHIPS, STATS } from '../ships/index.js';
+import { flagshipArt } from '../flagship/materials.js';
+import { buildFlagship } from '../flagship/build.js';
+import flagFrigate from '../flagship/frigate.js';
 import { makeWorld, regionAt, SUN, HAZE, MAP, THINNING } from './world.js';
 import { makeInput } from './input.js';
 import { makeFlyer } from './flight.js';
@@ -21,6 +24,8 @@ const PARTS = ['hull', 'sails', 'crystals'];
 const COMPASS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
 const compassDeg = (heading) => ((180 - THREE.MathUtils.radToDeg(heading)) % 360 + 360) % 360; // north is up the map (-z)
 const NUMBER = ['', 'a', 'two', 'three', 'four', 'five', 'six'];
+// The Frigate is the levelled-up one (src/flagship/), with working parts; the other three are the game's own
+const SHIPS = BASE_SHIPS.map((R) => (R.id === 'frigate' ? flagFrigate : R));
 
 async function main() {
   if (touch) document.body.classList.add('touch');
@@ -37,6 +42,7 @@ async function main() {
   scene.fog = new THREE.Fog(HAZE, 4000, 34000);
   const camera = new THREE.PerspectiveCamera(55, 1, 1, 70000);
   const [world, art] = await Promise.all([makeWorld(renderer), loadShipArt(renderer)]);
+  const fart = flagshipArt(art);
   scene.add(world.group);
 
   // the day sky lights the brass
@@ -51,11 +57,11 @@ async function main() {
   scene.add(hemi, sun, sun.target);
 
   const bolts = makeBolts(scene), smoke = makeSmoke(scene);
-  const raiders = makeRaiders(scene, art, bolts);
+  const raiders = makeRaiders(scene, art, bolts, fart);
 
   // ---------- the ship you fly ----------
   const built = new Map(), zones = new Map();
-  const shipFor = (R) => { if (!built.has(R.id)) built.set(R.id, buildShip(R, 'full', art)); return built.get(R.id); };
+  const shipFor = (R) => { if (!built.has(R.id)) built.set(R.id, R === flagFrigate ? buildFlagship(R, 'full', fart) : buildShip(R, 'full', art)); return built.get(R.id); };
   const start = { pos: new THREE.Vector3(0, 680, 2600), heading: Math.PI };
   let player = null, gunnery = null;
   function fly(id) {
@@ -301,6 +307,14 @@ async function main() {
       else if (k === 'm') mini.classList.toggle('big');
       else if (k === 'h') toggleHelp();
     }
+    // the flagship's working parts: sail set, gun decks manned in a fight (or when a side is fired), damage shown
+    const C = player.ship.control, facing = batteryFor(cam.yaw);
+    if (C) {
+      C.sail = player.sail;
+      const fight = W.state === 'fight' && !player.down;
+      for (const s of ['port', 'starboard']) C.stations[s] = fight || (inp.fire && facing === s) ? 1 : 0;
+      for (const k of PARTS) C.damage[k] = 1 - player.frac(k);
+    }
     player.update(dt, inp);
     player.ship.root.updateMatrixWorld(true);
     const gone = raiders.update(dt, player, camera);
@@ -308,7 +322,7 @@ async function main() {
     const battery = batteryFor(cam.yaw);
     aimFor(battery);
     gunnery.update(dt);
-    if (inp.fire && !player.down) gunnery.fire(battery, aimPoint, bolts, 'player', player.velocity);
+    if (inp.fire && !player.down && gunnery.fire(battery, aimPoint, bolts, 'player', player.velocity)) player.ship.fire?.(battery);
     bolts.update(dt, hitTest, camera);
     smokeFrom(player, smoke, bolts.spark, dt);
     for (const r of raiders.list) smokeFrom(r.f, smoke, bolts.spark, dt);
