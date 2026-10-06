@@ -1,8 +1,9 @@
 # Sunstone Skies
 
 The laptop version of the airship game set in Aethermoor. It started as a copy of the game in the
-`airship-game-in-aethermoor-` repository and is built up here, in this folder only, so the game itself is never
-touched. (Another version of the game is being made separately; this one is *Sunstone Skies*.)
+`airship-game-in-aethermoor-` repository, and from here it's its own game, built up in this folder only: two games,
+the same ships over Chris's world. (Another version of the game is being made separately; this one is *Sunstone
+Skies*.)
 
 What's in it so far:
 
@@ -184,4 +185,6 @@ so they keep working.
 
 The ships' code is in `src/fleet/` (one measurements file each); the progress rules in `src/game/progress.js`; the
 voyages in `src/game/voyage.js`; the garage in `src/game/garage.js`; the abilities in `src/game/abilities.js`.
-Everything else came from `chriskizer91-ops/airship-game-in-aethermoor-`.
+Everything else came from `chriskizer91-ops/airship-game-in-aethermoor-`, which was the starting point (the Galleon and
+the Man-o'-war began as that game's models of them). Nothing more is taken from it: the rules for working here are in
+`CLAUDE.md`.
