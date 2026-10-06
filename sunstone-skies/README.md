@@ -10,10 +10,13 @@ What's in it so far:
 - **Six ships, levelled up**: the Captain's Skiff, Cutter, Brig and Frigate, and now the Galleon and the Man-o'-war,
   built from Chris's art packs for them. More detail, parts that move, damage you can see, and every garage part
   showing on the ship. The Captain can buy all six, and raiders sail all six (lighter versions of the big two).
+- **Three charts**: Fair Winds, Rough Air and Black Sky, sailed by one Captain with one purse. Every voyage has a
+  danger, and the port rates your ship's strength on the same scale, so you can see whether she's ready. Black Sky
+  needs a strong ship.
 - **Voyages**: runs of waves of raiders, longer and harder voyage by voyage, each ending with a named raider captain.
-- **The port and the garage**: bank your shards, buy ships and parts, tune the crystal power.
+- **The port and the garage**: bank your shards, pick the chart, buy ships and parts, tune the crystal power.
 - **The Captain's levels**: renown wins levels, levels buy skill ranks in four skills, and skills unlock four abilities.
-- **Three difficulty settings**, and free flight with everything unlocked.
+- **Free flight**, with everything unlocked.
 
 It's built for a laptop with a keyboard and mouse. It's still the pieces, not the finished game.
 
@@ -29,8 +32,8 @@ Each is one file with everything inside, and works with no internet.
 
 ## Playing
 
-The start screen offers **Carry on the voyage** (once there's a saved Captain), a **new Captain** on one of the three
-settings, or **free flight**. Progress saves in the browser by itself.
+The start screen offers **Carry on** (once there's a saved Captain), **A new Captain**, or **free flight**. A new
+Captain starts over, so with one saved it asks for a second click. Progress saves in the browser by itself.
 
 | Keys | |
 |---|---|
@@ -44,18 +47,63 @@ settings, or **free flight**. Progress saves in the browser by itself.
 | 1–6 | in port: sail another ship you own |
 | C · M · H | look ahead · the map · hide the keys |
 
-### Voyages
+### Charts, voyages and danger
 
-A voyage is a run of waves; the first voyage has five, and each one after has one more, up to ten. A big wave comes
-in pieces: the first group, then reinforcements once it's mostly down (a late wave can come in three or four groups).
-The last wave of every voyage brings a named raider captain (Captain Rook, Black Meg, Old Sallow...) in one of the
-biggest ships of the voyage, tougher than the rest and fitted with garage parts, with an escort. Beat them and the
-voyage is done: the hold is banked with a quarter more, and the next voyage waits.
+One Captain sails three charts, with one fleet and one purse: the shards won on an easier chart buy the ships, parts
+and skills a harder one needs. The garage's first tab, **Charts**, picks the chart for the next voyage.
 
-Each voyage's raiders are a little tougher, hit a little harder and shoot a little straighter than the last, and
-bigger classes join in: Skiffs and Cutters on the first three voyages, Brigs from the fourth, Frigates from the fifth,
-Galleons from the seventh and Men-o'-war from the ninth (a Galleon's captain ends the seventh, a Man-o'-war's the
-eighth). Past the tenth voyage, every voyage is a tenth stronger than the last.
+| Chart | Its raiders | First voyage | Pay | Going down | Opens |
+|---|---|---|---|---|---|
+| Fair Winds | slower, slower to reload, aim wide | danger 1 | the least | keeps half the hold; the wave comes back weaker | from the start |
+| Rough Air | as they're meant to be | danger 3 | 8% more than Fair Winds at the same danger | loses the hold; the wave comes back weaker | after two Fair Winds voyages |
+| Black Sky | faster, quicker to reload, sharp-eyed | danger 6 | 17% more than Fair Winds at the same danger | loses the hold, and the wave comes back just as strong | after three Rough Air voyages |
+
+A voyage is a run of waves: five on a chart's first voyage, one more on each voyage after, up to ten. Its **danger**
+is its number on its chart, plus 2 on Rough Air and plus 5 on Black Sky, and the danger decides its raiders: how many,
+in which ships, how tough, how well they shoot, and what they pay. So Rough Air's first voyage is as dangerous as
+Fair Winds' third, and Black Sky's first as Fair Winds' sixth, with sharper raiders on top.
+
+Each danger's raiders are a little tougher, hit a little harder and shoot a little straighter than the last, and bigger
+classes join in: Skiffs and Cutters up to danger 3, Brigs from 4, Frigates from 5, Galleons from 7 and Men-o'-war from
+9. Past danger 15, each danger is a tenth stronger than the last.
+
+A big wave comes in pieces: the first group, then reinforcements once it's mostly down (a late wave can come in three
+or four groups). The last wave of every voyage brings a named raider captain (Captain Rook, Black Meg, Old Sallow...)
+in one of the biggest ships of the voyage, tougher than the rest and fitted with garage parts, with an escort. Beat
+them and the voyage is done: the hold is banked with a quarter more, and the chart's next voyage waits.
+
+### Strength: is she ready?
+
+The port gives the ship you're sailing a **strength**, on the same scale as danger: the danger of the Rough Air voyages
+she's ready for. It starts from her class and grows with her parts and your skills: her hull, crystals and sails, her
+guns' damage and reload, and how well she turns and how fast she sails. The Charts tab sets it against each chart's
+next voyage: **ready for it**, **a hard fight** (within 1.5 of what it needs), or **not ready**. Fair Winds' sloppy
+raiders need a little less than the danger, and Black Sky's sharp ones more.
+
+| Ship | Plain | Every skill at the top | Every part at Mk V | Half and half (skills at rank 3, parts at Mk II) | Everything |
+|---|---|---|---|---|---|
+| Skiff | 1.7 | 3.7 | 1.9 | 2.8 | 4.1 |
+| Cutter | 1.9 | 4.1 | 2.8 | 3.5 | 5.5 |
+| Brig | 2.7 | 5.3 | 4.6 | 5.0 | 8.1 |
+| Frigate | 3.6 | 6.7 | 6.0 | 6.4 | 10.1 |
+| Galleon | 4.1 | 7.5 | 7.0 | 7.4 | 11.6 |
+| Man-o'-war | 5.9 | 10.1 | 10.4 | 10.4 | 15.9 |
+
+What each chart's voyages need:
+
+| Voyage | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Fair Winds | 0.7 | 1.7 | 2.5 | 3.5 | 4.3 | 5.3 | 6.2 | 7.2 | 7.9 | 9.0 |
+| Rough Air | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+| Black Sky | 6.6 | 7.7 | 8.9 | 9.9 | 10.9 | 11.9 | 13.3 | 14.1 | 14.8 | 16.2 |
+
+Handling counts for a lot (a ship that can't bring her guns round doesn't win), so parts that slow a ship down add less
+than you'd think, and the Helm skill and trim fins more. The skills' abilities count too, most in the big ships.
+
+Black Sky is built to be out of reach without upgrades. No plain ship is ready for its first voyage, and its tenth is
+a hard fight even for a Man-o'-war with every part at Mk V and every skill at the top: the simulated Captain wins about
+three of its waves in four in her, most with under a third of her hull left. `docs/balance.md` has how strength is
+worked out and how it was measured.
 
 ### Shards, the hold, and the choice after a wave
 
@@ -67,21 +115,22 @@ half when you break its crystals (you shattered the loot). After each wave you c
 - **Put in to port**: the hold is banked, the ship is repaired, and the garage opens.
 
 **Going down** loses what's in the hold (on Fair Winds you keep half), and the wave is sailed again from port. The
-ship, her parts and everything banked are safe, and the wave comes back weaker each time (the raiders lost ships too),
-so no wave is a wall.
+ship, her parts and everything banked are safe. On Fair Winds and Rough Air the wave comes back weaker each time (the
+raiders lost ships too), so no wave there is a wall. Black Sky shows no mercy: the wave comes back just as strong.
 
 ### The garage
 
 | Tab | |
 |---|---|
-| Ships | Buy the next ship up: the Cutter (250 shards), the Brig (700), the Frigate (2,000), the Galleon (5,000), the Man-o'-war (9,000). Choose which to sail |
+| Charts | Pick the chart for the next voyage: each chart's next voyage, its danger, and whether your ship is ready for it |
+| Ships | Buy the next ship up: the Cutter (250 shards), the Brig (700), the Frigate (2,500), the Galleon (8,000), the Man-o'-war (15,000). Choose which to sail, and see each one's strength with your parts and skills |
 | Parts | Buy parts and upgrade them (Mk I to V), and fit them into the ship's slots: one on the Skiff, up to six on the Man-o'-war. A part bought is yours on every ship |
 | Tuning | Share the crystal power between sails (speed), guns (reload, a little damage) and lift (climbing). Free |
-| Captain | Your level and renown, and your skill points |
+| Captain | Your level and renown, your skill points, and the highest danger you've beaten |
 
 Every part gains something and costs something. These are their Mk I numbers. Each mark gains more (Mk III doubles
 the gain, Mk V nearly triples it) and costs a little more (half as much again at Mk V). The port's shipwrights sell
-Mk IV from the fifth voyage and Mk V from the seventh.
+Mk IV once you've beaten a danger 4 voyage, and Mk V once you've beaten danger 6.
 
 | Part | Gains | Costs | On the ship |
 |---|---|---|---|
@@ -111,14 +160,6 @@ skills of six ranks each:
 | Crystals | +5% crystals, +3% power to share | **Sunstone Ward** (B): a shell of golden light round the ship; hits do half damage, 5 s | a third, for 7 s | back 12 s sooner |
 
 The top level is 25, enough for every skill at rank 6.
-
-### Difficulty
-
-| | Raiders | Shards pay | Going down |
-|---|---|---|---|
-| Fair Winds | slower, slower to reload, aim wider | as they are | keeps half the hold |
-| Rough Air | as they're meant to be | a quarter more | loses the hold |
-| Black Sky | faster, quicker to reload, sharper-eyed | 40% more | loses the hold |
 
 ### Free flight
 
@@ -163,18 +204,19 @@ crystals going dark one by one. Raiders fly the same ships in rust colours, and 
 
 ## Balance
 
-The numbers (prices, parts, skills, the voyages' waves) are in `src/game/progress.js`, and `docs/balance.md` explains
-them, with what a simulated Captain did with them. `node tools/sim-voyage.mjs` runs that Captain.
+The numbers (prices, parts, skills, the charts, each danger's waves, the strength rating) are in
+`src/game/progress.js`, and `docs/balance.md` explains them, with what a simulated Captain did with them.
+`node tools/sim-voyage.mjs` runs that Captain.
 
 ## Rebuilding and checking
 
 ```
 npm install
 node tools/build.mjs           # builds dist/game.html, dist/hangar.html and dist/shipyard.html
-npm test                       # the progress rules: levels, parts, waves, shards
+npm test                       # the progress rules: charts, levels, parts, waves, shards, strength
 node tools/check.mjs           # plays the game: free flight, then a voyage; must end with "all good"
 node tools/check-shipyard.mjs  # works the ships through the shipyard's panel; must end with "all good"
-node tools/sim-voyage.mjs      # a simulated Captain sailing voyages (see docs/balance.md)
+node tools/sim-voyage.mjs      # a simulated Captain sailing the charts (see docs/balance.md)
 node tools/counts.mjs          # where each ship's triangles go
 node tools/yard-shots.mjs      # pictures from the shipyard, into shots/
 node tools/game-shots.mjs      # pictures of a fight, into shots/

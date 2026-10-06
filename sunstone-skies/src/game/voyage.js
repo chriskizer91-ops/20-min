@@ -1,8 +1,9 @@
 // voyage.js: what happens between and during the fights. Two ways to play:
-//   A voyage (the campaign): the Captain sets sail from port; each wave of the voyage comes in (a big wave in two
-//   groups, the second as reinforcements once the first is mostly down); after each wave the Captain flies on or puts
-//   in to port; the last wave brings a raider captain, and beating it ends the voyage. Going down loses the hold and
-//   the wave is sailed again from port, a little weaker each time. (The rules and numbers are in progress.js.)
+//   The campaign: in port the Captain picks a chart (Fair Winds, Rough Air or Black Sky) and sets sail on its next
+//   voyage; each wave comes in (a big wave in groups, the later ones as reinforcements once the one before is mostly
+//   down); after each wave the Captain flies on or puts in to port; the last wave brings a raider captain, and beating
+//   them ends the voyage. Going down loses the hold and the wave is sailed again from port (a little weaker each time,
+//   except on Black Sky). (The rules and numbers are in progress.js.)
 //   Free flight: the old endless waves, with everything unlocked and the garage open between waves.
 import * as P from './progress.js';
 import { waveAt } from './raiders.js';
@@ -33,14 +34,14 @@ export function makeDirector(env) {
       W.groups = []; W.state = 'fight';
       return;
     }
-    const wave = P.waveOf(c.voyage, c.wave, c.tries ?? 0), o = { difficulty: c.difficulty, level: P.raiderLevel(c.voyage) };
+    const at = P.on(c), D = P.danger(c), wave = P.nextWave(c), o = { chart: c.chart, level: P.raiderLevel(D) }, name = P.CHARTS[c.chart].name;
     W.wave = wave; W.groups = wave.groups.map((g) => [...g]); W.next = 0;
     const first = W.groups[W.next++], ids = wave.captain ? [wave.captain.id, ...first] : first;
     const a = env.raiders.spawnWave(ids, player, { ...o, captain: wave.captain });
     W.threat = threatOf(live());
     const who = wave.captain ? `${wave.captain.name} in a ${env.classOf(wave.captain.id)}${first.length ? `, with ${describe(first)}` : ''}` : describe(first);
-    env.ui.banner(wave.boss ? `Voyage ${c.voyage}: the last wave` : `Voyage ${c.voyage}, wave ${c.wave} of ${P.wavesIn(c.voyage)}`,
-      `${who}, to the ${env.compass(a)}${W.groups.length > 1 ? '. More behind them' : ''}${c.tries ? '. They lost ships last time too' : ''}`);
+    env.ui.banner(wave.boss ? `${name}, voyage ${at.voyage}: the last wave` : `${name}, voyage ${at.voyage}, wave ${at.wave} of ${P.wavesIn(at.voyage)}`,
+      `${who}, to the ${env.compass(a)}${W.groups.length > 1 ? '. More behind them' : ''}${at.tries && P.CHARTS[c.chart].mercy ? '. They lost ships last time too' : ''}`);
     W.state = 'fight';
   }
 
@@ -60,7 +61,7 @@ export function makeDirector(env) {
       if ((W.lost -= dt) <= 0) {
         env.raiders.clear();
         if (W.mode === 'free') { player.reset(player.pos.clone().setY(700), player.heading); W.state = 'calm'; W.timer = 10; env.ui.banner('Back in the air', 'The raiders will be back'); }
-        else toPort('Towed back to port', `Wave ${c.wave} of voyage ${c.voyage} waits`);
+        else toPort('Towed back to port', `Wave ${P.on(c).wave} of ${P.CHARTS[c.chart].name} voyage ${P.on(c).voyage} waits${P.CHARTS[c.chart].mercy ? ', a little weaker' : ''}`);
       }
       return;
     }
@@ -78,7 +79,7 @@ export function makeDirector(env) {
     // the fight: reinforcements when the first group is mostly down; the wave won when every raider is
     const now = live();
     if (W.mode === 'campaign' && W.next < W.groups.length && threatOf(now) <= W.threat * 0.35) {
-      const ids = W.groups[W.next++], a = env.raiders.spawnWave(ids, player, { difficulty: c.difficulty, level: P.raiderLevel(c.voyage) });
+      const ids = W.groups[W.next++], a = env.raiders.spawnWave(ids, player, { chart: c.chart, level: P.raiderLevel(P.danger(c)) });
       W.threat = threatOf(live());
       env.ui.banner('Reinforcements', `${describe(ids)}, to the ${env.compass(a)}`);
       return;
@@ -88,15 +89,15 @@ export function makeDirector(env) {
     const renown = P.waveRenown(c);
     c.renown += renown;
     if (W.wave.boss) {
-      const v = c.voyage, paid = P.voyageDone(c);
+      const v = P.on(c).voyage, name = P.CHARTS[c.chart].name, paid = P.voyageDone(c);
       P.save(c);
-      toPort(`Voyage ${v} done`, `${paid} shards banked · voyage ${c.voyage} waits`);
+      toPort(`${name}, voyage ${v} done`, `${paid} shards banked · voyage ${P.on(c).voyage} waits`);
       return;
     }
     P.waveBeaten(c); P.save(c);
     W.state = 'after'; W.choiceTimer = 25;
     env.ui.choice(true);
-    env.ui.banner(`Wave ${c.wave - 1} beaten`, `+${renown} renown · fly on, or put in to port`);
+    env.ui.banner(`Wave ${P.on(c).wave - 1} beaten`, `+${renown} renown · fly on, or put in to port`);
   }
 
   // after a wave: fly on (the hold's bonus grows, the crew patch what they can) or put in to port
@@ -126,7 +127,7 @@ export function makeDirector(env) {
   // leave port for the voyage's next wave
   function setSail() {
     if (W.state !== 'port') return;
-    env.raiders.warm?.(P.classesOf(C().voyage)); // build this voyage's raider ships now, not when they appear
+    env.raiders.warm?.(P.classesOf(P.danger(C()))); // build this voyage's raider ships now, not when they appear
     env.ui.port(false);
     W.state = 'calm'; W.timer = 6;
   }
@@ -136,7 +137,7 @@ export function makeDirector(env) {
     // begin playing: a voyage (from port) or free flight (straight into the air)
     begin(mode) {
       W.mode = mode; W.n = 0; W.lost = 0; env.raiders.clear(); env.ui.choice(false);
-      if (mode === 'campaign') toPort('In port', `Voyage ${C().voyage}, wave ${C().wave} waits`);
+      if (mode === 'campaign') toPort('In port', `${P.CHARTS[C().chart].name}: voyage ${P.on(C()).voyage}, wave ${P.on(C()).wave} waits`);
       else { env.ui.port(false); W.state = 'calm'; W.timer = 6; }
     },
     get calm() { return W.state === 'calm' || W.state === 'port' || W.state === 'after'; },

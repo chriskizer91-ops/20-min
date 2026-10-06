@@ -98,7 +98,8 @@ function battle(ids = ['frigate', 'cutter']) {
         aimAt(P, tp); g.step(0.05, { fire: false });
         const label = document.getElementById('battery-name').textContent, reach = document.getElementById('battery-count').textContent;
         const locked = g.locked === foe;
-        aimAt(P, tp); g.step(2, { fire: true });
+        // 3.5 s: two volleys land (a Cutter's three-gun broadside misses a still Cutter about one volley in ten)
+        aimAt(P, tp); g.step(3.5, { fire: true });
         r.guns[b] = { n, label, locked, reach, parts: PARTS.filter((k) => foe.f.health[k] < foe.f.full[k]) };
       }
       res.push(r);
@@ -173,18 +174,20 @@ function battle(ids = ['frigate', 'cutter']) {
   await page.close();
 }
 {
-  // a voyage: from port, a wave, its shards and renown, the choice after it, banking in port, the garage, a skill
-  // and its ability, and the last wave's raider captain ending the voyage
+  // a voyage: a new Captain in port on Fair Winds, a wave, its shards and renown, the choice after it, banking in
+  // port, the garage, skills and their abilities, the last wave's raider captain ending the voyage, going down; then
+  // Rough Air opening after two Fair Winds voyages, and a voyage on it
   const page = await open('game', 'laptop', gameReady);
-  await page.click('[data-new="rough"]');
+  await page.click('#start-new');
   const v = await page.evaluate(() => {
     const g = window.__game, P = g.P, c = g.captain, out = {};
-    out.start = { state: g.waves.state, ship: g.player.ship.recipe.id, shards: c.shards };
+    const charts = () => [...document.querySelectorAll('.g-chart')].map((a) => ({ shut: a.classList.contains('shut'), on: a.classList.contains('on'), ready: a.querySelector('.g-ready')?.className }));
+    out.start = { state: g.waves.state, ship: g.player.ship.recipe.id, shards: c.shards, chart: c.chart, tab: g.garage.tab, charts: charts() };
     document.getElementById('g-sail').click(); g.step(7, {});
     out.wave = g.raiders.list.map((r) => r.id);
     for (const r of g.raiders.list) r.f.hit('crystals', 1e6); // crystal kills pay half
     g.step(1, {});
-    out.after = { state: g.waves.state, hold: c.hold, renown: c.renown, wave: c.wave, choice: !document.getElementById('choice').hidden };
+    out.after = { state: g.waves.state, hold: c.hold, renown: c.renown, wave: P.on(c).wave, choice: !document.getElementById('choice').hidden };
     document.getElementById('btn-flyon').click(); g.step(8.5, {});
     out.flewOn = { streak: c.streak, state: g.waves.state, raiders: g.raiders.list.length };
     for (const r of g.raiders.list) r.f.hit('hull', 1e6);
@@ -220,32 +223,43 @@ function battle(ids = ['frigate', 'cutter']) {
     g.step(8, {});
     out.ward.after = { shield: g.player.shield, shows: g.ward.mesh.visible };
     // the last wave: its raider captain, and the voyage done
-    g.raiders.clear(); c.wave = P.wavesIn(1); g.waves.state = 'calm'; g.waves.timer = 0.1; g.step(0.5, {});
+    g.raiders.clear(); P.on(c).wave = P.wavesIn(1); g.waves.state = 'calm'; g.waves.timer = 0.1; g.step(0.5, {});
     const boss = g.raiders.list.find((r) => r.captain);
     out.boss = boss ? { name: boss.name, id: boss.id, hull: boss.f.full.hull, fits: Object.entries(boss.ship.shown.fitted).filter(([, on]) => on).map(([k]) => k) } : null;
     for (const r of g.raiders.list) r.f.hit('hull', 1e6);
     g.step(1, {});
-    out.done = { state: g.waves.state, voyage: c.voyage, wave: c.wave, hold: c.hold };
+    out.done = { state: g.waves.state, voyage: P.on(c).voyage, wave: P.on(c).wave, hold: c.hold, best: c.best };
     // going down loses the hold
     document.getElementById('g-sail').click(); g.step(7, {}); c.hold = 50;
     g.player.hit('hull', 1e6); g.step(8, {});
-    out.down = { state: g.waves.state, hold: c.hold, shards: c.shards };
+    out.down = { state: g.waves.state, hold: c.hold, shards: c.shards, tries: P.on(c).tries };
+    // two Fair Winds voyages done: Rough Air opens; sail it
+    P.on(c, 'fair').voyage = 3; g.garage.tab = 'charts';
+    out.opened = charts();
+    document.querySelector('[data-act="chart"][data-id="rough"]').click();
+    out.rough = { chart: c.chart, sail: document.getElementById('g-sail').textContent };
+    document.getElementById('g-sail').click(); g.step(7, {});
+    out.rough.banner = document.getElementById('banner-title').textContent;
+    out.rough.raiders = g.raiders.list.length; out.rough.purse = document.getElementById('purse').textContent;
     return out;
   });
   console.log(`voyage: ${JSON.stringify(v)}`);
-  if (v.start.state !== 'port' || v.start.ship !== 'skiff') problems.push(`a new Captain should start in port in the Skiff: ${JSON.stringify(v.start)}`);
+  if (v.start.state !== 'port' || v.start.ship !== 'skiff' || v.start.chart !== 'fair' || v.start.tab !== 'charts') problems.push(`a new Captain should start in port in the Skiff, on Fair Winds: ${JSON.stringify(v.start)}`);
+  if (v.start.charts.map((x) => x.shut).join() !== 'false,true,true' || !/ready/.test(v.start.charts[0].ready)) problems.push(`the charts at the start: ${JSON.stringify(v.start.charts)}`);
   if (!v.wave.length) problems.push('no raiders came when the Captain set sail');
   if (v.after.state !== 'after' || !v.after.choice || v.after.hold <= 0 || v.after.wave !== 2) problems.push(`after the first wave: ${JSON.stringify(v.after)}`);
   if (v.flewOn.streak !== 1 || v.flewOn.state !== 'fight') problems.push(`flying on: ${JSON.stringify(v.flewOn)}`);
   if (v.port.state !== 'port' || v.port.shards !== v.port.expected || !v.port.garage) problems.push(`putting in to port: ${JSON.stringify(v.port)}`);
   if (v.part.fitted[0] !== 'storm' || !(v.part.sails[1] > v.part.sails[0]) || !v.part.shows) problems.push(`fitting a part: ${JSON.stringify(v.part)}`);
-  if (v.part.mark !== 3 || !/Mk IV from voyage 5/.test(v.part.later ?? '')) problems.push(`Mk II, III, and Mk IV waiting: ${JSON.stringify(v.part)}`);
+  if (v.part.mark !== 3 || !/Mk IV once you've beaten danger 4/.test(v.part.later ?? '')) problems.push(`Mk II, III, and Mk IV waiting: ${JSON.stringify(v.part)}`);
   if (v.ship !== 'cutter') problems.push(`buying and sailing the Cutter: ${v.ship}`);
   if (v.skill.ranks !== 2 || v.skill.abilities.join() !== 'surge,ward' || !(v.surge > 1.4)) problems.push(`skills and Crystal Surge: ${JSON.stringify(v.skill)} surge ${v.surge}`);
   if (v.ward.shield !== 0.5 || v.ward.took !== 50 || !v.ward.shows || v.ward.after.shield !== 1 || v.ward.after.shows) problems.push(`the Sunstone Ward: ${JSON.stringify(v.ward)}`);
   if (!v.boss || v.boss.id !== 'cutter' || !v.boss.fits.length) problems.push(`the last wave's raider captain: ${JSON.stringify(v.boss)}`);
-  if (v.done.state !== 'port' || v.done.voyage !== 2 || v.done.wave !== 1 || v.done.hold !== 0) problems.push(`the voyage ending: ${JSON.stringify(v.done)}`);
-  if (v.down.state !== 'port' || v.down.hold !== 0) problems.push(`going down: ${JSON.stringify(v.down)}`);
+  if (v.done.state !== 'port' || v.done.voyage !== 2 || v.done.wave !== 1 || v.done.hold !== 0 || v.done.best !== 1) problems.push(`the voyage ending: ${JSON.stringify(v.done)}`);
+  if (v.down.state !== 'port' || v.down.hold !== 0 || v.down.tries !== 1) problems.push(`going down: ${JSON.stringify(v.down)}`);
+  if (v.opened[1].shut || !v.opened[2].shut) problems.push(`Rough Air should open after two Fair Winds voyages, Black Sky not yet: ${JSON.stringify(v.opened)}`);
+  if (v.rough.chart !== 'rough' || !/Rough Air, voyage 1/.test(v.rough.sail) || !/Rough Air, voyage 1/.test(v.rough.banner) || !v.rough.raiders || !/danger 3/.test(v.rough.purse)) problems.push(`sailing Rough Air: ${JSON.stringify(v.rough)}`);
   await page.evaluate(() => { const g = window.__game; g.garage.tab = 'parts'; });
   await page.waitForTimeout(1200);
   await shot(page, 'laptop-garage');

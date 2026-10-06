@@ -1,4 +1,6 @@
-// garage.js: the port's garage, the panel the Captain spends shards in. Four tabs:
+// garage.js: the port's garage, the panel the Captain spends shards in and picks the next voyage from. Five tabs:
+//   Charts    which chart to sail next (Fair Winds, Rough Air, Black Sky): each one's next voyage, its danger, and how
+//             ready the Captain's ship is for it
 //   Ships     buy the next ship up, or choose which one to sail
 //   Parts     buy parts and their upgrades (Mk I to V), and fit them into the ship's slots
 //   Tuning    share the crystal power between sails, guns and lift (free)
@@ -17,7 +19,8 @@ const { GAIN, COST } = P;
 
 // env: { captain(), names: { id: name }, changed(), setSail(), free() }
 export function makeGarage(env) {
-  let tab = 'ships', note = '';
+  let tab = 'charts', note = '';
+  const READY = { ready: 'ready for it', hard: 'a hard fight', beyond: 'not ready: it needs a stronger ship' };
   const C = () => env.captain();
   const say = (err, ok) => { note = err ?? ok ?? ''; if (!err) { P.save(C()); env.changed(); } render(); };
 
@@ -36,17 +39,33 @@ export function makeGarage(env) {
     const row = (k, base, mult, unit = '') => `<dt>${k}</dt><dd>${Math.round(base * mult).toLocaleString()}${unit}${Math.abs(mult - 1) > 0.005 ? ` <i>${pct(mult - 1)}</i>` : ''}</dd>`;
     return `<dl class="g-stats">${row('Hull', S.hull, e.hull)}${row('Sails', S.sails, e.sails)}${row('Crystals', S.crystals, e.crystals)}`
       + `${row('Top speed', kmh(H.vmax), e.speed, ' km/h')}${row('Turning', (H.turn * 180) / Math.PI, e.turn, '° a second')}${row('Climbing', H.climb, e.climb, ' m/s')}`
-      + `<dt>Guns</dt><dd>${S.bow} bow · ${S.stern} stern · ${S.side} a side</dd><dt>Part slots</dt><dd>${P.SLOTS[id]}</dd></dl>`;
+      + `<dt>Guns</dt><dd>${S.bow} bow · ${S.stern} stern · ${S.side} a side</dd><dt>Part slots</dt><dd>${P.SLOTS[id]}</dd>`
+      + `<dt>Strength</dt><dd>${P.strength(c, id).toFixed(1)}</dd></dl>`;
   }
 
   function render() {
     const c = C(), free = env.free();
     tabs();
     const lv = P.levelOf(c.renown);
-    $('g-purse').innerHTML = free ? 'Free flight: everything is yours' : `<b>${c.shards.toLocaleString()}</b> shards · voyage ${c.voyage}, wave ${c.wave} of ${P.wavesIn(c.voyage)}`;
+    const at = P.on(c), chart = P.CHARTS[c.chart];
+    $('g-purse').innerHTML = free ? 'Free flight: everything is yours' : `<b>${c.shards.toLocaleString()}</b> shards · ${chart.name}, voyage ${at.voyage}, wave ${at.wave} of ${P.wavesIn(at.voyage)}`;
+    $('g-sail').firstChild.textContent = free ? 'Back to the fight' : `Set sail: ${chart.name}, voyage ${at.voyage}`;
     $('g-note').textContent = note;
     let html = '';
-    if (tab === 'ships') {
+    if (tab === 'charts') {
+      html = `<p class="g-about">Pick the chart to sail. Each voyage has a danger, and needs a ship of a certain strength: your ship's
+        strength comes from her class, her parts and your skills. The harder charts pay more, and Black Sky needs a strong ship.</p>` + P.CHART_ORDER.map((id) => {
+        const C = P.CHARTS[id], a = P.on(c, id), open = P.chartOpen(c, id), sailing = c.chart === id;
+        const D = P.dangerOf(id, a.voyage), n = P.wavesIn(a.voyage), ready = P.readiness(c, id);
+        const btn = !open ? `<small class="later">Opens after ${C.opens.after} ${P.CHARTS[C.opens.chart].name} voyages</small>`
+          : sailing ? '<button type="button" class="chip" disabled>Sailing this chart</button>'
+            : `<button type="button" class="chip" data-act="chart" data-id="${id}">Sail this chart</button>`;
+        return `<article class="g-chart g-${id}${sailing ? ' on' : ''}${open ? '' : ' shut'}"><header><b>${C.name}</b><span>${P.doneOn(c, id)} voyage${P.doneOn(c, id) === 1 ? '' : 's'} done</span>${btn}</header>
+          <p class="g-next">Voyage ${a.voyage}${a.wave > 1 ? `, wave ${a.wave} of ${n}` : `, ${n} waves`} · <b>danger ${D}</b> · needs strength ${P.needFor(id, a.voyage).toFixed(1)}</p>
+          ${open ? `<p class="g-ready ${ready}">The ${env.names[c.ship]}, strength ${P.strength(c).toFixed(1)}: ${READY[ready]}</p>` : ''}
+          <small>${C.about}</small></article>`;
+      }).join('');
+    } else if (tab === 'ships') {
       html = P.SHIP_ORDER.map((id) => {
         const own = c.ships.includes(id), sailing = c.ship === id, price = P.SHIP_PRICE[id];
         const btn = sailing ? '<button type="button" class="chip" disabled>Sailing her</button>'
@@ -58,7 +77,7 @@ export function makeGarage(env) {
       const list = c.fitted[c.ship], slots = P.SLOTS[c.ship];
       html = `<p class="g-slots">${list.length} of ${slots} slot${slots > 1 ? 's' : ''} used on the ${env.names[c.ship]}</p>` + P.PARTS.map((Pt) => {
         const m = c.parts[Pt.id] ?? 0, fitted = list.includes(Pt.id), next = m + 1;
-        const buy = m >= P.MAX_MARK ? '' : !P.markOpen(c, next) ? `<small class="later">${MK[next]} from voyage ${P.MARK_FROM[next]}</small>`
+        const buy = m >= P.MAX_MARK ? '' : !P.markOpen(c, next) ? `<small class="later">${MK[next]} once you've beaten danger ${P.MARK_FROM[next]}</small>`
           : `<button type="button" class="chip buy" data-act="buypart" data-id="${Pt.id}"${c.shards < Pt.price[m] && !free ? ' aria-disabled="true"' : ''}>${m ? `Upgrade to ${MK[next]}` : 'Buy Mk I'} · ${Pt.price[m].toLocaleString()}</button>`;
         const fit = !m ? '' : `<button type="button" class="chip" data-act="${fitted ? 'unfit' : 'fit'}" data-id="${Pt.id}" aria-pressed="${fitted}">${fitted ? 'Fitted' : 'Fit'}</button>`;
         return `<article class="g-part${fitted ? ' on' : ''}"><header><b>${Pt.name}</b><span>${m ? MK[m] : 'Not bought'}</span></header>`
@@ -75,7 +94,7 @@ export function makeGarage(env) {
       const pts = P.skillPoints(c);
       html = `<div class="g-level"><b>Level ${lv.level}</b>${lv.need ? `<span class="meter"><i style="width:${(lv.into / lv.need) * 100}%"></i></span><small>${lv.into} of ${lv.need} renown to level ${lv.level + 1}</small>` : '<small>The top level</small>'}</div>
         <p class="g-about">${pts > 0 ? `<b>${pts}</b> skill point${pts > 1 ? 's' : ''} to spend.` : 'Renown from raiders and waves wins levels; each level is a skill point.'}
-        ${P.DIFFICULTY[c.difficulty].name}.</p>` + P.SKILLS.map((S) => {
+        ${c.best ? `Best voyage beaten: danger ${c.best}.` : ''}</p>` + P.SKILLS.map((S) => {
         const r = c.ranks[S.id], A = S.ability;
         const pips = Array.from({ length: P.MAX_RANK }, (_, i) => `<i class="${i < r ? 'on' : ''}${i === 1 || i === 3 || i === 5 ? ' mark' : ''}"></i>`).join('');
         const per = Object.entries(S.per).map(([k, x]) => `${pct(x)} ${WORDS[k]}`).join(', ');
@@ -93,6 +112,7 @@ export function makeGarage(env) {
     const b = e.target.closest('button[data-act]'); if (!b) return;
     const c = C(), id = b.dataset.id, free = env.free();
     switch (b.dataset.act) {
+      case 'chart': if (!P.chartOpen(c, id)) return say('That chart isn\'t open yet'); c.chart = id; return say(null, `${P.CHARTS[id].name} it is: set sail when you're ready`);
       case 'buyship': return say(P.buyShip(c, id), `The ${env.names[id]} is yours`);
       case 'sail': return say(P.chooseShip(c, id), `Sailing the ${env.names[id]}`);
       case 'buypart': {
@@ -117,7 +137,7 @@ export function makeGarage(env) {
   $('g-sail').addEventListener('click', () => env.setSail());
 
   return {
-    open() { $('port').hidden = false; document.body.classList.add('in-port'); note = ''; render(); },
+    open() { $('port').hidden = false; document.body.classList.add('in-port'); note = ''; tab = env.free() ? 'ships' : 'charts'; render(); },
     close() { $('port').hidden = true; document.body.classList.remove('in-port'); },
     render, get tab() { return tab; }, set tab(t) { tab = t; render(); },
   };

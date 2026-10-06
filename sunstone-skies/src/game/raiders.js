@@ -5,8 +5,9 @@
 //   Skiffs and Cutters chase: they come at the Captain bow-first, fire their bow guns, and break away when close.
 //   Brigs, Frigates, Galleons and Men-o'-war fight broadside: they come alongside at a few hundred metres and fire
 //   whole sides.
-// How hard they fight comes from the difficulty and the voyage (progress.js). A raider captain sails a ship fitted
-// out with garage parts, which show on it, and is twice as tough.
+// How hard they fight comes from the chart and the voyage's danger (progress.js). A raider captain sails a ship fitted
+// out with garage parts, which show on it, and is half as tough again as the rest of their class (more at the top
+// dangers).
 import * as THREE from 'three';
 import { shipMotion } from '../ship/build.js';
 import { STATS } from '../ships/index.js';
@@ -17,11 +18,11 @@ import { hitZones, firstHit } from './damage.js';
 import { CLOUD_Y } from './world.js';
 import { fleetModel, fleetShip } from '../fleet/build.js';
 import { COLOURS } from '../fleet/materials.js';
-import { DIFFICULTY, effects, looks, newCaptain } from './progress.js';
+import { CHARTS, effects, looks, newCaptain } from './progress.js';
 
-// How the raiders compare with the Captain on the middle setting (Rough Air): sail a little slower, reload half as
+// How the raiders compare with the Captain on the middle chart (Rough Air): sail a little slower, reload half as
 // slowly again, and aim a little off (by this much for every metre to the target)
-export const RAIDER = { pace: DIFFICULTY.rough.pace, slow: DIFFICULTY.rough.slow, aim: DIFFICULTY.rough.aim };
+export const RAIDER = { pace: CHARTS.rough.pace, slow: CHARTS.rough.slow, aim: CHARTS.rough.aim };
 const ROLE = { skiff: 'chaser', cutter: 'chaser', brig: 'broadside', frigate: 'broadside', galleon: 'broadside', manowar: 'broadside' };
 // The Galleon and the Man-o'-war are drawn at most at middle detail as raiders: there can be several of them in a fight
 const TOP = { galleon: 'middle', manowar: 'middle' };
@@ -85,9 +86,9 @@ export function makeRaiders(scene, art, bolts, fart) {
   const list = [];
   let ai = true;
 
-  // A raider. o: { difficulty, level (progress.js raiderLevel), captain: { name, fits, health } }
+  // A raider. o: { chart, level (progress.js raiderLevel), captain: { name, fits, health } }
   function spawn(id, pos, heading, frozen = false, o = {}) {
-    const D = DIFFICULTY[o.difficulty ?? 'rough'], L = o.level ?? { health: 1, damage: 1, slow: 1, aim: 1 }, cap = o.captain;
+    const D = CHARTS[o.chart ?? 'rough'], L = o.level ?? { health: 1, damage: 1, slow: 1, aim: 1 }, cap = o.captain;
     // a captain's ship carries parts (Mk I on the first voyage, better later); their numbers come from the same rules as the Captain's
     let m = {}, fits = {};
     if (cap) {

@@ -179,11 +179,21 @@
   .chip[aria-pressed='true'] { background: var(--plum); color: var(--gold); border-color: var(--gold); }
   .chip.buy { border-color: var(--gold); color: var(--gold); }
   .chip[aria-disabled='true'], .chip:disabled { opacity: 0.45; }
-  .g-card, .g-part, .g-skill { padding: 8px 10px; border: 1px solid rgba(236, 220, 184, 0.3); border-radius: 6px; background: rgba(0, 0, 0, 0.2); display: grid; gap: 3px; }
-  .g-card.on, .g-part.on { border-color: var(--gold); background: rgba(90, 36, 72, 0.35); }
-  .g-card header, .g-part header, .g-skill header { display: flex; align-items: center; gap: 8px; }
-  .g-card header b, .g-part header b, .g-skill header b { font: 400 21px/1 var(--display); color: var(--cream); }
-  .g-card header span, .g-part header span { flex: 1; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  .g-card, .g-part, .g-skill, .g-chart { padding: 8px 10px; border: 1px solid rgba(236, 220, 184, 0.3); border-radius: 6px; background: rgba(0, 0, 0, 0.2); display: grid; gap: 3px; }
+  .g-card.on, .g-part.on, .g-chart.on { border-color: var(--gold); background: rgba(90, 36, 72, 0.35); }
+  .g-card header, .g-part header, .g-skill header, .g-chart header { display: flex; align-items: center; gap: 8px; }
+  .g-card header b, .g-part header b, .g-skill header b, .g-chart header b { font: 400 21px/1 var(--display); color: var(--cream); }
+  .g-card header span, .g-part header span, .g-chart header span { flex: 1; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  .g-chart p { margin: 0; font-size: 14px; }
+  .g-chart small { font-size: 12.5px; color: var(--dim); }
+  .g-chart .later { font-size: 12px; }
+  .g-chart.shut { opacity: 0.6; }
+  .g-chart.g-black { border-color: rgba(160, 120, 200, 0.45); }
+  .g-chart.g-black header b { color: #d9c2ff; }
+  .g-next b { color: var(--gold); font-weight: 400; }
+  .g-ready { padding-left: 14px; position: relative; }
+  .g-ready::before { content: ''; position: absolute; left: 0; top: 0.42em; width: 8px; height: 8px; border-radius: 50%; }
+  .g-ready.ready::before { background: #8fd889; } .g-ready.hard::before { background: var(--gold); } .g-ready.beyond::before { background: var(--warn); }
   .g-part footer { display: flex; gap: 6px; justify-content: flex-end; }
   .g-part footer .later { align-self: center; font-size: 12px; color: var(--dim); }
   .g-what { display: grid; gap: 1px; }
@@ -208,12 +218,14 @@
   .pips i.on { background: var(--gold); }
 
   /* the start: a new Captain, carrying on, or free flight */
-  #start { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(14, 22, 38, 0.35), rgba(8, 6, 14, 0.82)); z-index: 6; }
-  #start .card { display: grid; gap: 12px; justify-items: center; padding: 22px 28px 24px; text-align: center; max-width: min(620px, 92vw); }
+  #start { position: fixed; inset: 0; display: flex; overflow-y: auto; background: radial-gradient(ellipse at center, rgba(14, 22, 38, 0.35), rgba(8, 6, 14, 0.82)); z-index: 6; }
+  /* margin: auto centres the card, and in a short window lets it scroll from the top */
+  #start .card { margin: auto; display: grid; gap: 12px; justify-items: center; padding: 22px 28px 24px; text-align: center; max-width: min(620px, 92vw); }
   #start h1 { margin: 0; font: 400 clamp(56px, 8vw, 92px)/0.9 var(--display); color: var(--cream); text-shadow: 0 3px 0 #000, 0 0 30px rgba(226, 189, 103, 0.4); }
   #start p { margin: 0; color: var(--dim); font-size: 14px; max-width: 46ch; }
   #start .row2 { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  #start .diff { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(236, 220, 184, 0.5); background: var(--panel); min-width: 150px; }
+  #start .diff { display: grid; gap: 2px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(236, 220, 184, 0.5); background: var(--panel); flex: 1 1 150px; max-width: 190px; }
+  #start .diff.black { border-color: rgba(160, 120, 200, 0.6); } #start .diff.black b { color: #d9c2ff; }
   #start .diff b { font: 400 22px/1 var(--display); color: var(--gold); }
   #start .diff small { font-size: 12px; color: var(--dim); }
   #start h2 { margin: 6px 0 0; font: 400 22px/1 var(--display); color: var(--cream); }
@@ -313,6 +325,7 @@
 <section id="port" hidden aria-label="The garage">
   <header><h2>The Garage</h2><p id="g-purse"></p></header>
   <nav id="g-tabs" role="tablist">
+    <button type="button" role="tab" data-tab="charts">Charts</button>
     <button type="button" role="tab" data-tab="ships">Ships</button>
     <button type="button" role="tab" data-tab="parts">Parts</button>
     <button type="button" role="tab" data-tab="tuning">Tuning</button>
@@ -327,13 +340,14 @@
   <div class="card panel">
     <h1>Sunstone Skies</h1>
     <p>Fly the Captain's ships over Aethermoor. Win shards from raiders, bank them in port, and build up your fleet, your ships' parts and your own skills, voyage by voyage.</p>
-    <button type="button" class="big go" id="start-continue" hidden>Carry on the voyage</button>
-    <h2>A new Captain</h2>
-    <div class="row2">
-      <button type="button" class="diff" data-new="fair"><b>Fair Winds</b><small>Gentler raiders. Going down keeps half the hold</small></button>
-      <button type="button" class="diff" data-new="rough"><b>Rough Air</b><small>As the raiders are meant to be. Shards pay a quarter more</small></button>
-      <button type="button" class="diff" data-new="black"><b>Black Sky</b><small>Fast, sharp-eyed raiders. Shards pay 40% more</small></button>
+    <div class="row2 charts">
+      <div class="diff"><b>Fair Winds</b><small>Sloppy raiders, gentle rules. Start here</small></div>
+      <div class="diff"><b>Rough Air</b><small>Raiders as they're meant to be, better pay. Opens after two Fair Winds voyages</small></div>
+      <div class="diff black"><b>Black Sky</b><small>Sharp raiders, no mercy, the best pay. Opens after three Rough Air voyages, and needs a strong ship</small></div>
     </div>
+    <p>One Captain sails all three charts: the shards won on the easier ones buy the ships and parts the harder ones need.</p>
+    <button type="button" class="big go" id="start-continue" hidden>Carry on</button>
+    <button type="button" class="big go" id="start-new">A new Captain</button>
     <button type="button" class="big" id="start-free">Free flight: every ship and part, endless waves</button>
   </div>
 </section>

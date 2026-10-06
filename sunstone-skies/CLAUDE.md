@@ -26,5 +26,6 @@ node tools/build.mjs
 npm test                       # the progress rules
 node tools/check.mjs           # the game: must end with "all good"
 node tools/check-shipyard.mjs  # the shipyard: must end with "all good"
-node tools/sim-voyage.mjs campaign rough 600 10   # the balance, as a simulated Captain plays it
+node tools/sim-voyage.mjs campaign 600 30        # the balance, as a simulated Captain plays it (docs/balance.md)
+node tools/sim-voyage.mjs rate 16                # the strength rating's numbers
 ```

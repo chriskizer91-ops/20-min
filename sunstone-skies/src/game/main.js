@@ -233,9 +233,10 @@ async function main() {
     if (W.mode !== 'free' || !director.calm || W.state === 'port') return;
     W.state = 'port'; garage.open(); frameView();
   }
-  function begin(mode, difficulty) {
+  // begin playing: free flight, a new Captain (fresh: true), or carrying on with the saved one
+  function begin(mode, fresh = false) {
     if (mode === 'free') cap = P.freeCaptain();
-    else if (difficulty) { P.forget(); cap = P.newCaptain(difficulty); P.save(cap); }
+    else if (fresh) { P.forget(); cap = P.newCaptain(); P.save(cap); }
     else cap = P.load() ?? P.newCaptain();
     document.body.classList.toggle('free', mode === 'free');
     $('start').hidden = true;
@@ -244,8 +245,14 @@ async function main() {
     abilities.reset(); updatePurse();
   }
   $('start-continue').hidden = !P.load();
+  if (P.load()) $('start-new').textContent = 'A new Captain (starts over)';
   $('start-continue').addEventListener('click', () => begin('campaign'));
-  for (const b of document.querySelectorAll('[data-new]')) b.addEventListener('click', () => begin('campaign', b.dataset.new));
+  // with a Captain saved, a new one takes a second click: the saved one is forgotten
+  $('start-new').addEventListener('click', (e) => {
+    const b = e.currentTarget;
+    if (P.load() && !b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Click again to start over: the saved Captain is forgotten'; return; }
+    begin('campaign', true);
+  });
   $('start-free').addEventListener('click', () => begin('free'));
   fly(cap.ship);
   resize();
@@ -339,7 +346,8 @@ async function main() {
     if (!player) return;
     const lv = P.levelOf(cap.renown);
     if (W.mode === 'free') { $('purse').innerHTML = `Free flight · wave <b>${W.n + 1}</b> · downed <b>${downed}</b>`; $('level').hidden = true; return; }
-    $('purse').innerHTML = `Voyage <b>${cap.voyage}</b> · wave <b>${cap.wave}</b> of ${P.wavesIn(cap.voyage)} · hold <b>${cap.hold}</b>${cap.streak ? ` ×${P.holdBonus(cap).toFixed(1)}` : ''} · shards <b>${cap.shards.toLocaleString()}</b>`;
+    const at = P.on(cap);
+    $('purse').innerHTML = `${P.CHARTS[cap.chart].name} · voyage <b>${at.voyage}</b> · wave <b>${at.wave}</b> of ${P.wavesIn(at.voyage)} · danger <b>${P.danger(cap)}</b> · hold <b>${cap.hold}</b>${cap.streak ? ` ×${P.holdBonus(cap).toFixed(1)}` : ''} · shards <b>${cap.shards.toLocaleString()}</b>`;
     $('level').hidden = false;
     $('level-n').textContent = lv.level;
     $('level-bar').style.width = `${lv.need ? (lv.into / lv.need) * 100 : 100}%`;
