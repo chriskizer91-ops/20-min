@@ -4,8 +4,8 @@
 //   dist/game.html    each of the six ships flown: how fast it goes, turns and climbs; every battery fired at a
 //                     raider and hitting it; a raider shot down; raiders fighting back; the Captain going down and
 //                     coming back; the keyboard, mouse and touch controls answering; pictures of a battle; the
-//                     settings, sound, aiming at a part, crystal power, the photo camera, the flight guide, exploring
-//                     and trees when flying low
+//                     settings, sound, aiming at a part, crystal power, the photo camera (and saving its pictures on
+//                     claude.ai), the flight guide, exploring and trees when flying low
 // Run: node tools/build.mjs && node tools/check.mjs [folder]
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -406,6 +406,25 @@ function battle(ids = ['frigate', 'cutter']) {
   if (trees.low < 50 || trees.high !== 0) problems.push(`trees when flying low: ${JSON.stringify(trees)}`);
   await page.waitForTimeout(1500);
   await shot(page, 'laptop-trees');
+  await page.close();
+}
+
+{
+  // on claude.ai a page can't download a file by itself: the photo camera offers its picture through the page's
+  // download permission (claude.use('downloads')), and the player says yes. A stand-in for it here.
+  const page = await browser.newPage(SIZES.laptop);
+  page.on('pageerror', (e) => problems.push(`game on claude.ai: ${e.message}`));
+  await page.addInitScript(() => {
+    const downloads = Object.freeze({ async save({ filename, data }) { window.__saved = { filename, bytes: data.byteLength, png: [...data.slice(0, 4)].join(' ') }; return { status: 'saved' }; } });
+    window.claude = Object.freeze({ use: async (name) => (name === 'downloads' ? downloads : null) });
+  });
+  await page.goto(`file://${root}dist/game.html`);
+  await page.waitForFunction(gameReady, null, { timeout: 180000 });
+  await page.evaluate(() => { const g = window.__game; g.begin('free'); g.step(0.2, {}); g.photo.enter(); g.photo.save(); });
+  await wait(page, () => window.__saved && /saved/.test(document.getElementById('photo-note').textContent), null, 'the photo camera saving through claude.ai');
+  const saved = await page.evaluate(() => ({ ...window.__saved, note: document.getElementById('photo-note').textContent }));
+  console.log('photo camera on claude.ai:', JSON.stringify(saved));
+  if (!/^Sunstone Skies .*\.png$/.test(saved.filename ?? '') || saved.png !== '137 80 78 71' || !(saved.bytes > 10000)) problems.push(`the photo camera on claude.ai: ${JSON.stringify(saved)}`);
   await page.close();
 }
 

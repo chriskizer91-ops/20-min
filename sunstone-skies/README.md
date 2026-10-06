@@ -89,7 +89,7 @@ Back in port it's your own tuning again.
 
 - **O** opens the photo camera: the game stops, the HUD goes, and you can fly the camera round your ship (drag, and the
   mouse wheel to come closer). There's a lens from wide to long, the light, and **Save picture**, which puts a picture
-  in your downloads. O or Esc goes back to flying.
+  in your downloads (on the claude.ai link it asks you first). O or Esc goes back to flying.
 - The **flight guide** shows a few tips the first time you fly, each moving on once you've done it. It can be turned
   off, or shown again, in the settings.
 - The **settings** (Esc, or the gear) hold the sound and music and their volumes, the mouse speed, how much the camera

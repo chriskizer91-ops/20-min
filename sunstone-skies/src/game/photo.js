@@ -52,17 +52,37 @@ export function makePhoto(env) {
     env.renderer.toneMappingExposure = Number($('photo-light').value) / 100;
   }
   const zoom = (k) => { if (shot) shot.dist = clamp(shot.dist * k, shot.min, 4500); };
+  // On claude.ai the page can't download a file by itself: it offers the picture and the player says yes or no. Opened
+  // as a file of its own, it saves the picture straight into the downloads.
+  const onClaude = !!window.claude?.use;
+  const downloads = onClaude ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  const note = (text) => { $('photo-note').textContent = text; };
+  const cannot = 'The picture couldn\'t be saved here: use your computer\'s screenshot keys.';
   function save() {
     if (!shot) return null;
     try {
       frame(); env.renderer.render(env.scene, env.camera); // the picture is read straight after drawing it
-      const url = env.renderer.domElement.toDataURL('image/png'), a = document.createElement('a');
-      a.download = `Sunstone Skies ${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.png`; a.href = url;
+      const url = env.renderer.domElement.toDataURL('image/png');
+      const name = `Sunstone Skies ${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.png`;
+      if (onClaude) {
+        note('Saving…');
+        downloads.then((d) => {
+          if (!d) { note(cannot); return; }
+          const bin = atob(url.slice(url.indexOf(',') + 1)), bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          return d.save({ filename: name, data: bytes }).then(
+            (r) => note(r?.status === 'delivered' ? 'Picture sent.' : 'Picture saved, into your downloads.'),
+            (e) => note(e?.code === 'declined' ? 'Not saved.' : e?.code === 'rate_limited' ? 'One moment, then Save picture again.' : cannot));
+        }).catch(() => note(cannot));
+        return url;
+      }
+      const a = document.createElement('a');
+      a.download = name; a.href = url;
       document.body.append(a); a.click(); a.remove();
-      $('photo-note').textContent = 'Picture saved, into your downloads.';
+      note('Picture saved, into your downloads.');
       return url;
     } catch {
-      $('photo-note').textContent = 'The picture couldn\'t be saved here: use your computer\'s screenshot keys.';
+      note(cannot);
       return null;
     }
   }
