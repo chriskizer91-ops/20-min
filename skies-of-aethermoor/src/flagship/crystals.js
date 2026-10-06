@@ -109,7 +109,7 @@ export function furnaces(hull, batch, R, q, S, glows, lights, embers) {
 }
 
 // A glowing conduit along these points: a glass tube with pulses running along it, held by brass clamps
-function conduit(batch, pts, sys, q, S, r = 0.07) {
+function conduit(batch, pts, sys, q, S, r = 0.095) {
   const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2), len = curve.getLength();
   const n = Math.max(4, Math.round(len * (q.level === 'full' ? 3 : 1)));
   const g = new THREE.TubeGeometry(curve, n, r, q.level === 'full' ? 7 : 4, false);
@@ -144,6 +144,6 @@ export function conduits(hull, batch, R, q, S, furn) {
   for (const s of [1, -1]) {
     const pts = [];
     for (let z = Q.front + 0.5; z <= Fc.back - 0.4; z += 1.2) pts.push(V(s * (hull.deckHalf(z) - 0.55), hull.deckY(z) + lift, z));
-    conduit(batch, pts, 1, q, S, 0.075);
+    conduit(batch, pts, 1, q, S, 0.1);
   }
 }

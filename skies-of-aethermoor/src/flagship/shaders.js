@@ -19,7 +19,7 @@ export function shipUniforms() {
     uPow: { value: new THREE.Vector3(1 / 3, 1 / 3, 1 / 3) },
     uStrake: { value: new THREE.Vector4(-0.9, -2.7, 1, 0) },
     uPaint: { value: new THREE.Color(0x6a2456) },
-    uFlowColor: { value: new THREE.Color(0xffa63d) },
+    uFlowColor: { value: new THREE.Color(0xff7418) },
   };
 }
 
@@ -95,13 +95,14 @@ const COLOR_F = /* glsl */`
     dDark = max(dDark, s * 0.75); }
   #endif
   #ifdef SCORCH
-  { float n = ffbm(vRest * 0.45 + 2.0); float t = uHullDmg > 0.02 ? 0.12 + uHullDmg * 0.36 : -1.0;
-    float c = 1.0 - smoothstep(t - 0.05, t + 0.03, n), hole = 1.0 - smoothstep(t - 0.16, t - 0.11, n);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.045, 0.032, 0.026), c * 0.88);
-    diffuseColor.rgb *= 1.0 - hole * 0.92;
+  { float n = ffbm(vRest * 0.7 + 2.0); float t = uHullDmg > 0.02 ? 0.14 + uHullDmg * 0.42 : -1.0;
+    float c = 1.0 - smoothstep(t - 0.04, t + 0.025, n), hole = 1.0 - smoothstep(t - 0.13, t - 0.1, n);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.04, 0.03, 0.025), c * 0.9);
+    diffuseColor.rgb *= 1.0 - hole * 0.95;
     dDark = max(dDark, c);
-    float ember = smoothstep(t - 0.11, t - 0.07, n) * (1.0 - smoothstep(t - 0.05, t - 0.01, n));
-    dGlow += vec3(1.0, 0.32, 0.05) * ember * smoothstep(0.35, 0.75, uHullDmg) * (0.7 + 0.3 * sin(uTime * 7.0 + vRest.z * 3.0)) * 1.4; }
+    // a thin glowing rim round each hole once she's badly hurt, smouldering
+    float ember = smoothstep(t - 0.12, t - 0.1, n) * (1.0 - smoothstep(t - 0.095, t - 0.075, n));
+    dGlow += vec3(1.0, 0.22, 0.03) * ember * smoothstep(0.4, 0.8, uHullDmg) * (0.6 + 0.4 * sin(uTime * 7.0 + vRest.z * 3.0)) * 0.9; }
   #endif
   #ifdef GEM
   { float dead = step(uCrystal, vTag); vec3 cold = vec3(0.22, 0.18, 0.3);
@@ -123,7 +124,7 @@ const EMISSIVE_F = /* glsl */`
   { float share = vTag < 0.5 ? uPow.x : vTag < 1.5 ? uPow.y : uPow.z;
     float pulse = pow(0.5 + 0.5 * sin(vFlowU * 6.2831 - uTime * (1.5 + share * 9.0)), 5.0);
     float live = smoothstep(0.0, 0.25, uCrystal);
-    totalEmissiveRadiance = uFlowColor * (0.18 + share * 1.9) * (0.35 + pulse * 1.6) * live; }
+    totalEmissiveRadiance = uFlowColor * (0.12 + share * 1.3) * (0.3 + pulse * 1.7) * live; }
   #endif
 `;
 
