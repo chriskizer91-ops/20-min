@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sunstone Shipyard</title>
+<style>
+  /* The Captain's Frigate in the shipyard, over the clouds at sunset. The game's own look: plum panels with a cream
+     edge, gold for names, the two game fonts. Everything is inside this one file, so it works with no internet. */
+  @font-face { font-family: 'Jacquard 12'; src: url(/*FONT_DISPLAY*/) format('woff'); font-display: swap; }
+  @font-face { font-family: 'Pixelify Sans'; src: url(/*FONT_BODY*/) format('woff'); font-display: swap; }
+  :root {
+    color-scheme: dark;
+    --night: #0d0a1a;
+    --panel: rgba(24, 12, 30, 0.88);
+    --plum: #3a1631;
+    --cream: #ecdcb8;
+    --ink: #f3ead8;
+    --dim: #c3b4cf;
+    --gold: #e2bd67;
+    --good: #a8e0a0;
+    --bad: #ffb4a0;
+    --display: 'Jacquard 12', 'Georgia', serif;
+    --body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+    --gutter: max(16px, env(safe-area-inset-left, 0px));
+  }
+  /* one deliberate look: the sunset world of the game, the same in either theme */
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); overflow: hidden; }
+  body { font: 15px/1.4 var(--body); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; opacity: 0; transition: opacity 0.8s; }
+  body.ready #stage { opacity: 1; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  #title { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: var(--gutter); pointer-events: none;
+    text-shadow: 0 2px 0 #000, 0 0 18px rgba(0, 0, 0, 0.85); }
+  #title h1 { margin: 0; font: 400 clamp(30px, 5vw, 50px)/0.95 var(--display); color: var(--cream); }
+  #title p { margin: 4px 0 0 2px; font-size: 13px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.5); border-radius: 8px; }
+  .seg button { padding: 6px 11px; min-height: 36px; background: none; border: 0; border-radius: 6px; font-size: 14px; }
+  .seg button[aria-pressed='true'] { background: var(--plum); color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+  #which { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: var(--gutter); }
+  #fleet { position: fixed; left: var(--gutter); top: calc(96px + env(safe-area-inset-top, 0px)); }
+  #fleet button { display: grid; justify-items: center; line-height: 1; gap: 3px; padding: 6px 10px 5px; }
+  #fleet button b { font: 400 20px/0.9 var(--display); color: inherit; }
+  #fleet button small { font-size: 10.5px; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; }
+  #fleet button[aria-pressed='true'] small { color: var(--cream); }
+  #views { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); max-width: calc(100% - 2 * var(--gutter)); }
+
+  /* the panel: tabs for the working parts, damage, the garage and the power */
+  #panel { position: fixed; top: calc(70px + env(safe-area-inset-top, 0px)); right: var(--gutter); width: min(340px, 42vw); max-height: calc(100% - 150px);
+    display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(58, 22, 49, 0.94), rgba(20, 9, 26, 0.94)); border: 2px solid var(--cream);
+    border-radius: 8px; box-shadow: inset 0 0 0 3px var(--plum), 0 10px 30px rgba(0, 0, 0, 0.55); }
+  #tabs { display: flex; gap: 2px; padding: 6px 6px 0; }
+  #tabs button { flex: 1; padding: 7px 4px 6px; min-height: 36px; background: none; border: 0; border-bottom: 2px solid transparent; font-size: 13.5px; color: var(--dim); }
+  #tabs button[aria-selected='true'] { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab { padding: 10px 14px 14px; overflow-y: auto; }
+  .tab h2 { margin: 0 0 2px; font: 400 26px/1 var(--display); color: var(--gold); }
+  .tab p.note { margin: 2px 0 10px; font-size: 13px; color: var(--dim); }
+  .row { display: grid; grid-template-columns: 74px 1fr 46px; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; }
+  .row label { color: var(--cream); }
+  .row output { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-size: 13px; }
+  input[type=range] { width: 100%; accent-color: var(--gold); min-height: 30px; margin: 0; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+  .chip { padding: 6px 11px; min-height: 36px; background: var(--panel); border: 1px solid rgba(236, 220, 184, 0.55); border-radius: 6px; font-size: 14px; }
+  .chip[aria-pressed='true'] { background: var(--plum); color: var(--gold); border-color: var(--gold); }
+  .chip.fire { border-color: #ffb46a; color: #ffd6a0; }
+  .part { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 10px; margin: 6px 0; border: 1px solid rgba(236, 220, 184, 0.35); border-radius: 6px; background: rgba(0, 0, 0, 0.18); }
+  .part b { font-weight: 400; color: var(--cream); font-size: 15px; }
+  .part small { grid-column: 1; font-size: 12.5px; }
+  .part .gain { color: var(--good); } .part .cost { color: var(--bad); }
+  .part button { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+  #slots { font-size: 13px; color: var(--gold); margin: 2px 0 6px; }
+  #btn-panel { position: fixed; top: calc(62px + env(safe-area-inset-top, 0px)); right: var(--gutter); display: none; }
+  #tri { position: fixed; left: var(--gutter); bottom: calc(66px + env(safe-area-inset-bottom, 0px)); font-size: 12px; color: var(--ink); text-shadow: 0 1px 0 #000, 0 0 10px #000; font-variant-numeric: tabular-nums; pointer-events: none; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; font: 400 30px var(--display); color: var(--dim); transition: opacity 0.6s; }
+  body.ready #loading { opacity: 0; }
+  #error { position: fixed; inset: auto 16px 16px; padding: 12px; background: #3a0d18; border: 1px solid #ff7a8a; border-radius: 6px; }
+
+  @media (max-width: 700px) {
+    #title h1 { font-size: 30px; }
+    #title p { font-size: 11px; }
+    #which { top: calc(60px + env(safe-area-inset-top, 0px)); left: var(--gutter); right: auto; }
+    #btn-panel { display: block; top: calc(60px + env(safe-area-inset-top, 0px)); }
+    #panel { top: auto; bottom: calc(58px + env(safe-area-inset-bottom, 0px)); left: var(--gutter); right: var(--gutter); width: auto; max-height: 46%; }
+    body.closed #panel { display: none; }
+    #views { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); flex-wrap: nowrap; }
+    #views button { padding: 6px 7px; font-size: 13px; min-height: 34px; }
+    #fleet { top: calc(104px + env(safe-area-inset-top, 0px)); }
+    #fleet button { padding: 5px 7px 4px; }
+    #tri { bottom: auto; top: calc(160px + env(safe-area-inset-top, 0px)); }
+    .row { grid-template-columns: 64px 1fr 42px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="title"><h1>The Tempest</h1><p>Frigate · 40 m · levelled up</p></div>
+<div id="fleet" class="seg" role="group" aria-label="Ship"></div>
+<div id="which" class="seg" role="group" aria-label="Which model">
+  <button type="button" data-which="after" aria-pressed="true">New</button>
+  <button type="button" data-which="before" aria-pressed="false">Old</button>
+  <button type="button" data-which="both" aria-pressed="false">Both</button>
+</div>
+<button type="button" id="btn-panel" class="chip" aria-expanded="true">Hide</button>
+<section id="panel">
+  <div id="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="work" aria-selected="true">Working</button>
+    <button type="button" role="tab" data-tab="damage" aria-selected="false">Damage</button>
+    <button type="button" role="tab" data-tab="garage" aria-selected="false">Garage</button>
+    <button type="button" role="tab" data-tab="power" aria-selected="false">Power</button>
+  </div>
+  <div class="tab" id="tab-work">
+    <h2>Working parts</h2>
+    <p class="note">Take in sail and the wings fold back and furl. Put her over and the rudder, wheel and fins answer.</p>
+    <div class="row"><label for="c-sail">Sail</label><input id="c-sail" type="range" min="0" max="100" value="55"><output id="o-sail">55%</output></div>
+    <div class="row"><label for="c-turn">Helm</label><input id="c-turn" type="range" min="-100" max="100" value="0"><output id="o-turn">ahead</output></div>
+    <div class="row"><label for="c-climb">Climb</label><input id="c-climb" type="range" min="-100" max="100" value="0"><output id="o-climb">level</output></div>
+    <p class="note" style="margin-top:10px">Battle stations: the lids swing up and the guns run out.</p>
+    <div class="buttons">
+      <button type="button" class="chip" id="st-port" aria-pressed="false">Port guns out</button>
+      <button type="button" class="chip" id="st-starboard" aria-pressed="false">Starboard guns out</button>
+    </div>
+    <div class="buttons">
+      <button type="button" class="chip fire" data-fire="bow">Fire bow</button>
+      <button type="button" class="chip fire" data-fire="port">Fire port</button>
+      <button type="button" class="chip fire" data-fire="starboard">Fire starboard</button>
+      <button type="button" class="chip fire" data-fire="stern">Fire stern</button>
+    </div>
+  </div>
+  <div class="tab" id="tab-damage" hidden>
+    <h2>Damage</h2>
+    <p class="note">What each kind of shot does to her, so you can see what you hit.</p>
+    <div class="row"><label for="d-hull">Hull</label><input id="d-hull" type="range" min="0" max="100" value="100"><output id="o-hull">100%</output></div>
+    <div class="row"><label for="d-sails">Sails</label><input id="d-sails" type="range" min="0" max="100" value="100"><output id="o-sails">100%</output></div>
+    <div class="row"><label for="d-crystals">Crystals</label><input id="d-crystals" type="range" min="0" max="100" value="100"><output id="o-crystals">100%</output></div>
+    <div class="buttons"><button type="button" class="chip" id="btn-repair">Repair her</button></div>
+  </div>
+  <div class="tab" id="tab-garage" hidden>
+    <h2>Garage</h2>
+    <p id="slots">0 of 4 part slots used</p>
+    <div id="parts"></div>
+  </div>
+  <div class="tab" id="tab-power" hidden>
+    <h2>Crystal power</h2>
+    <p class="note">Tuning is free. Share the crystals' power between sails, guns and lift, and watch it run along the glowing pipes.</p>
+    <div class="row"><label for="p-sails">Sails</label><input id="p-sails" type="range" min="0" max="100" value="33"><output id="o-psails">33%</output></div>
+    <div class="row"><label for="p-guns">Guns</label><input id="p-guns" type="range" min="0" max="100" value="33"><output id="o-pguns">33%</output></div>
+    <div class="row"><label for="p-lift">Lift</label><input id="p-lift" type="range" min="0" max="100" value="34"><output id="o-plift">34%</output></div>
+    <div class="buttons"><button type="button" class="chip" id="btn-even">Share evenly</button></div>
+  </div>
+</section>
+<div id="views" class="seg" role="group" aria-label="Views">
+  <button type="button" data-view="turn" aria-pressed="true">Turn</button>
+  <button type="button" data-view="side" aria-pressed="false">Side</button>
+  <button type="button" data-view="front" aria-pressed="false">Bow</button>
+  <button type="button" data-view="back" aria-pressed="false">Stern</button>
+  <button type="button" data-view="deck" aria-pressed="false">Deck</button>
+  <button type="button" data-view="below" aria-pressed="false">Below</button>
+</div>
+<div id="tri"></div>
+<div id="loading">Into the shipyard…</div>
+<div id="error" hidden></div>
+<!--SCRIPT-->
+</body>
+</html>
