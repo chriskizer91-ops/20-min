@@ -6,10 +6,10 @@ biggest one the Captain can fly: **the Frigate, the Tempest**.
 
 ## Open it
 
-- **`dist/shipyard.html`**: the Tempest in the shipyard. One file with everything inside; it works with no internet,
+- **The shipyard**: https://claude.ai/artifact/7N7Tjm1wmUy6TE48Gfg8JF (or open `dist/shipyard.html`): the Tempest in the shipyard. One file with everything inside; it works with no internet,
   on a phone or a laptop. Drag to turn round her, pinch or scroll to zoom. **New / Old / Both** at the top compares
   her with the Frigate as it was. On a phone, tap **Controls** for the panel.
-- **`dist/game.html`**: the game, with the new Tempest in it. Press **4** (or tap *Tempest*) to fly her. Raider
+- **The game**: https://claude.ai/artifact/EL93WRMph8tSQ6YAbGE6Hz (or open `dist/game.html`): the game, with the new Tempest in it. Press **4** (or tap *Tempest*) to fly her. Raider
   Frigates fly her too, in their rust colours.
 - `dist/hangar.html` is the hangar page as it was, with the four ships before this work.
 
@@ -77,6 +77,9 @@ is ever drawn at full, so even a fight with six raiders all close enough for mid
 triangles.
 
 `docs/frigate.md` has the details, and how the model is ready for the game's next features.
+
+After a change, build and publish `dist/shipyard.artifact.html` and `dist/game.artifact.html` to those two links, so
+they keep working.
 
 ## Rebuilding and checking
 
