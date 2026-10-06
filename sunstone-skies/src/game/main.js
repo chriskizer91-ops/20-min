@@ -1,37 +1,39 @@
-// main.js: Sunstone Skies. Fly any of the Captain's four ships over Chris's map and fight off waves of raiders:
-// swing the camera round the ship to aim, and whichever guns face where you look fire. Shots tear the hull, the sails
-// or the crystals (docs/ships.md); a raider with no hull left goes down, and so does the Captain.
-// Works on a laptop (keyboard and mouse, full detail) and on a phone (touch stick, aiming drag, buttons).
+// main.js: Sunstone Skies, the laptop game. The Captain flies the four levelled-up ships over Chris's map and fights
+// waves of raiders: swing the camera round the ship to aim, and whichever guns face where you look fire. Shots tear
+// the hull, the sails or the crystals (docs/ships.md); a raider with no hull left goes down, and so does the Captain.
+// Two ways to play (voyage.js): voyages, where shards from raiders buy ships and parts in port and renown buys
+// skills (progress.js, garage.js, abilities.js); and free flight, with everything unlocked.
 import * as THREE from 'three';
 import { loadShipArt } from '../ship/materials.js';
-import { buildShip } from '../ship/build.js';
-import { SHIPS as BASE_SHIPS, STATS } from '../ships/index.js';
+import { STATS } from '../ships/index.js';
+import { FLEET } from '../fleet/index.js';
 import { fleetArt } from '../fleet/materials.js';
 import { buildFleetShip } from '../fleet/build.js';
-import flagFrigate from '../fleet/frigate.js';
 import { makeWorld, regionAt, SUN, HAZE, MAP, THINNING } from './world.js';
 import { makeInput } from './input.js';
 import { makeFlyer } from './flight.js';
 import { makeBolts, makeGunnery, batteryFor, BATTERY_NAMES, intercept } from './guns.js';
-import { makeRaiders, waveAt } from './raiders.js';
+import { makeRaiders } from './raiders.js';
 import { hitZones, firstHit } from './damage.js';
 import { makeSmoke, smokeFrom } from './effects.js';
+import * as P from './progress.js';
+import { makeDirector } from './voyage.js';
+import { makeAbilities } from './abilities.js';
+import { makeGarage } from './garage.js';
 import minimapUrl from '../../assets/map/minimap.webp';
 
 const $ = (id) => document.getElementById(id);
-const touch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 1 && matchMedia('(hover: none)').matches;
+const touch = matchMedia('(pointer: coarse)').matches;
 const PARTS = ['hull', 'sails', 'crystals'];
 const COMPASS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
 const compassDeg = (heading) => ((180 - THREE.MathUtils.radToDeg(heading)) % 360 + 360) % 360; // north is up the map (-z)
-const NUMBER = ['', 'a', 'two', 'three', 'four', 'five', 'six'];
-// The Frigate is the levelled-up one (src/flagship/), with working parts; the other three are the game's own
-const SHIPS = BASE_SHIPS.map((R) => (R.id === 'frigate' ? flagFrigate : R));
+const SHIPS = FLEET;
+const NAMES = Object.fromEntries(SHIPS.map((R) => [R.id, R.name]));
 
 async function main() {
-  if (touch) document.body.classList.add('touch');
   const canvas = $('stage');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, touch ? 1.6 : 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -52,16 +54,17 @@ async function main() {
   scene.environmentIntensity = 0.9;
   const hemi = new THREE.HemisphereLight(0xc3dcff, 0x7c8a5c, 0.75);
   const sun = new THREE.DirectionalLight(0xfff0d6, 2.6);
-  sun.castShadow = true; sun.shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
+  sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
   scene.add(hemi, sun, sun.target);
 
   const bolts = makeBolts(scene), smoke = makeSmoke(scene);
   const raiders = makeRaiders(scene, art, bolts, fart);
 
-  // ---------- the ship you fly ----------
+  // ---------- the Captain, and the ship they fly ----------
+  let cap = P.load() ?? P.newCaptain();
   const built = new Map(), zones = new Map();
-  const shipFor = (R) => { if (!built.has(R.id)) built.set(R.id, R === flagFrigate ? buildFleetShip(R, 'full', fart) : buildShip(R, 'full', art)); return built.get(R.id); };
+  const shipFor = (R) => { if (!built.has(R.id)) built.set(R.id, buildFleetShip(R, 'full', fart)); return built.get(R.id); };
   const start = { pos: new THREE.Vector3(0, 680, 2600), heading: Math.PI };
   let player = null, gunnery = null;
   function fly(id) {
@@ -71,11 +74,13 @@ async function main() {
     const worn = player ? PARTS.map((k) => player.frac(k)) : null; // damage carries over to the next ship
     if (player) scene.remove(player.ship.root);
     ship.root.rotation.set(0, keep.heading, 0);
+    if (cap.ships.includes(id)) cap.ship = id;
     player = makeFlyer(ship, STATS[id], keep);
     if (worn) PARTS.forEach((k, i) => { player.health[k] = player.full[k] * worn[i]; });
     if (!zones.has(id)) zones.set(id, hitZones(ship));
     player.aimY = zones.get(id).aim.y;
     gunnery = makeGunnery(ship);
+    outfit();
     scene.add(ship.root);
     const r = R.length * 0.85;
     Object.assign(sun.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 1, far: r * 8 });
@@ -83,6 +88,14 @@ async function main() {
     cam.dist = camDistFor(R);
     $('ship-name').textContent = R.name; $('ship-cls').textContent = `${R.cls} · ${R.length} m`;
     for (const b of $('ships').children) b.setAttribute('aria-pressed', String(b.dataset.ship === id));
+  }
+  // the Captain's parts, skills and tuning, on the ship: how she flies and fires, and what she shows
+  function outfit() {
+    const id = player.ship.recipe.id, e = P.effects(cap, id), L = P.looks(cap, id);
+    player.setMods(e);
+    gunnery.setMods(e, L.heavyShot ? 1.25 : 1);
+    player.ship.fit(Object.fromEntries(Object.keys(player.ship.fitted).map((k) => [k, !!L[k]])));
+    Object.assign(player.ship.control.power, cap.power);
   }
 
   // ---------- the camera: behind the ship, swung round it by the mouse or a drag ----------
@@ -149,49 +162,44 @@ async function main() {
     return true;
   }
 
-  // ---------- the raiders come in waves ----------
-  const W = { n: 0, state: 'calm', timer: 6, lost: 0 };
-  function describe(ids) {
-    const count = {};
-    for (const id of ids) count[id] = (count[id] ?? 0) + 1;
-    const parts = Object.entries(count).map(([id, n]) => { const c = SHIPS.find((s) => s.id === id).cls; return `${NUMBER[n]} ${c}${n > 1 ? 's' : ''}`; });
-    return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0];
-  }
-  function waves(dt, gone) {
+  // ---------- the raiders come in waves (voyage.js), and pay for going down ----------
+  const director = makeDirector({
+    captain: () => cap, raiders, player: () => player, classOf: (id) => SHIPS.find((s) => s.id === id).cls,
+    compass: (a) => COMPASS[Math.round(compassDeg(a) / 45) % 8],
+    ui: { banner, toast, choice: (on) => { $('choice').hidden = !on; }, port: (open) => (open ? enterPort() : leavePort()) },
+  });
+  const W = director.W;
+  function reward(gone) {
     for (const r of gone) {
       downed++;
       bolts.burst(r.f.pos, 0xff8a3a, 60, 2.2); bolts.burst(r.f.pos.clone().add({ x: 0, y: 3, z: 0 }), 0xffe08a, 30, 1.6);
-      toast(`${r.name} ${r.f.down.why === 'hull' ? 'going down' : 'sinking, crystals dead'}`);
+      const how = r.f.down.why, what = `${r.name} ${how === 'hull' ? 'going down' : 'sinking, crystals dead'}`;
+      if (W.mode !== 'campaign') { toast(what); continue; }
+      const shards = P.bounty(cap, r.id, how, !!r.captain), before = P.levelOf(cap.renown).level;
+      cap.hold += shards; cap.renown += P.renownFor(cap, r.id, !!r.captain);
+      toast(`${what} · +${shards} shards${how === 'crystals' ? ' (the crystals shattered: half pay)' : ''}`);
+      const after = P.levelOf(cap.renown).level;
+      if (after > before) banner(`Level ${after}`, 'A skill point to spend in port');
     }
-    if (W.lost > 0) {
-      if ((W.lost -= dt) <= 0) {
-        raiders.clear();
-        player.reset(new THREE.Vector3(player.pos.x, 700, player.pos.z), player.heading);
-        W.state = 'calm'; W.timer = 10;
-        banner('Back in the air', 'The raiders will be back');
-      }
-      return;
-    }
-    if (player.down) { W.lost = 6; banner(`The ${player.ship.recipe.name} is going down`, 'Your crew will get her back up'); return; }
-    W.timer -= dt;
-    if (W.state === 'calm') {
-      player.repair(dt * 0.12); // between fights the crew patch her up
-      if (W.timer <= 0) {
-        const ids = waveAt(W.n), a = raiders.spawnWave(ids, player);
-        banner(`Raiders, wave ${W.n + 1}`, `${describe(ids)}, to the ${COMPASS[Math.round(compassDeg(a) / 45) % 8]}`);
-        W.state = 'fight';
-      }
-    } else if (!raiders.list.some((r) => !r.f.down)) {
-      W.n++; W.state = 'calm'; W.timer = 12;
-      banner(`Wave ${W.n} beaten`, 'The crew patch her up');
-    }
+  }
+  function enterPort() {
+    if (cap.ship !== player.ship.recipe.id) fly(cap.ship);
+    player.repair(1); abilities.reset();
+    garage.open(); cam.yaw = 2.4; cam.pitch = 0.25;
+    frameView();
+  }
+  function leavePort() { garage.close(); cam.zoom = 1; frameView(); }
+  // in port the garage covers the right of the screen, so the view moves over to put the ship in the space left
+  function frameView() {
+    const w = innerWidth, h = innerHeight, panel = $('port').hidden ? 0 : $('port').getBoundingClientRect().width + 16;
+    if (panel) camera.setViewOffset(w, h, panel / 2, 0, w, h); else camera.clearViewOffset();
   }
 
   // ---------- the ship buttons and the help ----------
   for (const R of SHIPS) {
     const b = document.createElement('button');
     b.type = 'button'; b.dataset.ship = R.id; b.innerHTML = `<b>${R.name}</b><small>${R.cls}</small>`;
-    b.addEventListener('click', () => fly(R.id));
+    b.addEventListener('click', () => { if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(R.id))) { P.chooseShip(cap, R.id); fly(R.id); garage.render(); } });
     $('ships').append(b);
   }
   const toggleHelp = () => { const h = $('help'); h.hidden = !h.hidden; $('btn-help').hidden = !h.hidden; };
@@ -204,13 +212,42 @@ async function main() {
   function resize() {
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.fov = w < h ? 68 : 55; camera.updateProjectionMatrix();
+    camera.aspect = w / h; camera.fov = w < h ? 68 : 55; camera.updateProjectionMatrix(); frameView();
     camera.userData.pixelScale = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
     for (const s of built.values()) s.glow.material.uniforms.uScale.value = camera.userData.pixelScale;
     const r = mini.getBoundingClientRect(); mini.width = Math.round(r.width * devicePixelRatio); mini.height = Math.round(r.height * devicePixelRatio);
   }
   addEventListener('resize', resize);
-  fly(touch ? 'skiff' : 'brig');
+
+  // ---------- the garage, the abilities, the choice after a wave, and the start ----------
+  const garage = makeGarage({ captain: () => cap, names: NAMES, free: () => W.mode === 'free',
+    setSail: () => { if (W.mode === 'free') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); } else director.setSail(); },
+    changed: () => { if (cap.ship !== player.ship.recipe.id) fly(cap.ship); else outfit(); updatePurse(); } });
+  const abilities = makeAbilities({ captain: () => cap, player: () => player, gunnery: () => gunnery, toast });
+  $('btn-flyon').addEventListener('click', () => director.flyOn());
+  $('btn-port').addEventListener('click', () => director.putIn());
+  $('btn-garage').addEventListener('click', () => openFreeGarage());
+  for (const b of $('abilities').querySelectorAll('[data-ability]')) b.addEventListener('click', () => abilities.use(b.dataset.ability));
+  // in free flight the garage opens between waves; the game waits while it's open
+  function openFreeGarage() {
+    if (W.mode !== 'free' || !director.calm || W.state === 'port') return;
+    W.state = 'port'; garage.open(); frameView();
+  }
+  function begin(mode, difficulty) {
+    if (mode === 'free') cap = P.freeCaptain();
+    else if (difficulty) { P.forget(); cap = P.newCaptain(difficulty); P.save(cap); }
+    else cap = P.load() ?? P.newCaptain();
+    document.body.classList.toggle('free', mode === 'free');
+    $('start').hidden = true;
+    player = null; fly(cap.ship);
+    director.begin(mode);
+    abilities.reset(); updatePurse();
+  }
+  $('start-continue').hidden = !P.load();
+  $('start-continue').addEventListener('click', () => begin('campaign'));
+  for (const b of document.querySelectorAll('[data-new]')) b.addEventListener('click', () => begin('campaign', b.dataset.new));
+  $('start-free').addEventListener('click', () => begin('free'));
+  fly(cap.ship);
   resize();
 
   // ---------- the HUD ----------
@@ -271,7 +308,8 @@ async function main() {
       $(`n-${k}`).textContent = Math.ceil(player.health[k]);
       $(`row-${k}`).classList.toggle('low', player.frac(k) < 0.3);
     }
-    $('score-n').textContent = downed; $('wave-n').textContent = W.n + 1;
+    updatePurse();
+    abilityBar();
     const deg = compassDeg(player.heading);
     $('compass').textContent = `${['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8]} ${Math.round(deg)}°`;
     const w = $('warn');
@@ -296,16 +334,61 @@ async function main() {
     }
   }
 
+  // the shards, the hold, the voyage and the Captain's level
+  function updatePurse() {
+    if (!player) return;
+    const lv = P.levelOf(cap.renown);
+    if (W.mode === 'free') { $('purse').innerHTML = `Free flight · wave <b>${W.n + 1}</b> · downed <b>${downed}</b>`; $('level').hidden = true; return; }
+    $('purse').innerHTML = `Voyage <b>${cap.voyage}</b> · wave <b>${cap.wave}</b> of ${P.wavesIn(cap.voyage)} · hold <b>${cap.hold}</b>${cap.streak ? ` ×${P.holdBonus(cap).toFixed(1)}` : ''} · shards <b>${cap.shards.toLocaleString()}</b>`;
+    $('level').hidden = false;
+    $('level-n').textContent = lv.level;
+    $('level-bar').style.width = `${lv.need ? (lv.into / lv.need) * 100 : 100}%`;
+    $('level-pts').textContent = P.skillPoints(cap) > 0 ? ` · ${P.skillPoints(cap)} to spend` : '';
+  }
+  function abilityBar() {
+    const have = new Map(abilities.view().map((a) => [a.id, a]));
+    for (const el of $('abilities').querySelectorAll('[data-ability]')) {
+      const a = have.get(el.dataset.ability);
+      el.hidden = !a;
+      if (!a) continue;
+      el.classList.toggle('on', a.on); el.classList.toggle('ready', a.wait <= 0);
+      el.querySelector('i').style.height = `${a.wait * 100}%`;
+      el.querySelector('small').textContent = a.on ? 'now' : a.wait > 0 ? `${Math.ceil(a.left)} s` : 'ready';
+    }
+    $('abilities').hidden = !have.size;
+  }
+
   let last = performance.now(), time = 0, held = null;
   // one step of the game: controls, flying, the raiders, the camera, the guns, the shots, the HUD
   function tick(dt) {
     time += dt;
     const inp = held ?? input.read();
     for (const k of inp.pressed) {
-      if (k >= '1' && k <= '4') fly(SHIPS[+k - 1].id);
+      if (k >= '1' && k <= '4') { const id = SHIPS[+k - 1].id; if (W.mode === 'free' || (W.state === 'port' && cap.ships.includes(id))) { P.chooseShip(cap, id); fly(id); garage.render(); } }
       else if (k === 'c') { cam.yaw = 0; cam.pitch = 0.2; }
       else if (k === 'm') mini.classList.toggle('big');
       else if (k === 'h') toggleHelp();
+      else if (k === 'z') abilities.use('surge');
+      else if (k === 'x') abilities.use('double');
+      else if (k === 'v') abilities.use('control');
+      else if (k === 'g') { if (W.state === 'port' && W.mode === 'free') { garage.close(); frameView(); W.state = 'calm'; W.timer = Math.max(W.timer, 4); } else openFreeGarage(); }
+      else if (k === 'Enter' && W.state === 'after') director.flyOn();
+      else if (k === 'p' && W.state === 'after') director.putIn();
+      else if (k === 'Enter' && W.state === 'port' && W.mode === 'campaign') director.setSail();
+    }
+    // in port (or the free-flight garage) the world waits: the ship rides at anchor and the camera turns round her
+    if (W.state === 'port') {
+      player.ship.root.position.copy(player.pos); player.ship.root.rotation.set(0, player.heading, 0);
+      player.ship.update(dt, { calm: true, turn: 0, climb: 0 });
+      player.ship.root.updateMatrixWorld(true);
+      cam.yaw += dt * 0.08; cam.zoom = 0.85;
+      placeCamera(dt, { ...inp, look: { x: inp.look.x, y: inp.look.y }, lastLook: performance.now() / 1000 });
+      world.time.value = time; world.puffs.follow(player.pos);
+      sun.target.position.copy(player.pos); sun.position.copy(player.pos).addScaledVector(SUN, 400);
+      player.ship.glow.material.uniforms.uScale.value = camera.userData.pixelScale;
+      director.update(dt);
+      hud(dt, 'bow');
+      return;
     }
     // the flagship's working parts: sail set, gun decks manned in a fight (or when a side is fired), damage shown
     const C = player.ship.control, facing = batteryFor(cam.yaw);
@@ -315,6 +398,7 @@ async function main() {
       for (const s of ['port', 'starboard']) C.stations[s] = fight || (inp.fire && facing === s) ? 1 : 0;
       for (const k of PARTS) C.damage[k] = 1 - player.frac(k);
     }
+    abilities.update(dt);
     player.update(dt, inp);
     player.ship.root.updateMatrixWorld(true);
     const gone = raiders.update(dt, player, camera);
@@ -327,7 +411,8 @@ async function main() {
     smokeFrom(player, smoke, bolts.spark, dt);
     for (const r of raiders.list) smokeFrom(r.f, smoke, bolts.spark, dt);
     smoke.update(dt, camera);
-    waves(dt, gone);
+    reward(gone);
+    director.update(dt);
     world.time.value = time;
     world.puffs.follow(player.pos);
     sun.target.position.copy(player.pos); sun.position.copy(player.pos).addScaledVector(SUN, 400);
@@ -348,6 +433,7 @@ async function main() {
   // for tools/check.mjs
   window.__game = {
     ready: true, get player() { return player; }, get gunnery() { return gunnery; }, cam, fly, input, raiders, bolts, renderer, camera, scene, waves: W,
+    get captain() { return cap; }, director, garage, abilities, begin, P,
     get hits() { return hits; }, get downed() { return downed; }, get locked() { return locked; },
     // run the game's clock without drawing, holding these controls (for tests on slow software rendering)
     step(seconds, controls = {}) {

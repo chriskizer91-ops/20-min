@@ -85,9 +85,10 @@ export function makeBolts(scene, max = 400) {
   const bolts = [], sparks = [];
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), FWD = V(0, 0, 1);
   const spark = (p, v, life, size, color) => { if (sparks.length < GMAX - max) sparks.push({ p: p.clone(), v: v.clone(), life, max: life, size, c: new THREE.Color(color) }); };
+  // kind: 'chaser' or 'broadside', or a ship's own version of one (its parts change the numbers: see makeGunnery)
   function fire(from, dir, kind, owner, inherit) {
     if (bolts.length >= max) return;
-    const K = KINDS[kind], color = new THREE.Color(BOLT_COLORS[owner] ?? BOLT_COLORS.player);
+    const K = typeof kind === 'string' ? KINDS[kind] : kind, color = new THREE.Color(BOLT_COLORS[owner] ?? BOLT_COLORS.player);
     const d = dir.clone().add(V((Math.random() - 0.5) * K.spread * 2, (Math.random() - 0.5) * K.spread * 2, (Math.random() - 0.5) * K.spread * 2)).normalize();
     bolts.push({ p: from.clone(), prev: from.clone(), v: d.multiplyScalar(K.speed).add(inherit ?? V(0, 0, 0)), life: K.life, K, owner, color, head: color.clone().lerp(new THREE.Color(0xffffff), 0.3) });
     spark(from, inherit ?? V(0, 0, 0), 0.18, 9 * K.size, owner === 'raider' ? 0xff8a5a : 0xffd27a);
@@ -124,21 +125,34 @@ export function makeBolts(scene, max = 400) {
   return { fire, update, burst, spark, bolts };
 }
 
+// A ship's guns as its parts and skills make them: damage, reload, range (the bolt's speed), how far they tilt and
+// swing, and how big the bolt is. m: multipliers (progress.js `effects`); size: heavy shot's bigger bolts
+export function kindsFor(m = {}, size = 1) {
+  const out = {};
+  for (const [k, K] of Object.entries(KINDS)) out[k] = { ...K, kind: k, damage: K.damage * (m.damage ?? 1), reload: K.reload * (m.reload ?? 1),
+    speed: K.speed * (m.range ?? 1), pitch: K.pitch * (m.pitch ?? 1), yaw: K.yaw * (m.swing ?? 1), size: K.size * size };
+  return out;
+}
+
 // A ship's gunnery: reload clocks per battery, and firing the battery that faces the aim point.
-// `slow` stretches the reload (the raiders' crews are slower than the Captain's)
-export function makeGunnery(ship, slow = 1) {
+// `slow` stretches the reload (the raiders' crews are slower than the Captain's); `mods` are the ship's own numbers
+// (kindsFor); `haste` speeds the reload for a while (the Double Shot ability)
+export function makeGunnery(ship, slow = 1, mods = {}, size = 1) {
   const B = gunsOf(ship), ready = { bow: 0, stern: 0, port: 0, starboard: 0 };
   const world = new THREE.Vector3(), dirW = new THREE.Vector3(), nm = new THREE.Matrix3();
-  const reload = (b) => (B[b][0] ? KINDS[B[b][0].kind].reload * slow : 1);
+  let K = kindsFor(mods, size);
+  const reload = (b) => (B[b][0] ? K[B[b][0].kind].reload * slow : 1);
   return {
-    B, ready, reload,
+    B, ready, reload, haste: 1,
+    setMods(m = {}, sz = 1) { K = kindsFor(m, sz); },
+    get kinds() { return K; },
     count: (b) => B[b].length,
-    update(dt) { for (const k in ready) ready[k] = Math.max(0, ready[k] - dt); },
+    update(dt) { for (const k in ready) ready[k] = Math.max(0, ready[k] - dt * this.haste); },
     // the middle gun of a battery, in the world: where it is, which way it points, and its kind
     muzzle(b) {
       const g = B[b][B[b].length >> 1]; if (!g) return null;
       nm.getNormalMatrix(ship.body.matrixWorld);
-      return { p: g.p.clone().applyMatrix4(ship.body.matrixWorld), d: g.d.clone().applyMatrix3(nm).normalize(), K: KINDS[g.kind] };
+      return { p: g.p.clone().applyMatrix4(ship.body.matrixWorld), d: g.d.clone().applyMatrix3(nm).normalize(), K: K[g.kind] };
     },
     // can battery b reach this point? (inside its swing and tilt, and its range)
     reaches(b, aim) {
@@ -154,8 +168,8 @@ export function makeGunnery(ship, slow = 1) {
       for (const g of B[b]) {
         world.copy(g.p).applyMatrix4(ship.body.matrixWorld);
         dirW.copy(g.d).applyMatrix3(nm).normalize();
-        const K = KINDS[g.kind], want = aim.clone().sub(world).normalize();
-        bolts.fire(world, clampToArc(want, dirW, K.yaw, K.pitch), g.kind, owner, inherit);
+        const k = K[g.kind], want = aim.clone().sub(world).normalize();
+        bolts.fire(world, clampToArc(want, dirW, k.yaw, k.pitch), k, owner, inherit);
       }
       ready[b] = reload(b);
       return B[b].length;

@@ -37,8 +37,8 @@ function detailFor(level, R) {
   return q;
 }
 
-export const FITTINGS = ['armour', 'racing', 'longFocus', 'highAngle', 'cage'];
-export const NO_FIT = { armour: false, racing: false, longFocus: false, highAngle: false, cage: false };
+export const FITTINGS = ['armour', 'racing', 'storm', 'longFocus', 'highAngle', 'heavyShot', 'cage', 'vents'];
+export const NO_FIT = Object.fromEntries(FITTINGS.map((f) => [f, false]));
 
 // ---------- the glows: soft points for every crystal, lantern, window, gun and vent, each on a channel ----------
 const GLOW_CH = 48;
@@ -204,6 +204,8 @@ export function fleetShip(model, fart, { fits, motion = true } = {}) {
       m.visible = !F ? true : F === 'armour' ? fitted.armour : F === 'canvas' ? !fitted.racing || q.level !== 'full' : F === 'racing' ? fitted.racing
         : F === 'cage' ? fitted.cage : F === 'mount-hi' ? fitted.highAngle : F.startsWith('guns-') ? F === `guns-${kind}-${mount}` : true;
     }
+    // storm canvas: heavier, greyer sailcloth
+    for (const rig of [false, true]) { const mat = inst.get('canvas', rig); mat.color.set(fitted.storm ? 0xbdb2a2 : inst.colours.sails); mat.emissive.set(fitted.storm ? 0x4a3e32 : inst.colours.sailGlow); }
     stats.triangles = meshes.reduce((n, m) => n + (m.visible ? m.userData.triangles : 0), 0);
     stats.drawCalls = meshes.filter((m) => m.visible).length + 1 + (sparks ? 1 : 0);
     return fitted;
@@ -259,7 +261,7 @@ export function fleetShip(model, fart, { fits, motion = true } = {}) {
       const run = base < 4 ? smooth(0, 1, now.run[b]) : 1, flash = Math.pow(now.kick[b], 6) * 2.5;
       for (const o of [0, 8, 16, 24]) K[base + o] = o === v ? run * (0.55 + c.power.guns * 1.2 * total) + flash : 0;
     }
-    K[6] = (0.15 + c.power.lift * 1.7 * total * (1 + Math.max(0, now.climb) * 0.6)) * Math.min(1, alive * 4);
+    K[6] = (0.15 + c.power.lift * 1.7 * total * (1 + Math.max(0, now.climb) * 0.6)) * Math.min(1, alive * 4) * (fitted.vents ? 1.8 : 1);
     K[7] = (0.15 + c.power.sails * 1.6 * total) * Math.min(1, alive * 4);
     U.uPow.value.set(c.power.sails * total, c.power.guns * total, c.power.lift * total);
     U.uHullDmg.value = c.damage.hull; U.uSailDmg.value = c.damage.sails; U.uCrystal.value = 1 - c.damage.crystals;

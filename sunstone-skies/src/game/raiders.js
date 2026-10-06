@@ -1,25 +1,28 @@
-// raiders.js: the raiders, the Captain's enemies for now. They fly the same four classes as the Captain (Skiff,
-// Cutter, Brig, Frigate), built by the same code at the middle and far settings of the detail dial, and they fly by
-// the same rules (flight.js), a little slower. Raiders are easy to tell apart: rust-red sails, darker planks and
-// crimson pennants with a black hoist.
+// raiders.js: the raiders, the Captain's enemies. They fly the same four levelled-up classes as the Captain (Skiff,
+// Cutter, Brig, Frigate), drawn at full, middle or far detail by how big they look, and they fly by the same rules
+// (flight.js). Raiders are easy to tell apart: rust-red sails and strake, darker planks, crimson pennants with a
+// black hoist. Their sails, gun lids and guns work like the Captain's, and their damage shows.
 //   Skiffs and Cutters chase: they come at the Captain bow-first, fire their bow guns, and break away when close.
 //   Brigs and Frigates fight broadside: they come alongside at a few hundred metres and fire whole sides.
-// They come in waves, smallest first.
+// How hard they fight comes from the difficulty and the voyage (progress.js). A raider captain sails a ship fitted
+// out with garage parts, which show on it, and is twice as tough.
 import * as THREE from 'three';
-import { buildShip, shipMotion } from '../ship/build.js';
-import { SHIPS, STATS } from '../ships/index.js';
+import { shipMotion } from '../ship/build.js';
+import { STATS } from '../ships/index.js';
+import { FLEET } from '../fleet/index.js';
 import { makeFlyer } from './flight.js';
 import { makeGunnery, intercept } from './guns.js';
 import { hitZones, firstHit } from './damage.js';
 import { CLOUD_Y } from './world.js';
 import { fleetModel, fleetShip } from '../fleet/build.js';
 import { COLOURS } from '../fleet/materials.js';
-import flagFrigate from '../fleet/frigate.js';
+import { DIFFICULTY, effects, looks, newCaptain } from './progress.js';
 
-// How the raiders compare with the Captain: sail a little slower, reload half as slowly again, and aim a little off
-// (by this much for every metre to the target)
-export const RAIDER = { pace: 0.92, slow: 1.5, aim: 0.02 };
+// How the raiders compare with the Captain on the middle setting (Rough Air): sail a little slower, reload half as
+// slowly again, and aim a little off (by this much for every metre to the target)
+export const RAIDER = { pace: DIFFICULTY.rough.pace, slow: DIFFICULTY.rough.slow, aim: DIFFICULTY.rough.aim };
 const ROLE = { skiff: 'chaser', cutter: 'chaser', brig: 'broadside', frigate: 'broadside' };
+// Free flight's waves: the old ladder, then three to six mixed
 export const WAVES = [['skiff'], ['skiff', 'skiff'], ['cutter'], ['cutter', 'skiff'], ['brig'], ['brig', 'cutter'], ['frigate'],
   ['frigate', 'cutter', 'cutter'], ['brig', 'brig', 'skiff', 'skiff'], ['frigate', 'brig', 'cutter', 'cutter', 'skiff']];
 export function waveAt(n) {
@@ -31,63 +34,31 @@ export function waveAt(n) {
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
-// the raiders' colours, on copies of the ship materials
-function raiderArt(art) {
-  const M = { ...art.M };
-  M.hull = art.M.hull.clone(); M.hull.color.set(0x9a8781);
-  M.canvas = art.M.canvas.clone(); M.canvas.color.set(0xc8735c); M.canvas.emissive.set(0x7a3020);
-  M.canvas.onBeforeCompile = art.M.canvas.onBeforeCompile; M.canvas.customProgramCacheKey = art.M.canvas.customProgramCacheKey;
-  return { ...art, M };
-}
-function crimsonPennants(ship) {
-  ship.body.traverse((o) => {
-    if (!o.isMesh || o.name !== 'flag') return;
-    const c = o.geometry.attributes.color;
-    for (let i = 0; i < c.count; i++) { if (c.getX(i) > 0.8) c.setXYZ(i, 0.09, 0.07, 0.06); else c.setXYZ(i, 0.72, 0.09, 0.07); }
-    c.needsUpdate = true;
-  });
-}
-
-// One raider ship: copies of its class's middle and far models (sharing their shapes), swapped by how big it looks
-function raiderShip(T) {
+// One raider ship: its own full, middle and far ships (sharing the class's models), swapped by how big it looks, so its
+// sails furl, its lids open, its guns kick and its damage shows on it alone. The full one is built the first time
+// it comes close.
+function raiderShip(T, fart, fits) {
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-  const mid = T.mid.body.clone(), far = T.far.body.clone(); far.visible = false; body.add(mid, far);
-  const rudders = [], glows = [], embers = [];
-  body.traverse((o) => { if (o.name === 'rudder') rudders.push(o); else if (o.name === 'glow') glows.push(o); else if (o.name === 'embers') embers.push(o); });
-  const move = shipMotion(T.R, body, rudders);
-  return {
-    root, body, recipe: T.R, hull: T.mid.hull, length: T.R.length, level: 'middle',
-    update(dt, opts) {
-      const t = move(dt, opts);
-      for (const g of glows) g.material.uniforms.uTime.value = t;
-      for (const e of embers) e.material.uniforms.uTime.value = t;
-    },
-    detail(level, pixelScale) {
-      mid.visible = level === 'middle'; far.visible = level === 'far'; this.level = level;
-      for (const g of glows) g.material.uniforms.uScale.value = pixelScale;
-      for (const e of embers) e.material.uniforms.uScale.value = pixelScale;
-    },
-  };
-}
-
-// A raider flying the levelled-up Frigate: its own middle and far ships (sharing the class's models), so its sails
-// furl, its lids open, its guns kick and its damage shows, on it alone
-function flagshipRaider(T, fart) {
-  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-  const mid = fleetShip(T.midModel, fart, { motion: false }), far = fleetShip(T.farModel, fart, { motion: false });
-  far.root.visible = false; body.add(mid.root, far.root);
+  const make = (model) => { const s = fleetShip(model, fart, { motion: false, fits }); body.add(s.root); return s; };
+  const ships = { middle: make(T.midModel), far: make(T.farModel), full: null };
+  ships.far.root.visible = false;
   const move = shipMotion(T.R, body, []);
+  let px = 400;
   return {
     root, body, recipe: T.R, hull: T.midModel.hull, length: T.R.length, level: 'middle',
-    update(dt, opts) { move(dt, opts); (this.level === 'far' ? far : mid).update(dt, opts); },
+    get shown() { return ships[this.level]; },
+    update(dt, opts) { move(dt, opts); this.shown.update(dt, opts); },
     detail(level, pixelScale) {
-      mid.root.visible = level === 'middle'; far.root.visible = level === 'far'; this.level = level;
-      for (const s of [mid, far]) s.glow.material.uniforms.uScale.value = pixelScale;
+      if (level === 'full' && !ships.full) { ships.full = make(T.fullModel()); }
+      for (const [k, s] of Object.entries(ships)) if (s) s.root.visible = k === level;
+      this.level = level; px = pixelScale;
+      for (const s of Object.values(ships)) if (s) s.glow.material.uniforms.uScale.value = px;
     },
-    fire(b) { mid.fire(b); far.fire(b); },
+    fire(b) { for (const s of Object.values(ships)) s?.fire(b); },
     // its sail, its gun decks (manned while it fights) and its damage, from how it's flying
     sync(f, fighting) {
-      for (const s of [mid, far]) {
+      for (const s of Object.values(ships)) {
+        if (!s) continue;
         const C = s.control; C.sail = f.sail;
         C.stations.port = C.stations.starboard = fighting ? 1 : 0;
         for (const k of ['hull', 'sails', 'crystals']) C.damage[k] = 1 - f.frac(k);
@@ -97,41 +68,49 @@ function flagshipRaider(T, fart) {
 }
 
 export function makeRaiders(scene, art, bolts, fart) {
-  const rart = raiderArt(art), T = {};
-  for (const R of SHIPS) {
-    if (R.id === 'frigate' && fart) {
-      const midModel = fleetModel(flagFrigate, 'middle', fart, COLOURS.raider), farModel = fleetModel(flagFrigate, 'far', fart, COLOURS.raider);
-      T[R.id] = { R: flagFrigate, midModel, farModel, flagship: true, zones: hitZones(fleetShip(midModel, fart)) };
-      continue;
-    }
-    const mid = buildShip(R, 'middle', rart), far = buildShip(R, 'far', rart);
-    crimsonPennants(mid); crimsonPennants(far);
-    T[R.id] = { R, mid, far, zones: hitZones(mid) };
+  const T = {};
+  for (const R of FLEET) {
+    const midModel = fleetModel(R, 'middle', fart, COLOURS.raider), farModel = fleetModel(R, 'far', fart, COLOURS.raider);
+    let full = null;
+    T[R.id] = { R, midModel, farModel, fullModel: () => (full ??= fleetModel(R, 'full', fart, COLOURS.raider)), zones: hitZones(fleetShip(midModel, fart)) };
   }
   const list = [];
   let ai = true;
 
-  function spawn(id, pos, heading, frozen = false) {
-    const ship = T[id].flagship ? flagshipRaider(T[id], fart) : raiderShip(T[id]);
-    const f = makeFlyer(ship, STATS[id], { pos, heading }, RAIDER.pace);
+  // A raider. o: { difficulty, level (progress.js raiderLevel), captain: { name, fits, health } }
+  function spawn(id, pos, heading, frozen = false, o = {}) {
+    const D = DIFFICULTY[o.difficulty ?? 'rough'], L = o.level ?? { health: 1, damage: 1, slow: 1, aim: 1 }, cap = o.captain;
+    // a captain's ship carries parts at Mk II; their numbers come from the same rules as the Captain's
+    let m = {}, fits = {};
+    if (cap) {
+      const c = newCaptain(); c.ship = id; c.fitted[id] = [...cap.fits];
+      for (const p of cap.fits) c.parts[p] = 2;
+      m = effects(c, id); fits = looks(c, id);
+    }
+    const tough = L.health * (cap?.health ?? 1);
+    const mods = { ...m, hull: (m.hull ?? 1) * tough, sails: (m.sails ?? 1) * tough, crystals: (m.crystals ?? 1) * tough };
+    const ship = raiderShip(T[id], fart, fits);
+    const f = makeFlyer(ship, STATS[id], { pos, heading }, D.pace, mods);
     f.sail = 0.85; f.speed = f.H.vmax * 0.6; f.aimY = T[id].zones.aim.y;
     ship.root.position.copy(pos); ship.root.rotation.y = heading;
     scene.add(ship.root);
     const role = ROLE[id];
-    const r = { id, R: T[id].R, name: `Raider ${T[id].R.cls}`, ship, f, gun: makeGunnery(ship, RAIDER.slow), zones: T[id].zones, role, frozen,
-      mode: 'attack', timer: 0, side: 1, alt: (Math.random() - 0.5) * (role === 'chaser' ? 90 : 20), counted: false, gone: false };
+    const gun = makeGunnery(ship, D.slow * L.slow, { ...m, damage: (m.damage ?? 1) * L.damage }, fits.heavyShot ? 1.25 : 1);
+    const r = { id, R: T[id].R, name: cap ? cap.name : `Raider ${T[id].R.cls}`, captain: cap ?? null, ship, f, gun, zones: T[id].zones, role, frozen,
+      aim: D.aim * L.aim, mode: 'attack', timer: 0, side: 1, alt: (Math.random() - 0.5) * (role === 'chaser' ? 90 : 20), counted: false, gone: false };
     ship.update(0, {}); ship.root.updateMatrixWorld(true);
     list.push(r);
     return r;
   }
 
   // a wave of raiders, 1.5 to 1.9 km ahead of the Captain, more or less, coming in
-  function spawnWave(ids, foe) {
-    const base = foe.heading + (Math.random() - 0.5) * 1.4;
+  // o: as spawn's, plus captain for the first ship of the group, and from: the bearing to come in on
+  function spawnWave(ids, foe, o = {}) {
+    const base = o.from ?? foe.heading + (Math.random() - 0.5) * 1.4;
     ids.forEach((id, i) => {
       const a = base + (i - (ids.length - 1) / 2) * 0.24, d = 1500 + Math.random() * 400;
       const pos = new THREE.Vector3(foe.pos.x + Math.sin(a) * d, clamp(foe.pos.y + (Math.random() - 0.5) * 160, 200, 2000), foe.pos.z + Math.cos(a) * d);
-      spawn(id, pos, a + Math.PI);
+      spawn(id, pos, a + Math.PI, false, { ...o, captain: i === 0 ? o.captain : null });
     });
     return base;
   }
@@ -179,7 +158,7 @@ export function makeRaiders(scene, art, bolts, fart) {
       const aim = intercept(m.p, r.f.velocity, foe.aimAt(), foe.velocity, m.K.speed);
       const dist = aim.distanceTo(m.p);
       if (dist > m.K.speed * m.K.life * 0.7 || !r.gun.reaches(b, aim)) continue; // they hold fire till it's worth it
-      const e = dist * RAIDER.aim + 1.5;
+      const e = dist * r.aim + 1.5;
       aim.add(off.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2 * e));
       if (r.gun.fire(b, aim, bolts, 'raider', r.f.velocity)) r.ship.fire?.(b);
     }
@@ -200,7 +179,7 @@ export function makeRaiders(scene, art, bolts, fart) {
       if (r.f.down && !r.counted) { r.counted = true; downed.push(r); }
       if (r.f.down && (r.f.pos.y < CLOUD_Y - 140 || r.f.down.t > 16)) r.gone = true;
       const size = (r.R.length / Math.max(1, camera.position.distanceTo(r.f.pos))) * toScreen;
-      r.ship.detail(size < 0.06 ? 'far' : 'middle', camera.userData.pixelScale ?? 500);
+      r.ship.detail(size < 0.06 ? 'far' : size > 0.32 ? 'full' : 'middle', camera.userData.pixelScale ?? 500);
     }
     for (let i = list.length - 1; i >= 0; i--) if (list[i].gone) { scene.remove(list[i].ship.root); list.splice(i, 1); }
     return downed;

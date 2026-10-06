@@ -1,5 +1,5 @@
-// check.mjs: opens the built pages in a headless browser the size of a laptop and of a phone, checks nothing went
-// wrong, and takes pictures into shots/ (or the folder given).
+// check.mjs: opens the built pages in a headless browser the size of a laptop (Sunstone Skies is a laptop game),
+// checks nothing went wrong, and takes pictures into shots/ (or the folder given).
 //   dist/hangar.html  every ship at every level of detail, with its triangle count kept near its budget
 //   dist/game.html    each of the four ships flown: how fast it goes, turns and climbs; every battery fired at a
 //                     raider and hitting it; a raider shot down; raiders fighting back; the Captain going down and
@@ -29,7 +29,7 @@ const shot = (page, path) => page.screenshot({ path: `${out}/${path}.png`, timeo
 const wait = (page, fn, arg, what) => page.waitForFunction(fn, arg, { timeout: 60000, polling: 100 }).catch(() => problems.push(`${what}: didn't happen`));
 
 // ---------- the hangar ----------
-for (const name of ['laptop', 'phone']) {
+for (const name of ['laptop']) {
   const page = await open('hangar', name, () => window.__hangar?.ready || !document.getElementById('error').hidden);
   if (name === 'laptop') {
     const table = await page.evaluate((ships) => ships.map((id) => [id, ...['full', 'middle', 'far'].map((l) => window.__hangar.stats(id, l))]), ships);
@@ -51,6 +51,7 @@ for (const name of ['laptop', 'phone']) {
 
 // ---------- the game ----------
 const gameReady = () => window.__game?.ready || !document.getElementById('error').hidden;
+// the game opens on its start screen; most checks fly in free flight, where every ship is there to fly
 // set up a fight near the Captain, run it for a while with the Captain firing at the nearest raider, then hold it
 function battle(ids = ['frigate', 'cutter']) {
   const g = window.__game, P = g.player;
@@ -70,6 +71,8 @@ function battle(ids = ['frigate', 'cutter']) {
 }
 {
   const page = await open('game', 'laptop', gameReady);
+  await shot(page, 'laptop-start');
+  await page.click('#start-free');
   // Each ship flown on the game's own clock (software drawing is too slow to fly in real time): 20 seconds at full
   // sail turning and climbing, then each battery fired at a raider of the same class sitting 260 m off on its side.
   const flown = await page.evaluate((ships) => {
@@ -169,32 +172,71 @@ function battle(ids = ['frigate', 'cutter']) {
   await page.close();
 }
 {
-  const page = await open('game', 'phone', gameReady);
-  const start = await page.evaluate(() => { window.__game.waves.timer = 1e9; return { touch: document.body.classList.contains('touch'), ship: window.__game.player.ship.recipe.id }; });
-  if (!start.touch) problems.push('phone: the touch controls are not showing');
-  if (start.ship !== 'skiff') problems.push(`phone: starts in the ${start.ship}, not the Skiff`);
-  await page.waitForTimeout(2500); // let the loading cover fade
-  await shot(page, 'phone-game-start');
-  // a thumb held on the left and pushed right steers; one held on Sail + sets sail; one on Fire fires
-  const cdp = await page.context().newCDPSession(page);
-  const touch = (type, ...pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map(([x, y], id) => ({ x, y, id })) });
-  await touch('touchStart', [80, 560]); await touch('touchMove', [110, 560]); await touch('touchMove', [140, 560]);
-  await wait(page, () => window.__game.player.turn > 0.05, null, 'the stick steers');
-  await touch('touchEnd');
-  const box = async (sel) => { const b = await page.locator(sel).boundingBox(); return [b.x + b.width / 2, b.y + b.height / 2]; };
-  const s0 = await page.evaluate(() => window.__game.player.sail);
-  await touch('touchStart', await box('#btn-sail-up'));
-  await wait(page, (s0) => window.__game.player.sail > s0 + 0.01, s0, 'Sail + sets more sail');
-  await touch('touchEnd');
-  await touch('touchStart', [300, 300]); await touch('touchMove', [260, 300]); await touch('touchMove', [220, 300]);
-  await wait(page, () => Math.abs(window.__game.cam.yaw) > 0.1, null, 'dragging on the right aims');
-  await touch('touchEnd');
-  await touch('touchStart', await box('#btn-fire'));
-  await wait(page, () => window.__game.bolts.bolts.length > 0, null, 'Fire fires');
-  await touch('touchEnd');
-  await page.evaluate(battle, ['cutter', 'skiff']);
-  await page.waitForTimeout(2500);
-  await shot(page, 'phone-battle');
+  // a voyage: from port, a wave, its shards and renown, the choice after it, banking in port, the garage, a skill
+  // and its ability, and the last wave's raider captain ending the voyage
+  const page = await open('game', 'laptop', gameReady);
+  await page.click('[data-new="rough"]');
+  const v = await page.evaluate(() => {
+    const g = window.__game, P = g.P, c = g.captain, out = {};
+    out.start = { state: g.waves.state, ship: g.player.ship.recipe.id, shards: c.shards };
+    document.getElementById('g-sail').click(); g.step(7, {});
+    out.wave = g.raiders.list.map((r) => r.id);
+    for (const r of g.raiders.list) r.f.hit('crystals', 1e6); // crystal kills pay half
+    g.step(1, {});
+    out.after = { state: g.waves.state, hold: c.hold, renown: c.renown, wave: c.wave, choice: !document.getElementById('choice').hidden };
+    document.getElementById('btn-flyon').click(); g.step(8.5, {});
+    out.flewOn = { streak: c.streak, state: g.waves.state, raiders: g.raiders.list.length };
+    for (const r of g.raiders.list) r.f.hit('hull', 1e6);
+    g.step(1, {});
+    const hold = c.hold;
+    document.getElementById('btn-port').click();
+    out.port = { state: g.waves.state, shards: c.shards, expected: Math.round(hold * 1.1), garage: !document.getElementById('port').hidden };
+    // the garage: buy and fit storm canvas; the ship's sails get tougher and her canvas shows it
+    c.shards += 1000; g.garage.tab = 'parts';
+    const sails0 = g.player.full.sails;
+    document.querySelector('[data-act="buypart"][data-id="storm"]').click();
+    document.querySelector('[data-act="fit"][data-id="storm"]').click();
+    out.part = { fitted: c.fitted.skiff, sails: [sails0, g.player.full.sails], shows: g.player.ship.fitted.storm };
+    // buy the Cutter and sail her
+    g.garage.tab = 'ships';
+    document.querySelector('[data-act="buyship"][data-id="cutter"]').click();
+    document.querySelector('[data-act="sail"][data-id="cutter"]').click();
+    out.ship = g.player.ship.recipe.id;
+    // a skill: renown for three levels, two ranks of Helm, and Crystal Surge on Z
+    c.renown += 50 + 90 + 130; g.garage.tab = 'captain';
+    document.querySelector('[data-act="rank"][data-id="helm"]').click(); document.querySelector('[data-act="rank"][data-id="helm"]').click();
+    out.skill = { ranks: c.ranks.helm, abilities: P.abilities(c).map((a) => a.id) };
+    document.getElementById('g-sail').click(); g.step(1, {});
+    g.abilities.use('surge'); g.step(0.5, {});
+    out.surge = g.player.boost.speed;
+    // the last wave: its raider captain, and the voyage done
+    g.raiders.clear(); c.wave = P.wavesIn(1); g.waves.state = 'calm'; g.waves.timer = 0.1; g.step(0.5, {});
+    const boss = g.raiders.list.find((r) => r.captain);
+    out.boss = boss ? { name: boss.name, id: boss.id, hull: boss.f.full.hull, fits: Object.entries(boss.ship.shown.fitted).filter(([, on]) => on).map(([k]) => k) } : null;
+    for (const r of g.raiders.list) r.f.hit('hull', 1e6);
+    g.step(1, {});
+    out.done = { state: g.waves.state, voyage: c.voyage, wave: c.wave, hold: c.hold };
+    // going down loses the hold
+    document.getElementById('g-sail').click(); g.step(7, {}); c.hold = 50;
+    g.player.hit('hull', 1e6); g.step(8, {});
+    out.down = { state: g.waves.state, hold: c.hold, shards: c.shards };
+    return out;
+  });
+  console.log(`voyage: ${JSON.stringify(v)}`);
+  if (v.start.state !== 'port' || v.start.ship !== 'skiff') problems.push(`a new Captain should start in port in the Skiff: ${JSON.stringify(v.start)}`);
+  if (!v.wave.length) problems.push('no raiders came when the Captain set sail');
+  if (v.after.state !== 'after' || !v.after.choice || v.after.hold <= 0 || v.after.wave !== 2) problems.push(`after the first wave: ${JSON.stringify(v.after)}`);
+  if (v.flewOn.streak !== 1 || v.flewOn.state !== 'fight') problems.push(`flying on: ${JSON.stringify(v.flewOn)}`);
+  if (v.port.state !== 'port' || v.port.shards !== v.port.expected || !v.port.garage) problems.push(`putting in to port: ${JSON.stringify(v.port)}`);
+  if (v.part.fitted[0] !== 'storm' || !(v.part.sails[1] > v.part.sails[0]) || !v.part.shows) problems.push(`fitting a part: ${JSON.stringify(v.part)}`);
+  if (v.ship !== 'cutter') problems.push(`buying and sailing the Cutter: ${v.ship}`);
+  if (v.skill.ranks !== 2 || v.skill.abilities[0] !== 'surge' || !(v.surge > 1.4)) problems.push(`skills and Crystal Surge: ${JSON.stringify(v.skill)} surge ${v.surge}`);
+  if (!v.boss || v.boss.id !== 'brig' || !v.boss.fits.length) problems.push(`the last wave's raider captain: ${JSON.stringify(v.boss)}`);
+  if (v.done.state !== 'port' || v.done.voyage !== 2 || v.done.wave !== 1 || v.done.hold !== 0) problems.push(`the voyage ending: ${JSON.stringify(v.done)}`);
+  if (v.down.state !== 'port' || v.down.hold !== 0) problems.push(`going down: ${JSON.stringify(v.down)}`);
+  await page.evaluate(() => { const g = window.__game; g.garage.tab = 'parts'; });
+  await page.waitForTimeout(1200);
+  await shot(page, 'laptop-garage');
   await page.close();
 }
 

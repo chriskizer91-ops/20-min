@@ -16,18 +16,29 @@ export function handling(st) {
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-// `pace` scales top speed (the raiders sail a little slower than the Captain)
-export function makeFlyer(ship, stats, start, pace = 1) {
+// `pace` scales top speed (the raiders sail a little slower than the Captain). `mods` are the multipliers from the
+// Captain's parts, skills and tuning (progress.js `effects`): on full health, speed, turning and climbing.
+export function makeFlyer(ship, stats, start, pace = 1, mods = {}) {
   const H = handling(stats);
   const full = { hull: stats.hull, sails: stats.sails, crystals: stats.crystals };
   const s = {
-    ship, stats, H, full, health: { ...full },
+    ship, stats, H, full, health: { ...full }, mods: {}, boost: { speed: 1, turn: 1, accel: 1 },
     pos: start.pos.clone(), heading: start.heading, speed: H.vmax * 0.45 * pace, sail: 0.5, vy: 0, turn: 0, climb: 0,
     velocity: new THREE.Vector3(),
     down: null, // how it's going down, once it is: 'hull' or 'crystals', and for how long
     aimY: 0, // how far below its deck to aim at it (the middle of its hull)
   };
   s.aimAt = () => s.pos.clone().setY(s.pos.y + s.aimY);
+  // new parts, skills or tuning: the handling and full health change, and the ship keeps the same share of each
+  s.setMods = (m = {}) => {
+    s.mods = m;
+    const base = handling(stats);
+    H.vmax = base.vmax * (m.speed ?? 1); H.turn = base.turn * (m.turn ?? 1); H.climb = base.climb * (m.climb ?? 1);
+    for (const k of ['hull', 'sails', 'crystals']) {
+      const f = s.health[k] / full[k];
+      full[k] = stats[k] * (m[k] ?? 1); s.health[k] = full[k] * f;
+    }
+  };
   ship.root.rotation.order = 'YXZ';
   s.frac = (k) => s.health[k] / full[k];
   s.crew = () => Math.ceil(stats.crew * s.frac('hull')); // the crew falls with the hull
@@ -44,10 +55,10 @@ export function makeFlyer(ship, stats, start, pace = 1) {
   s.update = (dt, c) => {
     if (s.down) return sink(dt);
     const sf = s.frac('sails'), cf = s.frac('crystals');
-    const vmax = H.vmax * pace * (0.3 + 0.7 * sf), turnRate = H.turn * (0.45 + 0.55 * sf), climbRate = H.climb * (0.25 + 0.75 * cf);
+    const vmax = H.vmax * pace * (0.3 + 0.7 * sf) * s.boost.speed, turnRate = H.turn * (0.45 + 0.55 * sf) * s.boost.turn, climbRate = H.climb * (0.25 + 0.75 * cf);
     s.sail = c.sailTo != null ? clamp(c.sailTo, 0, 1) : clamp(s.sail + (c.sail ?? 0) * dt * 0.5, 0, 1);
     const target = s.sail * vmax;
-    s.speed += (target - s.speed) * (1 - Math.exp(-dt * (target > s.speed ? 0.35 : 0.6)));
+    s.speed += (target - s.speed) * (1 - Math.exp(-dt * (target > s.speed ? 0.35 * s.boost.accel : 0.6)));
     // controls are eased in, the way a heavy ship answers its wheel
     s.turn += ((c.turn ?? 0) - s.turn) * (1 - Math.exp(-dt * 3));
     s.climb += ((c.climb ?? 0) - s.climb) * (1 - Math.exp(-dt * 2.5));
@@ -88,5 +99,6 @@ export function makeFlyer(ship, stats, start, pace = 1) {
     Object.assign(s.health, full); s.down = null; s.pos.copy(pos); s.heading = heading; s.vy = 0; s.turn = 0; s.climb = 0;
     s.speed = H.vmax * 0.45 * pace; s.sail = 0.5; ship.root.rotation.set(0, heading, 0);
   };
+  s.setMods(mods);
   return s;
 }
